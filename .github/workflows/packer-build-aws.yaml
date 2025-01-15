@@ -1,0 +1,41 @@
+name: Build Infinia AMI with Packer
+
+on:
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  packer-build:
+    name: Build Packer Template
+    runs-on: small-dynamic-amd64-u24
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      # Step 3: Validate Packer template
+      - name: Validate Packer template
+        run: |
+          packer validate -var-file=aws.pkrvars.hcl template.pkr.hcl
+
+      # Step 4: Format Packer template
+      - name: Format Packer template
+        run: |
+          packer fmt -write packer-template.pkr.hcl
+
+      # Step 5: Build the Packer template
+      - name: Build AMI with Packer
+        run: |
+          packer build -var-file=aws.pkrvars.hcl template.pkr.hcl
+
+      # Step 6: Notify Build Success
+      - name: Notify Build Success
+        run: echo "Packer build completed successfully!"
