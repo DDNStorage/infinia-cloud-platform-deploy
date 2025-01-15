@@ -1,7 +1,9 @@
 name: Build Infinia AMI with Packer
 
 on:
-  workflow_dispatch: # Manual trigger
+  push:
+    branches:
+      - add-packer # Trigger on push to the add-packer branch
 
 jobs:
   packer-build:
