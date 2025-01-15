@@ -9,6 +9,9 @@ jobs:
   packer-build:
     name: Build Packer Template
     runs-on: small-dynamic-amd64-u24
+    defaults:
+      run:
+        working-directory: vm-images/aws/packer
 
     steps:
       # Step 1: Checkout the repository
