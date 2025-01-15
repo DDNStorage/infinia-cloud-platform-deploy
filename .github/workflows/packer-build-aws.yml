@@ -43,7 +43,7 @@ jobs:
       # Step 4: Format Packer template
       - name: Format Packer template
         run: |
-          packer fmt -write packer-template.pkr.hcl
+          packer fmt -write template.pkr.hcl
 
       # Step 5: Build the Packer template
       - name: Build AMI with Packer
