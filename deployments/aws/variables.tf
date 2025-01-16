@@ -68,6 +68,11 @@ variable "security_group_id" {
   type        = string
 }
 
+variable "domain_name" {
+  description = "Domain name for the ACM certificate"
+  type        = string
+}
+
 variable "load_balancer_name" {
   description = "Name of the internal load balancer"
   type        = string

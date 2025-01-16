@@ -52,3 +52,13 @@ output "client_instance_count" {
   description = "The number of client instances deployed"
   value       = var.num_client_instances
 }
+
+output "internal_lb_dns" {
+  description = "The DNS name of the internal load balancer"
+  value       = aws_lb.internal_lb.dns_name
+}
+
+output "acm_domain_validation_options" {
+  value = aws_acm_certificate.internal_cert.domain_validation_options
+}
+
