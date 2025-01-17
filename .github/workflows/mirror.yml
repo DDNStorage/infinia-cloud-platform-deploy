@@ -4,7 +4,7 @@ on: [push, delete]
 
 jobs:
   to_github:
-    runs-on: ubuntu-latest
+    runs-on: small-dynamic-amd64-u24
     steps:                                              
       - uses: actions/checkout@v4
         with:
