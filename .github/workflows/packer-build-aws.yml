@@ -8,7 +8,7 @@ on:
     inputs:
       infinia_version:
         description: "Infinia Version"
-        required: true
+        required: false  # Make this input optional
 
 jobs:
   packer-build:
@@ -40,20 +40,20 @@ jobs:
         run: |
           packer init template.pkr.hcl
 
-      # Step 3: Validate Packer template
+      # Step 3: Validate Packer template with default fallback
       - name: Validate Packer template
         run: |
-          packer validate -var "infinia_version=${{ github.event.inputs.infinia_version }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
+          packer validate -var "infinia_version=${{ github.event.inputs.infinia_version || '' }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
 
       # Step 4: Format Packer template
       - name: Format Packer template
         run: |
           packer fmt -write template.pkr.hcl
 
-      # Step 5: Build the Packer template
+      # Step 5: Build the Packer template with default fallback
       - name: Build AMI with Packer
         run: |
-          packer build -var "infinia_version=${{ github.event.inputs.infinia_version }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
+          packer build -var "infinia_version=${{ github.event.inputs.infinia_version || '' }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
 
       # Step 6: Notify Build Success
       - name: Notify Build Success
