@@ -3,7 +3,7 @@ name: Build Infinia AMI with Packer
 on:
   push:
     branches:
-      - add-packer
+      - main
   workflow_dispatch:
     inputs:
       infinia_version:
