@@ -26,7 +26,9 @@ infinia-deployment/
 └── README.md
 ```
 
-## Usage
+## Deployment Steps
+
+### 1. Infrastructure Setup
 1. Clone the repository:
    ```bash
    git clone <repository-url>
@@ -47,19 +49,70 @@ infinia-deployment/
    key_pair_name      = "my-key-pair"
    ```
 
-3. Initialize Terraform:
+3. Deploy infrastructure:
    ```bash
    terraform init
-   ```
-
-4. Plan the deployment:
-   ```bash
    terraform plan
+   terraform apply
    ```
 
-5. Apply the configuration:
+### 2. RED Deployment Guide
+
+#### Prerequisites
+- Download RED packages
+- Base operating system: Ubuntu 24.04
+
+#### Environment Setup
+```bash
+export BASE_PKG_URL="https://storage.googleapis.com/ddn-redsetup-public"
+export RELEASE_TYPE=""
+export TARGET_ARCH="$(dpkg --print-architecture)"
+export REL_DIST_PATH="ubuntu/24.04"
+export REL_PKG_URL="${BASE_PKG_URL}/releases${RELEASE_TYPE}/${REL_DIST_PATH}"
+export RED_VER=1.3.37
+```
+
+#### Install redsetup
+```bash
+wget $REL_PKG_URL/redsetup_"${RED_VER}"_"${TARGET_ARCH}${RELEASE_TYPE}".deb?cache-time="$(date +$s)" \
+-O /tmp/redsetup.deb && sudo apt install -y /tmp/redsetup.deb
+```
+
+#### Realm Entry Node Setup
+```bash
+wget $BASE_PKG_URL/releases/rmd_template.json -O /tmp/rmd_template.json && \
+envsubst < /tmp/rmd_template.json > /tmp/rmd.json && \
+sudo redsetup --realm-entry-secret <YOUR_SECRET> --admin-password <YOUR_ADMIN_PASSWORD> \
+--realm-entry --ctrl-plane-ip $(hostname --ip-address) \
+--release-metadata-file /tmp/rmd.json
+```
+
+#### Non-Realm Entry Node Setup
+```bash
+sudo redsetup --realm-entry-address <REALM_ENTRY_NODE_IP> --realm-entry-secret <YOUR_SECRET>
+```
+
+#### Deploy RED Cluster
+1. Login to RED CLI:
    ```bash
-   terraform apply
+   redcli user login realm_admin -p <YOUR_ADMIN_PASSWORD>
+   ```
+
+2. Generate and update realm configuration:
+   ```bash
+   redcli realm config generate
+   redcli realm config update -f realm_config.yaml
+   ```
+
+3. Install license:
+   ```bash
+   redcli license install -a <YOUR_LICENSE_KEY> -y
+   ```
+
+4. Create and verify cluster:
+   ```bash
+   redcli cluster create c1 -S=false -z
+   redcli cluster show
    ```
 
 ## Variables
@@ -96,6 +149,3 @@ infinia-deployment/
 - The security group must allow inbound traffic on port `8111`.
 - For additional customization, edit the `variables.tf` file.
 
----
-
-**Happy Deploying!**
