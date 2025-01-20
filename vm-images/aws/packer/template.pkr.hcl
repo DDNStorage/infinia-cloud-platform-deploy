@@ -104,7 +104,8 @@ build {
     inline_shebang  = "/bin/bash"
     execute_command = "sudo -E bash -c '{{.Vars}}{{.Path}}'"
     inline = [
-      "sudo bash -c 'cat <<EOF > /etc/systemd/system/regenerate-machine-id.service
+      <<EOT
+sudo bash -c 'cat > /etc/systemd/system/regenerate-machine-id.service <<EOF
 [Unit]
 Description=Regenerate machine-id on boot
 Before=network-pre.target
@@ -120,8 +121,9 @@ RemainAfterExit=yes
 
 [Install]
 WantedBy=multi-user.target
-EOF'",
-
+EOF'
+EOT
+      ,
       "sudo systemctl daemon-reload",
       "sudo systemctl enable regenerate-machine-id.service",
       "sudo touch /etc/cloud/cloud-init.disabled"
