@@ -56,6 +56,14 @@ source "amazon-ebs" "infina" {
     volume_type           = "gp3"
     delete_on_termination = true
   }
+
+  user_data = <<EOF
+#!/bin/bash
+# Regenerate machine-id on first boot
+rm -f /etc/machine-id /var/lib/dbus/machine-id
+systemd-machine-id-setup
+ln -sf /etc/machine-id /var/lib/dbus/machine-id
+EOF
 }
 
 build {
@@ -97,36 +105,6 @@ build {
       "journalctl --rotate && journalctl --vacuum-time=1s",
       "rm -rf /var/log/* /tmp/* /var/tmp/*",
       "touch /var/log/redsetup-complete"
-    ]
-  }
-
-  provisioner "shell" {
-    inline_shebang  = "/bin/bash"
-    execute_command = "sudo -E bash -c '{{.Vars}}{{.Path}}'"
-    inline = [
-      <<EOT
-sudo bash -c 'cat > /etc/systemd/system/regenerate-machine-id.service <<EOF
-[Unit]
-Description=Regenerate machine-id on boot
-Before=network-pre.target
-Wants=network-pre.target
-ConditionPathExists=!/etc/machine-id
-
-[Service]
-Type=oneshot
-ExecStart=/bin/rm -f /etc/machine-id /var/lib/dbus/machine-id
-ExecStart=/bin/systemd-machine-id-setup
-ExecStart=/bin/ln -sf /etc/machine-id /var/lib/dbus/machine-id
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF'
-EOT
-      ,
-      "sudo systemctl daemon-reload",
-      "sudo systemctl enable regenerate-machine-id.service",
-      "sudo touch /etc/cloud/cloud-init.disabled"
     ]
   }
 }
