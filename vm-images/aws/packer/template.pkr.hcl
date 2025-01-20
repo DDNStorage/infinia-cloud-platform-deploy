@@ -9,7 +9,7 @@ variable "region" {
 }
 
 variable "infinia_version" {
-  default = "1.3.38"
+  default = "1.3.37"
 }
 
 variable "base_pkg_url" {
