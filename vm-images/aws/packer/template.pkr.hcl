@@ -9,7 +9,7 @@ variable "region" {
 }
 
 variable "infinia_version" {
-  default = "1.3.32"
+  default = "1.3.37"
 }
 
 variable "base_pkg_url" {
@@ -97,6 +97,32 @@ build {
       "journalctl --rotate && journalctl --vacuum-time=1s",
       "rm -rf /var/log/* /tmp/* /var/tmp/*",
       "touch /var/log/redsetup-complete"
+    ]
+  }
+
+  # Add systemd service to regenerate machine-id on first boot
+  provisioner "shell" {
+    inline = [
+      "echo '[Unit]' > /etc/systemd/system/regenerate-machine-id.service",
+      "echo 'Description=Regenerate Machine ID on First Boot' >> /etc/systemd/system/regenerate-machine-id.service",
+      "echo 'Before=cloud-init.service' >> /etc/systemd/system/regenerate-machine-id.service",
+      "echo '' >> /etc/systemd/system/regenerate-machine-id.service",
+      "echo '[Service]' >> /etc/systemd/system/regenerate-machine-id.service",
+      "echo 'Type=oneshot' >> /etc/systemd/system/regenerate-machine-id.service",
+      "echo 'ExecStart=/bin/bash -c \"rm -f /etc/machine-id /var/lib/dbus/machine-id && systemd-machine-id-setup && ln -sf /etc/machine-id /var/lib/dbus/machine-id\"' >> /etc/systemd/system/regenerate-machine-id.service",
+      "echo 'RemainAfterExit=yes' >> /etc/systemd/system/regenerate-machine-id.service",
+      "echo '' >> /etc/systemd/system/regenerate-machine-id.service",
+      "echo '[Install]' >> /etc/systemd/system/regenerate-machine-id.service",
+      "echo 'WantedBy=multi-user.target' >> /etc/systemd/system/regenerate-machine-id.service",
+      "systemctl enable regenerate-machine-id.service"
+    ]
+  }
+
+  # Remove machine ID before baking AMI to ensure uniqueness on first boot
+  provisioner "shell" {
+    inline = [
+      "rm -f /etc/machine-id /var/lib/dbus/machine-id",
+      "truncate -s 0 /etc/machine-id"
     ]
   }
 }
