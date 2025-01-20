@@ -5,11 +5,10 @@ variable "instance_type" {
 
 variable "region" {
   type    = string
-  default = "us-east-1"
+  default = "us-east-2"
 }
 
 variable "infinia_version" {
-  type = string
   default = "1.3.38"
 }
 
@@ -101,29 +100,31 @@ build {
     ]
   }
 
-  # Add systemd service to regenerate machine-id on first boot
   provisioner "shell" {
+    inline_shebang  = "/bin/bash"
+    execute_command = "sudo -E bash -c '{{.Vars}}{{.Path}}'"
     inline = [
-      "echo '[Unit]' > /etc/systemd/system/regenerate-machine-id.service",
-      "echo 'Description=Regenerate Machine ID on First Boot' >> /etc/systemd/system/regenerate-machine-id.service",
-      "echo 'Before=cloud-init.service' >> /etc/systemd/system/regenerate-machine-id.service",
-      "echo '' >> /etc/systemd/system/regenerate-machine-id.service",
-      "echo '[Service]' >> /etc/systemd/system/regenerate-machine-id.service",
-      "echo 'Type=oneshot' >> /etc/systemd/system/regenerate-machine-id.service",
-      "echo 'ExecStart=/bin/bash -c \"rm -f /etc/machine-id /var/lib/dbus/machine-id && systemd-machine-id-setup && ln -sf /etc/machine-id /var/lib/dbus/machine-id\"' >> /etc/systemd/system/regenerate-machine-id.service",
-      "echo 'RemainAfterExit=yes' >> /etc/systemd/system/regenerate-machine-id.service",
-      "echo '' >> /etc/systemd/system/regenerate-machine-id.service",
-      "echo '[Install]' >> /etc/systemd/system/regenerate-machine-id.service",
-      "echo 'WantedBy=multi-user.target' >> /etc/systemd/system/regenerate-machine-id.service",
-      "systemctl enable regenerate-machine-id.service"
-    ]
-  }
+      "sudo bash -c 'cat <<EOF > /etc/systemd/system/regenerate-machine-id.service
+[Unit]
+Description=Regenerate machine-id on boot
+Before=network-pre.target
+Wants=network-pre.target
+ConditionPathExists=!/etc/machine-id
 
-  # Remove machine ID before baking AMI to ensure uniqueness on first boot
-  provisioner "shell" {
-    inline = [
-      "rm -f /etc/machine-id /var/lib/dbus/machine-id",
-      "truncate -s 0 /etc/machine-id"
+[Service]
+Type=oneshot
+ExecStart=/bin/rm -f /etc/machine-id /var/lib/dbus/machine-id
+ExecStart=/bin/systemd-machine-id-setup
+ExecStart=/bin/ln -sf /etc/machine-id /var/lib/dbus/machine-id
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF'",
+
+      "sudo systemctl daemon-reload",
+      "sudo systemctl enable regenerate-machine-id.service",
+      "sudo touch /etc/cloud/cloud-init.disabled"
     ]
   }
 }
