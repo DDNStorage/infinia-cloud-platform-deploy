@@ -1,4 +1,59 @@
-# Create IAM Role for Session Manager
+locals {
+  environment_variables = {
+    BASE_PKG_URL    = "https://storage.googleapis.com/ddn-redsetup-public"
+    RELEASE_TYPE    = ""
+    TARGET_ARCH     = "amd64"
+    REL_DIST_PATH   = "ubuntu/24.04"
+    REL_PKG_URL     = "https://storage.googleapis.com/ddn-redsetup-public/releases/ubuntu/24.04"
+    RED_VER         = var.infinia_version
+    REALM_ENTRY_SECRET = var.realm_entry_secret
+    ADMIN_PASSWORD  = var.admin_password
+    LICENSE_KEY     = var.license_key
+  }
+}
+
+resource "aws_vpc" "infinia_vpc" {
+  cidr_block = var.vpc_cidr
+}
+
+resource "aws_subnet" "infinia_subnet" {
+  vpc_id     = aws_vpc.infinia_vpc.id
+  cidr_block = var.subnet_cidr
+  availability_zone = var.availability_zone
+}
+
+resource "aws_security_group" "infinia_sg" {
+  vpc_id = aws_vpc.infinia_vpc.id
+
+# ingress {
+#     from_port   = 22
+#     to_port     = 22
+#     protocol    = "tcp"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 8111
+    to_port     = 8111
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 resource "aws_iam_role" "ssm_role" {
   name = "${var.infinia_deployment_name}-ssm-role"
 
@@ -16,106 +71,91 @@ resource "aws_iam_role" "ssm_role" {
   })
 }
 
-# Attach AmazonSSMManagedInstanceCore Policy to Role
 resource "aws_iam_role_policy_attachment" "ssm_core_policy" {
   role       = aws_iam_role.ssm_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-# Create IAM Instance Profile
 resource "aws_iam_instance_profile" "ssm_instance_profile" {
   name = "${var.infinia_deployment_name}-ssm-instance-profile"
   role = aws_iam_role.ssm_role.name
 }
 
-# Deploy Infinia SDS Instances with IAM Instance Profile
-resource "aws_instance" "infinia" {
-  count         = var.num_infinia_instances
-  ami           = var.infinia_ami_id
-  instance_type = var.instance_type_infinia
-  subnet_id     = element(var.subnet_ids, count.index % length(var.subnet_ids))
-  security_groups = [var.security_group_id]
-  key_name      = var.key_pair_name
-
+resource "aws_instance" "infinia_realm_entry" {
+  ami           = var.ami_id
+  instance_type = var.instance_type
+  subnet_id     = aws_subnet.infinia_subnet.id
+  availability_zone = var.availability_zone
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
 
-  root_block_device {
-    volume_size           = 256
-    volume_type           = "gp3"
-    delete_on_termination = true
+  tags = {
+    Name = "${var.infinia_deployment_name}-realm"
   }
 
-  tags = {
-    Name = "${var.infinia_deployment_name}-sn-${format("%02d", count.index)}"
-  }
+  # user_data = <<-EOF
+  #             #!/bin/bash
+  #             LOG_FILE="/var/log/redsetup.log"
+  #             exec > >(tee -a "$LOG_FILE") 2>&1
+
+  #             export BASE_PKG_URL=${local.environment_variables.BASE_PKG_URL}
+  #             export RELEASE_TYPE=${local.environment_variables.RELEASE_TYPE}
+  #             export TARGET_ARCH=${local.environment_variables.TARGET_ARCH}
+  #             export REL_DIST_PATH=${local.environment_variables.REL_DIST_PATH}
+  #             export REL_PKG_URL=${local.environment_variables.REL_PKG_URL}
+  #             export RED_VER=${local.environment_variables.RED_VER}
+              
+  #             sudo wget $BASE_PKG_URL/releases/rmd_template.json -O /tmp/rmd_template.json && envsubst < /tmp/rmd_template.json > /tmp/rmd.json
+  #             sudo redsetup -realm-entry \
+  #                 -realm-entry-secret ${local.environment_variables.REALM_ENTRY_SECRET} \
+  #                 --admin-password ${local.environment_variables.ADMIN_PASSWORD} \
+  #                 -ctrl-plane-ip $(hostname --ip-address) \
+  #                 -release-metadata-file /tmp/rmd.json \
+              
+  #             sudo redcli realm config generate \
+  #             sudo redcli realm config update -f realm_config.yaml \
+  #             sudo redcli license install -a ${local.environment_variables.LICENSE_KEY} -y
+  #             EOF
 }
 
-# Deploy Client Instances with IAM Instance Profile
-resource "aws_instance" "client" {
-  count         = var.num_client_instances
-  ami           = var.client_ami_id
-  instance_type = var.instance_type_client
-  subnet_id     = element(var.subnet_ids, count.index % length(var.subnet_ids))
-  security_groups = [var.security_group_id]
-  key_name      = var.key_pair_name
-
+resource "aws_instance" "infinia_non_realm_nodes" {
+  count         = var.num_non_realm_nodes
+  ami           = var.ami_id
+  instance_type = var.instance_type
+  subnet_id     = aws_subnet.infinia_subnet.id
+  availability_zone = var.availability_zone
+  depends_on    = [aws_instance.infinia_realm_entry]
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
 
-  root_block_device {
-    volume_size           = 256
-    volume_type           = "gp3"
-    delete_on_termination = true
+  tags = {
+    Name = "${var.infinia_deployment_name}-nonrealm-${format("%02d", count.index)}"
   }
 
-  tags = {
-    Name = "${var.infinia_deployment_name}-cn-${format("%02d", count.index)}"
-  }
+  # user_data = <<-EOF
+  #             #!/bin/bash
+  #             LOG_FILE="/var/log/redsetup.log"
+  #             exec > >(tee -a "$LOG_FILE") 2>&1
+
+  #             sudo redsetup --realm-entry-address ${aws_instance.infinia_realm_entry.private_ip} --realm-entry-secret ${local.environment_variables.REALM_ENTRY_SECRET}
+  #             EOF
 }
 
+variable "realm_entry_secret" {}
+variable "admin_password" {}
+variable "license_key" {}
+variable "aws_region" {}
+variable "ami_id" {}
+variable "instance_type" {}
+variable "vpc_cidr" {}
+variable "infinia_version" {}
+variable "subnet_cidr" {}
+variable "num_non_realm_nodes" {}
+variable "availability_zone" {}
+variable "infinia_deployment_name" {
+  description = "Deployment name for Infinia resources, must be between 4 and 8 lowercase characters"
+  type        = string
 
-# resource "aws_lb" "internal_lb" {
-#   name               = "${var.infinia_deployment_name}-lb"
-#   internal           = true
-#   load_balancer_type = "network"
-#   security_groups    = [var.security_group_id]
-#   subnets            = var.subnet_ids
-#   enable_deletion_protection = false
-#   tags = { Name = "${var.infinia_deployment_name}-lb" }
-# }
-
-# resource "aws_lb_target_group" "infinia_tg" {
-#   name        = "${var.infinia_deployment_name}-tg"
-#   port        = 8111
-#   protocol    = "TCP"
-#   vpc_id      = var.vpc_id
-
-#   health_check {
-#     port               = "8111"
-#     protocol           = "TCP"
-#     interval           = 10
-#     timeout            = 5
-#     unhealthy_threshold = 3
-#     healthy_threshold   = 2
-#   }
-
-#   tags = { Name = "${var.infinia_deployment_name}-tg" }
-# }
-
-# resource "aws_lb_listener" "infinia_listener" {
-#   load_balancer_arn = aws_lb.internal_lb.arn
-#   port              = 8111
-#   protocol          = "TCP"
-
-#   default_action {
-#     type             = "forward"
-#     target_group_arn = aws_lb_target_group.infinia_tg.arn
-#   }
-
-#   tags = { Name = "${var.infinia_deployment_name}-listener" }
-# }
-
-# resource "aws_lb_target_group_attachment" "infinia_tg_attachments" {
-#   count            = length(aws_instance.infinia)
-#   target_group_arn = aws_lb_target_group.infinia_tg.arn
-#   target_id        = aws_instance.infinia[count.index].id
-# }
+  validation {
+    condition     = length(var.infinia_deployment_name) >= 4 && length(var.infinia_deployment_name) <= 8 && var.infinia_deployment_name == lower(var.infinia_deployment_name)
+    error_message = "The deployment name must be between 4 and 8 characters, all lowercase."
+  }
+}

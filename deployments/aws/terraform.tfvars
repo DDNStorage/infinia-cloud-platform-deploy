@@ -8,3 +8,5 @@ client_ami_id      = "ami-041b0d36e6227842e"
 num_infinia_instances = 2
 num_client_instances  = 1
 key_pair_name = "my-key-pair"
+infinia_version = "1.3.39"
+availability_zone = "us-east-1a"
