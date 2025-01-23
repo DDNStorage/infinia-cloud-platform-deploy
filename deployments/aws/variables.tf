@@ -67,9 +67,3 @@ variable "security_group_id" {
   description = "Security group ID for the instances"
   type        = string
 }
-
-variable "load_balancer_name" {
-  description = "Name of the internal load balancer"
-  type        = string
-  default     = "infinia-internal-lb"
-}

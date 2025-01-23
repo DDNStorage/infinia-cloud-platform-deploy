@@ -8,3 +8,5 @@ client_ami_id      = "ami-0e2c8caa4b6378d8c"
 num_infinia_instances = 2
 num_client_instances  = 1
 key_pair_name = "my-key-pair"
+instance_type_infinia = "i3en.12xlarge"    # Override with your desired instance type
+instance_type_client  = "t3.large"         # Override with your desired instance type
