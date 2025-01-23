@@ -38,4 +38,23 @@ resource "aws_instance" "client" {
   }
 }
 
+# Deploy Load Balancer Instance
+resource "aws_instance" "load_balancer" {
+  ami           = var.client_ami_id
+  instance_type = "t3.medium"
+  subnet_id     = element(var.subnet_ids, 0)
+  security_groups = [var.security_group_id]
+  key_name      = var.key_pair_name
+
+  root_block_device {
+    volume_size           = 150
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+
+  tags = {
+    Name = "${var.infinia_deployment_name}-nginx"
+  }
+}
+
 
