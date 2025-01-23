@@ -1,13 +1,3 @@
-output "load_balancer_dns_name" {
-  description = "The DNS name of the internal Network Load Balancer"
-  value       = aws_lb.internal_lb.dns_name
-}
-
-output "load_balancer_arn" {
-  description = "The ARN of the internal Network Load Balancer"
-  value       = aws_lb.internal_lb.arn
-}
-
 output "infinia_instance_private_ips" {
   description = "The private IP addresses of the Infinia instances"
   value       = aws_instance.infinia[*].private_ip
@@ -51,4 +41,14 @@ output "infinia_instance_count" {
 output "client_instance_count" {
   description = "The number of client instances deployed"
   value       = var.num_client_instances
+}
+
+output "load_balancer_private_ip" {
+  description = "The private IP address of the load balancer instance"
+  value       = aws_instance.load_balancer.private_ip
+}
+
+output "load_balancer_instance_id" {
+  description = "The instance ID of the load balancer instance"
+  value       = aws_instance.load_balancer.id
 }
