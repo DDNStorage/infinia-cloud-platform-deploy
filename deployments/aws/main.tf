@@ -6,7 +6,21 @@ resource "aws_instance" "infinia" {
   subnet_id     = element(var.subnet_ids, count.index % length(var.subnet_ids))
   security_groups = [var.security_group_id]
   key_name      = var.key_pair_name
-
+  
+  lifecycle {
+    create_before_destroy = false
+    ignore_changes = [
+      subnet_id,
+      security_groups,
+      ami,
+      instance_type,
+      key_name,
+      root_block_device,
+      tags,
+      volume_tags
+    ]
+  }
+  
   root_block_device {
     volume_size           = 150
     volume_type           = "gp3"
@@ -27,6 +41,20 @@ resource "aws_instance" "client" {
   security_groups = [var.security_group_id]
   key_name      = var.key_pair_name
 
+  lifecycle {
+    create_before_destroy = false
+    ignore_changes = [
+      subnet_id,
+      security_groups,
+      ami,
+      instance_type,
+      key_name,
+      root_block_device,
+      tags,
+      volume_tags
+    ]
+  }
+
   root_block_device {
     volume_size           = 150 # Set root volume size to 150 GB
     volume_type           = "gp3"
@@ -45,6 +73,20 @@ resource "aws_instance" "load_balancer" {
   subnet_id     = element(var.subnet_ids, 0)
   security_groups = [var.security_group_id]
   key_name      = var.key_pair_name
+
+  lifecycle {
+    create_before_destroy = false
+    ignore_changes = [
+      subnet_id,
+      security_groups,
+      ami,
+      instance_type,
+      key_name,
+      root_block_device,
+      tags,
+      volume_tags
+    ]
+  }
 
   root_block_device {
     volume_size           = 150
