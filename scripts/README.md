@@ -11,10 +11,15 @@ A bash script for deploying and configuring realm entry and non-realm entry node
 
 ## Installation
 
-1. Clone or download the script
-2. Make it executable:
+1. Download the scripts from Google Cloud Storage:
 ```bash
-chmod +x infinia-node-setup.sh
+wget https://storage.googleapis.com/ddn-redsetup-public/deployment-scripts/infinia-node-setup.sh
+wget https://storage.googleapis.com/ddn-redsetup-public/deployment-scripts/infinia-cluster-configure.sh
+```
+
+2. Make them executable:
+```bash
+chmod +x infinia-node-setup.sh infinia-cluster-configure.sh
 ```
 
 ## Usage
