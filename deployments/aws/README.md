@@ -149,3 +149,16 @@ sudo redsetup --realm-entry-address <REALM_ENTRY_NODE_IP> --realm-entry-secret <
 - The security group must allow inbound traffic on port `8111`.
 - For additional customization, edit the `variables.tf` file.
 
+## Next Steps
+
+After successful Terraform deployment, proceed with node setup and cluster configuration by following the instructions in `scripts/README.md`. The scripts will guide you through:
+1. Setting up the realm entry node
+2. Configuring non-realm entry nodes
+3. Initializing the cluster
+
+You can find the instance IP addresses in the Terraform outputs:
+```bash
+terraform output infinia_instance_private_ips
+terraform output client_instance_private_ips
+```
+
