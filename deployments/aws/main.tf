@@ -237,6 +237,8 @@ resource "aws_instance" "infinia" {
   security_groups = [aws_security_group.infinia_sg.id]
 
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
+  associate_public_ip_address = true
+  key_name = "my-key-pair"
 
   root_block_device {
     volume_size           = 256
@@ -324,7 +326,9 @@ resource "aws_instance" "infinia_non_realm_nodes" {
   depends_on    = [aws_instance.infinia]
 
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
-
+  associate_public_ip_address = true
+  key_name = "my-key-pair"
+  
   root_block_device {
     volume_size           = 256
     volume_type           = "gp3"
