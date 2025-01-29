@@ -235,7 +235,6 @@ resource "aws_instance" "infinia" {
   instance_type = var.instance_type
   subnet_id     = aws_subnet.infinia_subnets[0].id
   security_groups = [aws_security_group.infinia_sg.id]
-  # key_name      = var.key_pair_name
 
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
 
@@ -246,33 +245,37 @@ resource "aws_instance" "infinia" {
   }
 
   tags = {
-    Name = "${var.infinia_deployment_name}-realm"
+    Name = "${var.infinia_deployment_name}-realm",
+    Role = "realm"
   }
 
-  user_data = <<-EOF
-              #!/bin/bash
-              LOG_FILE="/var/log/redsetup.log"
-              exec > >(tee -a "$LOG_FILE") 2>&1
+  # user_data = <<-EOF
+  #             #!/bin/bash
+  #             LOG_FILE="/var/log/redsetup.log"
+  #             exec > >(tee -a "$LOG_FILE") 2>&1
 
-              export BASE_PKG_URL=${local.environment_variables.BASE_PKG_URL}
-              export RELEASE_TYPE=${local.environment_variables.RELEASE_TYPE}
-              export TARGET_ARCH=${local.environment_variables.TARGET_ARCH}
-              export REL_DIST_PATH=${local.environment_variables.REL_DIST_PATH}
-              export REL_PKG_URL=${local.environment_variables.REL_PKG_URL}
-              export RED_VER=${local.environment_variables.RED_VER}
-              
-              sudo wget $BASE_PKG_URL/releases/rmd_template.json -O /tmp/rmd_template.json && envsubst < /tmp/rmd_template.json > /tmp/rmd.json
-              sudo redsetup -realm-entry \
-                  -realm-entry-secret ${local.environment_variables.REALM_ENTRY_SECRET} \
-                  --admin-password ${local.environment_variables.ADMIN_PASSWORD} \
-                  -ctrl-plane-ip $(hostname --ip-address) \
-                  -release-metadata-file /tmp/rmd.json
-              
-              sudo redcli realm config generate
-              sudo redcli realm config update -f realm_config.yaml
-              sudo redcli license install -a ${local.environment_variables.LICENSE_KEY} -y
-              EOF
+  #             # Download and process template
+  #             sudo wget ${local.environment_variables.BASE_PKG_URL}/releases/rmd_template.json -O /tmp/rmd_template.json
+  #             sudo awk -v ver='${local.environment_variables["RED_VER"]}' '{gsub("\\$\\{RED_VER\\}", ver)}1' /tmp/rmd_template.json > /tmp/rmd.json
+
+  #             # Run the redsetup command
+  #             sudo redsetup -realm-entry \
+  #                 -realm-entry-secret ${local.environment_variables.REALM_ENTRY_SECRET} \
+  #                 --admin-password ${local.environment_variables.ADMIN_PASSWORD} \
+  #                 -ctrl-plane-ip $(hostname --ip-address) \
+  #                 -release-metadata-file /tmp/rmd.json \
+
+  #             # Authenticate and configure Infinia
+  #             sudo redcli user login realm_admin -p ${local.environment_variables.ADMIN_PASSWORD}
+  #             sudo redcli realm config generate
+  #             sudo redcli realm config update -f realm_config.yaml
+  #             sudo redcli license install -a ${local.environment_variables.LICENSE_KEY} -y
+
+  #             echo "Setup completed successfully!" | tee -a "$LOG_FILE"
+  #             EOF
 }
+
+
 
 
 
@@ -322,17 +325,24 @@ resource "aws_instance" "infinia_non_realm_nodes" {
 
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
 
-  tags = {
-    Name = "${var.infinia_deployment_name}-nonrealm-${format("%02d", count.index + 1)}"
+  root_block_device {
+    volume_size           = 256
+    volume_type           = "gp3"
+    delete_on_termination = true
   }
 
-  user_data = <<-EOF
-              #!/bin/bash
-              LOG_FILE="/var/log/redsetup.log"
-              exec > >(tee -a "$LOG_FILE") 2>&1
+  tags = {
+    Name = "${var.infinia_deployment_name}-nonrealm-${format("%02d", count.index + 1)}",
+    Role = "nonrealm"
+  }
 
-              sudo redsetup --realm-entry-address ${aws_instance.infinia.private_ip} --realm-entry-secret ${var.realm_entry_secret}
-              EOF
+  # user_data = <<-EOF
+  #             #!/bin/bash
+  #             LOG_FILE="/var/log/redsetup.log"
+  #             exec > >(tee -a "$LOG_FILE") 2>&1
+
+  #             sudo redsetup --realm-entry-address ${aws_instance.infinia.private_ip} --realm-entry-secret ${var.realm_entry_secret}
+  #             EOF
 }
 
 
