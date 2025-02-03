@@ -36,7 +36,7 @@ resource "aws_instance" "infinia" {
   security_groups = [var.security_group_id]
   key_name      = var.key_pair_name
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
-  associate_public_ip_address = true
+  associate_public_ip_address = var.enable_public_ip
   
   lifecycle {
     create_before_destroy = false
@@ -58,6 +58,13 @@ resource "aws_instance" "infinia" {
     delete_on_termination = true
   }
 
+  dynamic "ephemeral_block_device" {
+    for_each = range(var.num_ephemeral_devices)  # Number of ephemeral drives
+    content {
+      device_name  = "/dev/sd${char(102 + ephemeral_block_device.value)}"  # e.g., /dev/sdf, /dev/sdg, etc.
+      virtual_name = "ephemeral${ephemeral_block_device.value}"  # AWS Instance Store Device Name
+  }
+
   tags = {
     Name = "${var.infinia_deployment_name}-sn-${format("%02d", count.index)}"
     Role = count.index == 0 ? "realm" : "nonrealm"
@@ -73,7 +80,7 @@ resource "aws_instance" "client" {
   security_groups = [var.security_group_id]
   key_name      = var.key_pair_name
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
-  associate_public_ip_address = true
+  associate_public_ip_address = var.enable_public_ip
 
   lifecycle {
     create_before_destroy = false
