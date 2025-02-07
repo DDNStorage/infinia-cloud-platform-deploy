@@ -1,0 +1,60 @@
+- name: Infinia Setup and Configuration
+  hosts: all
+  vars_files:
+    - vars.yml
+    - secret.yml
+  tasks:
+    - name: Download Infinia Scripts
+      get_url:
+        url: "{{ item.url }}"
+        dest: "{{ item.dest }}"
+        mode: '0755'
+      loop:
+        - { url: "https://storage.googleapis.com/ddn-redsetup-public/deployment-scripts/infinia-node-setup.sh", dest: "/tmp/infinia-node-setup.sh" }
+        - { url: "https://storage.googleapis.com/ddn-redsetup-public/deployment-scripts/infinia-cluster-configure.sh", dest: "/tmp/infinia-cluster-configure.sh" }
+      become: yes
+      tags: download
+
+    - block: # Infinia Setup
+        - name: Realm Node Setup
+          command: >
+            /tmp/infinia-node-setup.sh
+            --realm-entry
+            --version {{ infinia_version }}
+            --realm-secret "{{ realm_secret }}"
+            --admin-password "{{ admin_password }}"
+          args:
+            chdir: /tmp
+          when: "'role_realm' in group_names"
+          become: yes
+
+        - name: Non-Realm Node Setup
+          command: >
+            /tmp/infinia-node-setup.sh
+            --non-realm-entry
+            --ip {{ hostvars[groups['role_realm'][0]].private_ip_address }}
+            --version {{ infinia_version }}
+            --realm-secret "{{ realm_secret }}"
+            --admin-password "{{ admin_password }}"
+          args:
+            chdir: /tmp
+          when: "'role_nonrealm' in group_names"
+          become: yes
+
+      tags: setup
+
+    - block: # Infinia Cluster Setup
+        - name: Copy the Infinia Cluster Configuration Script
+          copy:
+            src: ./infinia-cluster-configure.sh
+            dest: /tmp/infinia-cluster-configure.sh
+            mode: '0755'
+
+        - name: Configure the Infinia Cluster
+          command: >
+            /tmp/infinia-cluster-configure.sh
+            --admin-password "{{ admin_password }}"
+            --license-key "{{ license_key }}"
+      when: "'role_realm' in group_names"
+      become: yes
+      tags: configure

@@ -43,12 +43,12 @@ output "client_instance_count" {
   value       = var.num_client_instances
 }
 
-output "load_balancer_private_ip" {
-  description = "The private IP address of the load balancer instance"
-  value       = aws_instance.load_balancer.private_ip
-}
+# output "load_balancer_private_ip" {
+#   description = "The private IP address of the load balancer instance"
+#   value       = aws_instance.load_balancer.private_ip
+# }
 
-output "load_balancer_instance_id" {
-  description = "The instance ID of the load balancer instance"
-  value       = aws_instance.load_balancer.id
-}
+# output "load_balancer_instance_id" {
+#   description = "The instance ID of the load balancer instance"
+#   value       = aws_instance.load_balancer.id
+# }
