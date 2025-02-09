@@ -70,15 +70,15 @@ variable "security_group_id" {
 
 variable "root_device_size" {
   description = "The size for the root device"
-  type = number
+  type        = number
 }
 
 variable "num_ephemeral_devices" {
   description = "The number of ephemeral devices"
-  type = number
+  type        = number
 }
 
 variable "enable_public_ip" {
   description = "enable public IP for EC2 instances"
-  type = bool
+  type        = bool
 }
