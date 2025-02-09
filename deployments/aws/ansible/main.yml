@@ -15,6 +15,12 @@
       become: yes
       tags: download
 
+    - name: Reset Infinia setup on all nodes
+      command: redsetup -reset
+      become: yes
+      ignore_errors: yes  # In case redsetup isn't installed yet
+      tags: reset
+
     - block: # Infinia Setup
         - name: Realm Node Setup
           command: >
@@ -23,10 +29,22 @@
             --version {{ infinia_version }}
             --realm-secret "{{ realm_secret }}"
             --admin-password "{{ admin_password }}"
+            --skip-reboot
           args:
             chdir: /tmp
           when: "'role_realm' in group_names"
           become: yes
+
+        - name: Reboot realm node
+          reboot:
+            reboot_timeout: 600
+          when: "'role_realm' in group_names"
+          become: yes
+
+        - name: Wait for 60 seconds after reboot
+          pause:
+            seconds: 60
+          when: "'role_realm' in group_names"
 
         - name: Non-Realm Node Setup
           command: >
@@ -36,10 +54,22 @@
             --version {{ infinia_version }}
             --realm-secret "{{ realm_secret }}"
             --admin-password "{{ admin_password }}"
+            --skip-reboot
           args:
             chdir: /tmp
           when: "'role_nonrealm' in group_names"
           become: yes
+
+        - name: Reboot non-realm node
+          reboot:
+            reboot_timeout: 600
+          when: "'role_nonrealm' in group_names"
+          become: yes
+
+        - name: Wait for 60 seconds after reboot
+          pause:
+            seconds: 60
+          when: "'role_nonrealm' in group_names"
 
       tags: setup
 

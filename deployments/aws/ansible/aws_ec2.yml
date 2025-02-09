@@ -2,9 +2,21 @@ plugin: aws_ec2
 regions:
   - us-east-1
 filters:
-  tag:Role: ['realm', 'nonrealm']  # Include only instances with these roles
+  tag:Role: ['realm', 'nonrealm']
+  tag:Name: ['ndemo-*']
 keyed_groups:
   - prefix: role
     key: tags['Role']
+  - key: tags['Name']
+    prefix: name
 hostnames:
-  - instance-id
+  - network-interface.association.public-ip
+  - tag:Name
+compose:
+  ansible_host: network_interfaces[0].association.public_ip
+  ansible_user: ubuntu
+  ansible_connection: ssh  # Explicitly set SSH
+  ansible_ssh_private_key_file: "~/my-key-pair.pem"
+vars:
+  ansible_connection: ssh  # Set at vars level too
+  ansible_ssh_common_args: '-o StrictHostKeyChecking=no'

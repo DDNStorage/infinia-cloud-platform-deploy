@@ -72,8 +72,3 @@ variable "root_device_size" {
   description = "The size for the root device"
   type = number
 }
-
-variable "num_ephemeral_devices" {
-  description = "The number of ephemeral devices"
-  type = number
-}

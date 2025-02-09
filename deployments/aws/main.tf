@@ -95,14 +95,6 @@ resource "aws_instance" "client" {
     delete_on_termination = true
   }
 
-  dynamic "ephemeral_block_device" {
-    for_each = range(var.num_ephemeral_devices)  # Number of ephemeral drives
-    content {
-      device_name  = "/dev/sd${char(102 + ephemeral_block_device.value)}"  # e.g., /dev/sdf, /dev/sdg, etc.
-      virtual_name = "ephemeral${ephemeral_block_device.value}"  # AWS Instance Store Device Name
-    }
-  }
-
   tags = {
     Name = "${var.infinia_deployment_name}-cn-${format("%02d", count.index)}"
   }

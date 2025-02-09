@@ -1,21 +1,53 @@
-output "infinia_instance_private_ips" {
-  description = "The private IP addresses of the Infinia instances"
-  value       = aws_instance.infinia[*].private_ip
+output "infinia_instances" {
+  description = "Details of Infinia instances"
+  value = [
+    for i, instance in aws_instance.infinia : {
+      name       = instance.tags["Name"]
+      id         = instance.id
+      private_ip = instance.private_ip
+      public_ip  = instance.public_ip
+      role       = instance.tags["Role"]
+    }
+  ]
 }
 
-output "infinia_instance_ids" {
-  description = "The instance IDs of the Infinia instances"
-  value       = aws_instance.infinia[*].id
+output "infinia_instances_formatted" {
+  description = "Formatted details of Infinia instances"
+  value = <<EOT
+Infinia Instances:
+%{for i, instance in aws_instance.infinia~}
+  ${i + 1}. ${instance.tags["Name"]}:
+    - Instance ID: ${instance.id}
+    - Private IP:  ${instance.private_ip}
+    - Public IP:   ${instance.public_ip}
+    - Role:        ${instance.tags["Role"]}
+%{endfor~}
+EOT
 }
 
-output "client_instance_private_ips" {
-  description = "The private IP addresses of the client instances"
-  value       = aws_instance.client[*].private_ip
+output "client_instances" {
+  description = "Details of client instances"
+  value = [
+    for i, instance in aws_instance.client : {
+      name       = instance.tags["Name"]
+      id         = instance.id
+      private_ip = instance.private_ip
+      public_ip  = instance.public_ip
+    }
+  ]
 }
 
-output "client_instance_ids" {
-  description = "The instance IDs of the client instances"
-  value       = aws_instance.client[*].id
+output "client_instances_formatted" {
+  description = "Formatted details of client instances"
+  value = <<EOT
+Client Instances:
+%{for i, instance in aws_instance.client~}
+  ${i + 1}. ${instance.tags["Name"]}:
+    - Instance ID: ${instance.id}
+    - Private IP:  ${instance.private_ip}
+    - Public IP:   ${instance.public_ip}
+%{endfor~}
+EOT
 }
 
 output "vpc_id" {
