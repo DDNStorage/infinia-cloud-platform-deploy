@@ -36,6 +36,7 @@ chmod +x infinia-node-setup.sh infinia-cluster-configure.sh
 - `-v, --version`: RedSetup version (mandatory for both realm entry and non-realm entry nodes)
 - `-s, --realm-secret`: Realm entry secret (optional, default: PA-ssW00r^d)
 - `-p, --admin-password`: Admin password (optional, default: PA-ssW00r^d)
+- `--skip-reboot`: Skip automatic reboot after installation (optional)
 
 ### Examples
 

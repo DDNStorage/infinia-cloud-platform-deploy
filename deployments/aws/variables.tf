@@ -77,3 +77,8 @@ variable "num_ephemeral_devices" {
   description = "The number of ephemeral devices"
   type        = number
 }
+
+variable "interface_type" {
+  description = "The ethernet interface type"
+  type = string
+}
