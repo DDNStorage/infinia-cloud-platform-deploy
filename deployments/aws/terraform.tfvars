@@ -12,4 +12,4 @@ instance_type_infinia   = "i7ie.48xlarge" # Override with your desired instance 
 instance_type_client    = "t3.large"     # Override with your desired instance type
 root_device_size        = 12000
 num_ephemeral_devices   = 17
-enable_public_ip        = true
+interface_type = "efa"

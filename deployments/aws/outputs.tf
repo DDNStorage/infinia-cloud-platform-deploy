@@ -52,3 +52,8 @@ output "client_instance_count" {
 #   description = "The instance ID of the load balancer instance"
 #   value       = aws_instance.load_balancer.id
 # }
+
+variable "interface_type" {
+  type        = string
+  description = "The ethernet interface type"
+}

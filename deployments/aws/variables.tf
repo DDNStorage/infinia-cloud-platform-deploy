@@ -77,8 +77,3 @@ variable "num_ephemeral_devices" {
   description = "The number of ephemeral devices"
   type        = number
 }
-
-variable "enable_public_ip" {
-  description = "enable public IP for EC2 instances"
-  type        = bool
-}

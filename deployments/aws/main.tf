@@ -32,7 +32,7 @@ resource "aws_network_interface" "efa" {
   count           = var.num_infinia_instances
   subnet_id       = element(var.subnet_ids, count.index % length(var.subnet_ids))
   security_groups = [var.security_group_id]
-  interface_type = "efa"
+  interface_type  = var.interface_type != "" ? var.interface_type : null
 
   tags = {
     Name = "${var.infinia_deployment_name}-efa-eni-${format("%02d", count.index)}"
@@ -44,11 +44,8 @@ resource "aws_instance" "infinia" {
   count         = var.num_infinia_instances
   ami           = var.infinia_ami_id
   instance_type = var.instance_type_infinia
-  # subnet_id     = element(var.subnet_ids, count.index % length(var.subnet_ids))
-  # security_groups      = [var.security_group_id]
   key_name             = var.key_pair_name
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
-  # associate_public_ip_address = var.enable_public_ip
 
   network_interface {
     network_interface_id = aws_network_interface.efa[count.index].id
@@ -120,14 +117,6 @@ resource "aws_instance" "client" {
     volume_size           = var.root_device_size # Set root volume size to 150 GB
     volume_type           = "gp3"
     delete_on_termination = true
-  }
-
-  dynamic "ephemeral_block_device" {
-    for_each = range(var.num_ephemeral_devices) # Number of ephemeral drives
-    content {
-      device_name  = "/dev/sd${char(102 + ephemeral_block_device.value)}" # e.g., /dev/sdf, /dev/sdg, etc.
-      virtual_name = "ephemeral${ephemeral_block_device.value}"           # AWS Instance Store Device Name
-    }
   }
 
   tags = {
