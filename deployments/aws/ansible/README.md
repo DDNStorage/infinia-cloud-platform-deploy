@@ -8,10 +8,16 @@ This Ansible playbook automates the setup and configuration of Infinia nodes and
 
 Before using this playbook, ensure you have the following:
 
-- **Ansible** installed (version 2.9 or higher).
-- **Python** installed (version 3.x recommended).
+- **Ansible (Version 2.9 or Higher)**
+📌 [Installation Guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)  
+
+- **Python (Version 3.x Recommended)**
+📌 [Official Download](https://www.python.org/downloads/)  
+📌 [Installation Guide](https://realpython.com/installing-python/)  
+
+-  **Session Manager Plugin for the AWS CLI (Version 1.2.694.0 or Higher)**
+📌 [Installation Guide](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-working-with-install-plugin.html)  
 - Access to the target hosts (via SSH or AWS SSM).
-- Ansible inventory file (`inventory.yml`) configured with the target hosts.
 - Required scripts (`infinia-node-setup.sh` and `infinia-cluster-configure.sh`) available locally or via URLs.
 
 ---
