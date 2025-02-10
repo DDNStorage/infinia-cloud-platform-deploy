@@ -31,11 +31,11 @@
           shell: 'echo "$(date) 🚀 Starting Realm Node Setup..." >> /var/log/infinia/setup.log'
           become: yes
         
-        - name: Reset Redsetup Before Running Setup
-          shell: |
-            echo "$(date) 🔄 Running redsetup --reset..." >> /var/log/infinia/setup.log
-            sudo redsetup --reset >> /var/log/infinia/setup.log 2>&1 || echo "⚠️ Redsetup Reset Failed!" >> /var/log/infinia/setup.log
-          become: yes
+        # - name: Reset Redsetup Before Running Setup
+        #   shell: |
+        #     echo "$(date) 🔄 Running redsetup --reset..." >> /var/log/infinia/setup.log
+        #     sudo redsetup --reset >> /var/log/infinia/setup.log 2>&1 || echo "⚠️ Redsetup Reset Failed!" >> /var/log/infinia/setup.log
+        #   become: yes
 
         - name: Realm Node Setup
           shell: |
@@ -45,7 +45,8 @@
               --realm-entry \
               --version {{ infinia_version }} \
               --realm-secret "{{ realm_secret }}" \
-              --admin-password "{{ admin_password }}" >> /var/log/infinia/setup.log 2>&1
+              --admin-password "{{ admin_password }}" >> /var/log/infinia/setup.log 2>&1 \
+              --skip-reboot
             '
           args:
             chdir: /tmp
@@ -67,11 +68,11 @@
           shell: 'echo "$(date) 🚀 Starting Non-Realm Node Setup..." >> /var/log/infinia/setup.log'
           become: yes
 
-        - name: Reset Redsetup Before Running Setup
-          shell: |
-            echo "$(date) 🔄 Running redsetup --reset..." >> /var/log/infinia/setup.log
-            sudo redsetup --reset >> /var/log/infinia/setup.log 2>&1 || echo "⚠️ Redsetup Reset Failed!" >> /var/log/infinia/setup.log
-          become: yes
+        # - name: Reset Redsetup Before Running Setup
+        #   shell: |
+        #     echo "$(date) 🔄 Running redsetup --reset..." >> /var/log/infinia/setup.log
+        #     sudo redsetup --reset >> /var/log/infinia/setup.log 2>&1 || echo "⚠️ Redsetup Reset Failed!" >> /var/log/infinia/setup.log
+        #   become: yes
 
         - name: Non-Realm Node Setup
           shell: |
@@ -82,7 +83,8 @@
               --ip {{ hostvars[groups["role_realm"][0]].private_ip_address }} \
               --version {{ infinia_version }} \
               --realm-secret "{{ realm_secret }}" \
-              --admin-password "{{ admin_password }}" >> /var/log/infinia/setup.log 2>&1
+              --admin-password "{{ admin_password }}" >> /var/log/infinia/setup.log 2>&1 \
+              --skip-reboot
             '
           args:
             chdir: /tmp
@@ -105,6 +107,16 @@
         - name: Log Cluster Configuration Start
           shell: 'echo "$(date) 🚀 Starting Infinia Cluster Configuration..." >> /var/log/infinia/setup.log'
           become: yes
+
+        - name: Copy Cluster Configuration Scripts 
+          copy:
+            src: "{{ item.src }}"
+            dest: "{{ item.dest }}"
+            mode: '0755'
+          loop:
+            - { src: "./infinia-cluster-configure.sh", dest: "/tmp/infinia-cluster-configure.sh" }
+          become: yes
+          tags: copy
 
         - name: Configure the Infinia Cluster
           shell: |
