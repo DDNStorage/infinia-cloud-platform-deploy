@@ -80,5 +80,22 @@ variable "num_ephemeral_devices" {
 
 variable "interface_type" {
   description = "The ethernet interface type"
-  type = string
+  type        = string
+}
+
+variable "use_ebs_volumes" {
+  description = "Flag to determine whether EBS volumes should be attached"
+  type        = bool
+  default     = false # Default is no EBS volumes unless explicitly enabled
+}
+
+variable "ebs_volume_size" {
+  description = "Size of each EBS volume (in GB)"
+  type        = number
+  default     = 7500
+}
+
+variable "enable_public_ip" {
+  type    = string
+  default = true
 }

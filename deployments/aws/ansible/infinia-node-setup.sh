@@ -6,7 +6,7 @@ trap 'echo "Error occurred at line $LINENO. Command: $BASH_COMMAND"' ERR
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 [-r|--realm-entry] [-n|--non-realm-entry] [-i|--ip IP_ADDRESS] [-v|--version VERSION] [-s|--realm-secret SECRET] [-p|--admin-password PASSWORD]"
+    echo "Usage: $0 [-r|--realm-entry] [-n|--non-realm-entry] [-i|--ip IP_ADDRESS] [-v|--version VERSION] [-s|--realm-secret SECRET] [-p|--admin-password PASSWORD] [--skip-reboot]"
     echo "Options:"
     echo "  -r, --realm-entry        Configure as realm entry node"
     echo "  -n, --non-realm-entry    Configure as non-realm entry node"
@@ -14,6 +14,7 @@ usage() {
     echo "  -v, --version            RedSetup version (mandatory)"
     echo "  -s, --realm-secret       Realm entry secret (optional, default: PA-ssW00r^d)"
     echo "  -p, --admin-password     Admin password (optional, default: PA-ssW00r^d)"
+    echo "  --skip-reboot           Skip automatic reboot after installation (optional)"
     exit 1
 }
 
@@ -29,6 +30,7 @@ REALM_ENTRY_IP=""
 RED_VER=""
 REALM_SECRET="PA-ssW00r^d"
 ADMIN_PASSWORD="PA-ssW00r^d"
+SKIP_REBOOT=false
 
 log "Parsing command line arguments..."
 while [[ $# -gt 0 ]]; do
@@ -62,6 +64,11 @@ while [[ $# -gt 0 ]]; do
             ADMIN_PASSWORD="$2"
             log "Admin password provided"
             shift 2
+            ;;
+        --skip-reboot)
+            SKIP_REBOOT=true
+            log "Automatic reboot will be skipped"
+            shift
             ;;
         *)
             log "Error: Invalid option $1"
@@ -138,13 +145,14 @@ if [[ "$REALM_ENTRY" == "true" ]]; then
     log "Executing redsetup for realm entry node..."
     if ! sudo redsetup --realm-entry-secret "$REALM_SECRET" --admin-password "$ADMIN_PASSWORD" \
         --realm-entry --ctrl-plane-ip "$(hostname -I | awk '{print $1}' | tr -d ' ')" \
-        --release-metadata-file /tmp/rmd.json; then
+        --release-metadata-file /tmp/rmd.json $([ "$SKIP_REBOOT" == "true" ] && echo "-skip-reboot"); then
         log "Error: Failed to configure realm entry node"
         exit 1
     fi
 elif [[ "$NON_REALM_ENTRY" == "true" ]]; then
     log "Configuring non-realm entry node..."
-    if ! sudo redsetup --realm-entry-address "$REALM_ENTRY_IP" --realm-entry-secret "$REALM_SECRET"; then
+    if ! sudo redsetup --realm-entry-address "$REALM_ENTRY_IP" --realm-entry-secret "$REALM_SECRET" \
+        $([ "$SKIP_REBOOT" == "true" ] && echo "-skip-reboot"); then
         log "Error: Failed to configure non-realm entry node"
         exit 1
     fi

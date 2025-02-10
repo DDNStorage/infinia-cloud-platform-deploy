@@ -52,6 +52,17 @@
           when: "'role_realm' in group_names"
           become: yes
 
+        - name: Reboot realm node
+          reboot:
+            reboot_timeout: 600
+          when: "'role_realm' in group_names"
+          become: yes
+
+        - name: Wait for 60 seconds after reboot
+          pause:
+            seconds: 60
+          when: "'role_realm' in group_names"
+
         - name: Log Non-Realm Node Setup Start
           shell: 'echo "$(date) 🚀 Starting Non-Realm Node Setup..." >> /var/log/infinia/setup.log'
           become: yes
@@ -78,6 +89,16 @@
           when: "'role_nonrealm' in group_names"
           become: yes
 
+        - name: Reboot non-realm node
+          reboot:
+            reboot_timeout: 600
+          when: "'role_nonrealm' in group_names"
+          become: yes
+
+        - name: Wait for 60 seconds after reboot
+          pause:
+            seconds: 60
+          when: "'role_nonrealm' in group_names"
       tags: setup
 
     - block: # Infinia Cluster Setup

@@ -2,7 +2,9 @@ plugin: aws_ec2
 regions:
   - us-east-1
 filters:
-  tag:Role: ['realm', 'nonrealm']  # Include only instances with these roles
+  tag:Role: ['realm', 'nonrealm']
+  tag:Deployment: "yantest"
+use_extra_vars: true
 keyed_groups:
   - prefix: role
     key: tags['Role']
