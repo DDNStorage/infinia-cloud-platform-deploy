@@ -1,0 +1,65 @@
+name: Deploy Infinia Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      infinia_deployment_name:
+        description: "Deployment Name for Infinia"
+        required: true
+        type: string
+      infinia_version:
+        description: "Infinia Version"
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  INFRA_DIR: deployments/aws  
+
+jobs:
+  Infinia-deployment:
+    name: Deploy Infinia on AWS
+    runs-on: small-dynamic-amd64-u24
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform plan -var-file=terraform.tfvars -var="infinia_deployment_name=${{ github.event.inputs.infinia_deployment_name }}" -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform apply -var-file=terraform.tfvars -var="infinia_deployment_name=${{ github.event.inputs.infinia_deployment_name }}" -auto-approve tfplan
+
+      - name: Run Ansible playbook
+        uses: dawidd6/action-ansible-playbook@v3
+        with:
+          playbook: main.yml
+          directory: ${{ env.INFRA_DIR }}/ansible
+          vault_password: ${{ secrets.ANSIBLE_VAULT }}
+          options: |
+            -i aws_ec2.yml
+            --extra-vars infinia_version=${{ github.event.inputs.infinia_version }}
