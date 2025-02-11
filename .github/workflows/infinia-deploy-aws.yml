@@ -1,19 +1,19 @@
 name: Deploy Infinia Infrastructure
 
 on:
-  # push:
-  #   branches:
-  #     - add-infinia-deploy-pipeline
-  workflow_dispatch:
-    inputs:
-      infinia_deployment_name:
-        description: "Deployment Name for Infinia"
-        required: true
-        type: string
-      infinia_version:
-        description: "Infinia Version"
-        required: true
-        type: string
+  push:
+    branches:
+      - add-infinia-deploy-pipeline
+  # workflow_dispatch:
+  #   inputs:
+  #     infinia_deployment_name:
+  #       description: "Deployment Name for Infinia"
+  #       required: true
+  #       type: string
+  #     infinia_version:
+  #       description: "Infinia Version"
+  #       required: true
+  #       type: string
 
 env:
   AWS_REGION: us-east-1
@@ -53,11 +53,11 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ${{ env.INFRA_DIR }}
-        run: terraform plan -var-file=terraform.tfvars -var="infinia_deployment_name=${{ github.event.inputs.infinia_deployment_name }}" -out=tfplan
+        run: terraform plan -var-file=terraform.tfvars -var="infinia_deployment_name=yantest" -out=tfplan
 
       - name: Terraform Apply
         working-directory: ${{ env.INFRA_DIR }}
-        run: terraform apply -var-file=terraform.tfvars -var="infinia_deployment_name=${{ github.event.inputs.infinia_deployment_name }}" -auto-approve tfplan
+        run: terraform apply -var-file=terraform.tfvars -var="infinia_deployment_name=yantest" -auto-approve tfplan
 
       - name: Run Ansible playbook
         uses: dawidd6/action-ansible-playbook@v3
@@ -67,4 +67,4 @@ jobs:
           vault_password: ${{ secrets.ANSIBLE_VAULT }}
           options: |
             -i aws_ec2.yml
-            --extra-vars infinia_version=${{ github.event.inputs.infinia_version }}
+            --extra-vars infinia_version=2.0.6
