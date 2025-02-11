@@ -3,7 +3,7 @@ name: Deploy Infinia Infrastructure
 on:
   push:
     branches:
-      - main
+      - add-infinia-deploy-pipeline
   workflow_dispatch:
     inputs:
       infinia_deployment_name:
