@@ -59,12 +59,15 @@ jobs:
         working-directory: ${{ env.INFRA_DIR }}
         run: terraform apply -var-file=terraform.tfvars -var="infinia_deployment_name=yantest" -auto-approve tfplan
 
+      - name: Setup Ansible
+        run: |
+          sudo apt update && sudo apt install software-properties-common -y
+          sudo add-apt-repository --yes --update ppa:ansible/ansible
+          sudo apt install ansible
+          curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+          sudo dpkg -i session-manager-plugin.deb
+      
       - name: Run Ansible playbook
-        uses: dawidd6/action-ansible-playbook@v3
-        with:
-          playbook: main.yml
-          directory: ${{ env.INFRA_DIR }}/ansible
-          vault_password: ${{ secrets.ANSIBLE_VAULT }}
-          options: |
-            -i aws_ec2.yml
-            --extra-vars infinia_version=2.0.6
+        working-directory: ${{ env.INFRA_DIR }}/ansible
+        run: |
+          ANSIBLE_VAULT_PASSWORD=${{ secrets.ANSIBLE_VAULT }} ansible-playbook main.yml -i aws_ec2.yml 
