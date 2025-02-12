@@ -70,4 +70,5 @@ jobs:
       - name: Run Ansible playbook
         working-directory: ${{ env.INFRA_DIR }}/ansible
         run: |
-          ANSIBLE_VAULT_PASSWORD=${{ secrets.ANSIBLE_VAULT }} ansible-playbook main.yml -i aws_ec2.yml 
+          echo ${{ secrets.ANSIBLE_VAULT }} > vault_pass
+          ansible-playbook main.yml -i aws_ec2.yml --vault-password-file vault_pass
