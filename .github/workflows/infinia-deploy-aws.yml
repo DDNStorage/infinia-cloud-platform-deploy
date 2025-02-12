@@ -64,7 +64,7 @@ jobs:
           sudo apt update && sudo apt install software-properties-common -y
           sudo add-apt-repository --yes --update ppa:ansible/ansible
           sudo apt install ansible
-          pip install --upgrade ansible-core ansible boto3 botocore
+          sudo pip install --upgrade ansible-core ansible boto3 botocore
           curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
           sudo dpkg -i session-manager-plugin.deb
       
