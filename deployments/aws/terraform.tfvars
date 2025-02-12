@@ -1,4 +1,4 @@
-infinia_deployment_name = "demo-infinia"
+infinia_deployment_name = "yantest"
 aws_region              = "us-east-1"
 vpc_id                  = "vpc-07077509cd5b0bbfd"
 subnet_ids              = ["subnet-00c82fa683b0b31d8", "subnet-05c8a5c5a03e5e2e9"]
