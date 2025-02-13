@@ -5,8 +5,8 @@ nv set interface lo ip address 10.10.7.215/32
 nv set interface vlan103 ip address 10.10.8.130/25
 nv set interface vlan103 vlan id 103
 
-# Assign VLAN 103 to Ports 22-43
-nv set interface swp22-43 bridge domain br_default
+# Assign VLAN 103 to Ports 22-64
+nv set interface swp22-64 bridge domain br_default
 
 # Configure Bridge Domain
 nv set bridge domain br_default vlan 103
