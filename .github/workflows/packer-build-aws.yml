@@ -50,7 +50,7 @@ jobs:
       - name: Validate Packer template
         run: |
           if [ -n "${{ inputs.infinia_version }}" ]; then
-            packer validate -var "infinia_version=${{ inputs.infinia_version }}" -var "region=${{ inputs.aws_region }} -var-file=aws.pkrvars.hcl template.pkr.hcl
+            packer validate -var "infinia_version=${{ inputs.infinia_version }}" -var "region=${{ inputs.aws_region }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
           else
             packer validate -var-file=aws.pkrvars.hcl template.pkr.hcl
           fi
@@ -64,7 +64,7 @@ jobs:
       - name: Build AMI with Packer
         id: packer_build
         run: |
-          AMI_ID=$(packer build -var "infinia_version=${{ inputs.infinia_version }}" -var "region=${{ inputs.aws_region }} -var-file=aws.pkrvars.hcl template.pkr.hcl | tee /dev/tty | grep -oE 'ami-[a-zA-Z0-9]+' | tail -n1)
+          AMI_ID=$(packer build -var "infinia_version=${{ inputs.infinia_version }}" -var "region=${{ inputs.aws_region }}" -var-file=aws.pkrvars.hcl template.pkr.hcl | tee /dev/tty | grep -oE 'ami-[a-zA-Z0-9]+' | tail -n1)
           echo "ami_id=$AMI_ID" >> $GITHUB_OUTPUT
           echo "Built AMI ID: $AMI_ID"
 
