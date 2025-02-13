@@ -35,6 +35,10 @@ jobs:
         id: test_output
         run : |
           echo "ami_id=ami-xxx" >> $GITHUB_OUTPUT
+      - name: Debug AMI ID Output
+        run: |
+          echo "AMI ID from packer-build: ${{ steps.test_output.outputs.ami_id }}"
+  
 
       # # Step 2: Configure AWS Credentials
       # - name: Configure AWS Credentials

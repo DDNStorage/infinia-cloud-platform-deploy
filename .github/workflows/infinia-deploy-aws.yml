@@ -35,7 +35,7 @@ jobs:
 
       - name: Print output
         run: |
-          echo "AMI ID received in deploy: ${{ needs.packer-build.outputs.ami_id }}"
+          echo "AMI ID received in deploy: ${{ inputs.ami_id }}"
 
       # - name: Configure AWS Credentials
       #   uses: aws-actions/configure-aws-credentials@v4
