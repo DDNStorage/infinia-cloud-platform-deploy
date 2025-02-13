@@ -1,0 +1,121 @@
+cumulus@cumulus:mgmt:~$ nv config show
+- header:
+    model: msn4600
+    nvue-api-version: nvue_v1
+    rev-id: 1.0
+    version: Cumulus Linux 5.11.0
+- set:
+    bridge:
+      domain:
+        br_default:
+          untagged: 1
+        br_dfault:
+          vlan:
+            101-102: {}
+    interface:
+      eth0:
+        ip:
+          address:
+            10.10.2.29/22: {}
+          gateway:
+            10.10.3.254: {}
+          vrf: mgmt
+        type: eth
+      lo:
+        ip:
+          address:
+            10.10.7.215/32: {}
+            10.10.7.217/32: {}
+        type: loopback
+      swp22-43:
+        bridge:
+          domain:
+            br_default: {}
+        type: swp
+      vlan101:
+        ip:
+          address:
+            10.10.6.129/25: {}
+        type: svi
+        vlan: 101
+    router:
+      bgp:
+        autonomous-system: 65181
+        enable: on
+        router-id: 10.10.7.217
+    service:
+      ntp:
+        mgmt:
+          server:
+            0.cumulusnetworks.pool.ntp.org: {}
+            1.cumulusnetworks.pool.ntp.org: {}
+            2.cumulusnetworks.pool.ntp.org: {}
+            3.cumulusnetworks.pool.ntp.org: {}
+    system:
+      aaa:
+        class:
+          nvapply:
+            action: allow
+            command-path:
+              /:
+                permission: all
+          nvshow:
+            action: allow
+            command-path:
+              /:
+                permission: ro
+          sudo:
+            action: allow
+            command-path:
+              /:
+                permission: all
+        role:
+          nvue-admin:
+            class:
+              nvapply: {}
+          nvue-monitor:
+            class:
+              nvshow: {}
+          system-admin:
+            class:
+              nvapply: {}
+              sudo: {}
+        user:
+          cumulus:
+            full-name: cumulus,,,
+            hashed-password: '*'
+            role: system-admin
+      api:
+        state: enabled
+      config:
+        auto-save:
+          state: enabled
+      control-plane:
+        acl:
+          acl-default-dos:
+            inbound: {}
+          acl-default-whitelist:
+            inbound: {}
+      hostname: cumulus
+      reboot:
+        mode: cold
+      ssh-server:
+        state: enabled
+      wjh:
+        channel:
+          forwarding:
+            trigger:
+              l2: {}
+              l3: {}
+              tunnel: {}
+        enable: on
+    vrf:
+      default:
+        router:
+          bgp:
+            address-family:
+              ipv4-unicast:
+                enable: on
+                network:
+                  10.10.6.128/25: {}
+            enable: on
