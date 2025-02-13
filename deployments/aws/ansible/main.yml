@@ -132,7 +132,7 @@
       become: yes
       tags: configure
 
-    - block: # Verify Infina setup
+    - block: # Verify Infinia setup
         - name: Verify Infinia Setup
           shell: |
             bash -c '
@@ -145,6 +145,7 @@
         - name: Display Inventory Output
           debug:
             msg: "{{ inventory_output.stdout_lines }}"
-        when: "'role_realm' in group_names"
+
+      when: "'role_realm' in group_names"
       become: yes
       tags: verify
