@@ -14,7 +14,7 @@ on:
     outputs:
       ami_id:
         description: "Built AMI ID"
-        value: ${{ jobs.packer-build.outputs.ami_id }}
+        value: ${{ jobs.packer-build.outputs.output1 }}
 
 jobs:
   packer-build:
