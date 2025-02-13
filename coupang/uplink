@@ -1,0 +1,8 @@
+# Set swp1-21 as part of the bridge domain
+nv set interface swp1-21 bridge domain uplink_trunk
+
+# Allow VLANs that need to be carried (Backend & Frontend)
+nv set bridge domain uplink_trunk vlan 101,102,103,104
+
+# Apply configuration
+nv config apply
