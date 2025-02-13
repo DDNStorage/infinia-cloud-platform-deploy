@@ -44,4 +44,4 @@ jobs:
     uses: ./.github/workflows/infinia-destroy-aws.yml
     with:
       aws_region: us-east-1
-    secrets: inherit
+    secrets: inherit 

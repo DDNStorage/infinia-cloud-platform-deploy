@@ -62,17 +62,15 @@ jobs:
 
       # Step 5: Build the Packer template with conditional argument
       - name: Build AMI with Packer
+        id: packer_build
         run: |
-          if [ -n "${{ inputs.infinia_version }}" ]; then
-            packer build -var "infinia_version=${{ inputs.infinia_version }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
-          else
-            packer build -var-file=aws.pkrvars.hcl template.pkr.hcl
-          fi
+          AMI_ID=$(packer build -var "infinia_version=${{ inputs.infinia_version }}" -var-file=aws.pkrvars.hcl template.pkr.hcl | tee /dev/tty | grep -oE 'ami-[a-zA-Z0-9]+' | tail -n1)
           echo "::set-output name=ami_id::$AMI_ID"
+          echo "Built AMI ID: $AMI_ID"
 
       - name: Capture AMI ID
         id: capture-ami-id
         run: echo "::set-output name=ami_id::$AMI_ID"
-      # Step 7: Notify Build Success
+
       - name: Notify Build Success
-        run: echo "Packer build completed successfully!"
+        run: echo "Packer build completed successfully! AMI ID: ${{ steps.capture-ami-id.outputs.ami_id }}"
