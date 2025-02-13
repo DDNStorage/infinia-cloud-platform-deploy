@@ -30,7 +30,7 @@ jobs:
       - name: Test output
         id: test_output
         run : |
-          echo "ami_id="ami-xxx" >> $GITHUB_OUTPUT
+          echo "ami_id=ami-xxx" >> $GITHUB_OUTPUT
 
       # # Step 2: Configure AWS Credentials
       # - name: Configure AWS Credentials
