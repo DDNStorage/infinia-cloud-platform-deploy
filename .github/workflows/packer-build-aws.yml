@@ -21,7 +21,7 @@ jobs:
     name: Build Packer Template
     runs-on: small-dynamic-amd64-u24
     outputs:
-      ami_id: ${{ steps.test_output.outputs.ami_id }}
+      ami_id: ${{ steps.packer_build.outputs.ami_id }}
     defaults:
       run:
         working-directory: vm-images/aws/packer
@@ -31,54 +31,45 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Test output
-        id: test_output
-        run : |
-          echo "ami_id=ami-xxx" >> $GITHUB_OUTPUT
-      - name: Debug AMI ID Output
+      # Step 2: Configure AWS Credentials
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Setup `packer`
+        uses: hashicorp/setup-packer@main
+        with:
+          version: "latest"
+
+      - name: Run `packer init`
         run: |
-          echo "AMI ID from packer-build: ${{ steps.test_output.outputs.ami_id }}"
-  
+          packer init template.pkr.hcl
 
-      # # Step 2: Configure AWS Credentials
-      # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: ${{ inputs.aws_region }}
+      # Step 3: Validate Packer template with conditional argument
+      - name: Validate Packer template
+        run: |
+          if [ -n "${{ inputs.infinia_version }}" ]; then
+            packer validate -var "infinia_version=${{ inputs.infinia_version }}" -var "region=${{ inputs.aws_region }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
+          else
+            packer validate -var-file=aws.pkrvars.hcl template.pkr.hcl
+          fi
 
-      # - name: Setup `packer`
-      #   uses: hashicorp/setup-packer@main
-      #   with:
-      #     version: "latest"
+      # Step 4: Format Packer template
+      - name: Format Packer template
+        run: |
+          packer fmt -write template.pkr.hcl
 
-      # - name: Run `packer init`
-      #   run: |
-      #     packer init template.pkr.hcl
+      # Step 5: Build the Packer template with conditional argument
+      - name: Build AMI with Packer
+        id: packer_build
+        run: |
+          AMI_ID=$(packer build -var "infinia_version=${{ inputs.infinia_version }}" -var "region=${{ inputs.aws_region }}" -var-file=aws.pkrvars.hcl template.pkr.hcl | tee /dev/tty | grep -oE 'ami-[a-zA-Z0-9]+' | tail -n1)
+          echo "ami_id=$AMI_ID" >> $GITHUB_OUTPUT
+          echo "Built AMI ID: $AMI_ID"
 
-      # # Step 3: Validate Packer template with conditional argument
-      # - name: Validate Packer template
-      #   run: |
-      #     if [ -n "${{ inputs.infinia_version }}" ]; then
-      #       packer validate -var "infinia_version=${{ inputs.infinia_version }}" -var "region=${{ inputs.aws_region }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
-      #     else
-      #       packer validate -var-file=aws.pkrvars.hcl template.pkr.hcl
-      #     fi
-
-      # # Step 4: Format Packer template
-      # - name: Format Packer template
-      #   run: |
-      #     packer fmt -write template.pkr.hcl
-
-      # # Step 5: Build the Packer template with conditional argument
-      # - name: Build AMI with Packer
-      #   id: packer_build
-      #   run: |
-      #     AMI_ID=$(packer build -var "infinia_version=${{ inputs.infinia_version }}" -var "region=${{ inputs.aws_region }}" -var-file=aws.pkrvars.hcl template.pkr.hcl | tee /dev/tty | grep -oE 'ami-[a-zA-Z0-9]+' | tail -n1)
-      #     echo "ami_id=$AMI_ID" >> $GITHUB_OUTPUT
-      #     echo "Built AMI ID: $AMI_ID"
-
-      # - name: Notify Build Success
-      #   run: |
-      #     echo "Packer build completed successfully! AMI ID: ${{ steps.packer_build.outputs.ami_id }}"
+      - name: Notify Build Success
+        run: |
+          echo "Packer build completed successfully! AMI ID: ${{ steps.packer_build.outputs.ami_id }}"
