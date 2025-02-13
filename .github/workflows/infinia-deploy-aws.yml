@@ -33,48 +33,52 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ inputs.aws_region }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        run: terraform init
-
-      - name: Terraform Validate
-        id: validate
-        run: terraform validate -no-color
-
-      - name: Terraform Plan
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        run: terraform plan -var-file=terraform.tfvars -var="infinia_deployment_name=${{ inputs.deployment_name }}" -var="infinia_ami_id=${{ inputs.ami_id }}" -var="infinia_version=${{ inputs.infinia_version }}" -out=tfplan
-
-      - name: Terraform Apply
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        run: terraform apply -var-file=terraform.tfvars -var="infinia_deployment_name=${{ inputs.deployment_name }}" -var="infinia_ami_id=${{ inputs.ami_id }}" -var="infinia_version=${{ inputs.infinia_version }}" -auto-approve tfplan
-
-      - name: Setup Ansible
+      - name: Print output
         run: |
-          sudo apt update && sudo apt install software-properties-common -y
-          sudo add-apt-repository --yes --update ppa:ansible/ansible
-          sudo apt install ansible
-          sudo pip3 install --upgrade ansible-core ansible boto3 botocore
-          curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
-          sudo dpkg -i session-manager-plugin.deb
+          echo ${{ inputs.ami_id}}
+
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: ${{ inputs.aws_region }}
+
+      # - name: Setup Node.js
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: '18'
+
+      # - name: Setup Terraform
+      #   uses: hashicorp/setup-terraform@v3
+
+      # - name: Terraform Init
+      #   working-directory: ${{ env.TERRAFORM_DIR }}
+      #   run: terraform init
+
+      # - name: Terraform Validate
+      #   id: validate
+      #   run: terraform validate -no-color
+
+      # - name: Terraform Plan
+      #   working-directory: ${{ env.TERRAFORM_DIR }}
+      #   run: terraform plan -var-file=terraform.tfvars -var="infinia_deployment_name=${{ inputs.deployment_name }}" -var="infinia_ami_id=${{ inputs.ami_id }}" -var="infinia_version=${{ inputs.infinia_version }}" -out=tfplan
+
+      # - name: Terraform Apply
+      #   working-directory: ${{ env.TERRAFORM_DIR }}
+      #   run: terraform apply -var-file=terraform.tfvars -var="infinia_deployment_name=${{ inputs.deployment_name }}" -var="infinia_ami_id=${{ inputs.ami_id }}" -var="infinia_version=${{ inputs.infinia_version }}" -auto-approve tfplan
+
+      # - name: Setup Ansible
+      #   run: |
+      #     sudo apt update && sudo apt install software-properties-common -y
+      #     sudo add-apt-repository --yes --update ppa:ansible/ansible
+      #     sudo apt install ansible
+      #     sudo pip3 install --upgrade ansible-core ansible boto3 botocore
+      #     curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+      #     sudo dpkg -i session-manager-plugin.deb
       
-      - name: Run Ansible playbook
-        working-directory: ${{ env.ANSIBLE_DIR }}
-        run: |
-          echo ${{ secrets.ANSIBLE_VAULT }} > vault_pass
-          ansible-playbook main.yml -i aws_ec2.yml --vault-password-file vault_pass -vv
+      # - name: Run Ansible playbook
+      #   working-directory: ${{ env.ANSIBLE_DIR }}
+      #   run: |
+      #     echo ${{ secrets.ANSIBLE_VAULT }} > vault_pass
+      #     ansible-playbook main.yml -i aws_ec2.yml --vault-password-file vault_pass -vv
