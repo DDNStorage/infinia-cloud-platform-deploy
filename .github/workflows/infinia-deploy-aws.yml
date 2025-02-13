@@ -1,23 +1,28 @@
 name: Deploy Infinia Infrastructure
 
 on:
-  push:
-    branches:
-      - add-infinia-deploy-pipeline
-  # workflow_dispatch:
-  #   inputs:
-  #     infinia_deployment_name:
-  #       description: "Deployment Name for Infinia"
-  #       required: true
-  #       type: string
-  #     infinia_version:
-  #       description: "Infinia Version"
-  #       required: true
-  #       type: string
+  workflow_call:
+    inputs:
+      ami_id:
+        description: "AMI ID from Packer"
+        required: true
+        type: string
+      aws_region:
+        description: "AWS Region"
+        required: true
+        type: string
+      deployment_name:
+        description: "Infinia Deployment Name"
+        required: true
+        type: string
+      infinia_version:
+        description: "Infinia Version"
+        required: true
+        type: string
 
 env:
-  AWS_REGION: us-east-1
-  INFRA_DIR: deployments/aws  
+  TERRAFORM_DIR: deployments/aws
+  ANSIBLE_DIR: deployments/aws/ansible
 
 jobs:
   Infinia-deployment:
@@ -33,7 +38,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ inputs.aws_region }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -44,7 +49,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        working-directory: ${{ env.INFRA_DIR }}
+        working-directory: ${{ env.TERRAFORM_DIR }}
         run: terraform init
 
       - name: Terraform Validate
@@ -52,12 +57,12 @@ jobs:
         run: terraform validate -no-color
 
       - name: Terraform Plan
-        working-directory: ${{ env.INFRA_DIR }}
-        run: terraform plan -var-file=terraform.tfvars -var="infinia_deployment_name=yantest" -out=tfplan
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: terraform plan -var-file=terraform.tfvars -var="infinia_deployment_name=${{ inputs.deployment_name }}" -var="infinia_ami_id=${{ inputs.ami_id }}" -var="infinia_version=${{ inputs.infinia_version }}" -out=tfplan
 
       - name: Terraform Apply
-        working-directory: ${{ env.INFRA_DIR }}
-        run: terraform apply -var-file=terraform.tfvars -var="infinia_deployment_name=yantest" -auto-approve tfplan
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: terraform apply -var-file=terraform.tfvars -var="infinia_deployment_name=${{ inputs.deployment_name }}" -var="infinia_ami_id=${{ inputs.ami_id }}" -var="infinia_version=${{ inputs.infinia_version }}" -auto-approve tfplan
 
       - name: Setup Ansible
         run: |
@@ -69,7 +74,7 @@ jobs:
           sudo dpkg -i session-manager-plugin.deb
       
       - name: Run Ansible playbook
-        working-directory: ${{ env.INFRA_DIR }}/ansible
+        working-directory: ${{ env.ANSIBLE_DIR }}
         run: |
           echo ${{ secrets.ANSIBLE_VAULT }} > vault_pass
           ansible-playbook main.yml -i aws_ec2.yml --vault-password-file vault_pass -vv

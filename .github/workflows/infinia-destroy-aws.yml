@@ -1,0 +1,43 @@
+name: Destroy Infinia Infrastructure
+
+on:
+  workflow_call:
+    inputs:
+      aws_region:
+        description: "AWS Region"
+        required: true
+        type: string
+
+env:
+  TERRAFORM_DIR: deployments/aws
+
+jobs:
+  destroy-infinia:
+    name: Destroy Infrastructure
+    runs-on: small-dynamic-amd64-u24
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.aws_region }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Destroy (Manual Confirmation)
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: |
+          echo "Review deployment before destroying."
+          read -p "Proceed with terraform destroy? (yes/no): " confirm
+          if [[ "$confirm" == "yes" ]]; then
+            terraform destroy -auto-approve
+          else
+            echo "Terraform destroy canceled."
+            exit 1
+          fi

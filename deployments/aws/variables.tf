@@ -100,3 +100,9 @@ variable "enable_public_ip" {
   type = bool
   default = true
 }
+
+variable "infinia_version" {
+  description = "The infinia version"
+  type = string
+  default = "1.3.36"
+}

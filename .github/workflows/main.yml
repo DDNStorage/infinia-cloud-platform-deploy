@@ -1,0 +1,44 @@
+name: Infinia Build, Deploy and Cleanup
+
+on:
+  push:
+    branches:
+      - add-infinia-deploy-pipeline
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "Choose action: destroy (optional)"
+        required: false
+        default: ""
+        type: choice
+        options:
+          - destroy
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  packer-build:
+    name: Build Packer AMI
+    uses: ./.github/workflows/packer-build-aws.yml
+    with:
+      aws_region: us-east-1
+      infinia_version: 2.0.8
+
+  infinia-deploy:
+    name: Deploy Infinia Infrastructure
+    needs: packer-build
+    uses: ./.github/workflows/infinia-deploy.yml
+    with:
+      ami_id: ${{ needs.packer-build.outputs.ami_id }}
+      aws_region: us-east-1
+      deployment_name: yantest
+      infinia_version: 2.0.8
+
+  infinia-destroy:
+    if: github.event.inputs.action == 'destroy'
+    name: Destroy Infinia Infrastructure
+    needs: infinia-deploy
+    uses: ./.github/workflows/infinia-destroy-aws.yml
+    with:
+      aws_region: us-east-1

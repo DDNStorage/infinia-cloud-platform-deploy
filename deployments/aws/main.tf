@@ -153,6 +153,20 @@ hostnames:
 EOT
 }
 
+resource "local_file" "ansible_vars" {
+  filename = "${path.module}/ansible/vars.yml"
+  content  = <<EOT
+# vars.yml
+# Non-sensitive variables
+infinia_version: ${var.infinia_version}
+ansible_connection: aws_ssm
+ansible_aws_ssm_bucket_name: red-ansible-scripts
+ansible_aws_ssm_region: us-east-1
+ansible_aws_ssm_timeout: 3600
+ansible_aws_ssm_retries: 200
+EOT
+}
+
 
 # # Deploy Load Balancer Instance
 # resource "aws_instance" "load_balancer" {

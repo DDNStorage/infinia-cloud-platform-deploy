@@ -1,14 +1,20 @@
 name: Build Infinia AMI with Packer
 
 on:
-  push:
-    branches:
-      - add-packer
-  workflow_dispatch:
+  workflow_call:
     inputs:
+      aws_region:
+        description: "AWS Region"
+        required: true
+        type: string
       infinia_version:
         description: "Infinia Version"
-        required: false  # Make it optional
+        required: true
+        type: string
+    outputs:
+      ami_id:
+        description: "Built AMI ID"
+        value: ${{ jobs.packer-build.outputs.ami_id }}
 
 jobs:
   packer-build:
@@ -62,7 +68,11 @@ jobs:
           else
             packer build -var-file=aws.pkrvars.hcl template.pkr.hcl
           fi
+          echo "::set-output name=ami_id::$AMI_ID"
 
-      # Step 6: Notify Build Success
+      - name: Capture AMI ID
+        id: capture-ami-id
+        run: echo "::set-output name=ami_id::$AMI_ID"
+      # Step 7: Notify Build Success
       - name: Notify Build Success
         run: echo "Packer build completed successfully!"
