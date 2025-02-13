@@ -73,4 +73,5 @@ jobs:
         run: echo "::set-output name=ami_id::$AMI_ID"
 
       - name: Notify Build Success
-        run: echo "Packer build completed successfully! AMI ID: ${{ steps.capture-ami-id.outputs.ami_id }}"
+        run: |
+          echo "Packer build completed successfully! AMI ID: ${{ steps.capture-ami-id.outputs.ami_id }}"
