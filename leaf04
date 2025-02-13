@@ -1,0 +1,23 @@
+# Set Loopback Address
+nv set interface lo ip address 10.10.7.216/32
+
+# Assign VLAN 104 and IP Address
+nv set interface vlan104 ip address 10.10.9.130/25
+nv set interface vlan104 vlan id 104
+
+# Assign VLAN 104 to Ports 22-64
+nv set interface swp22-64 bridge domain br_default
+
+# Configure Bridge Domain
+nv set bridge domain br_default vlan 104
+nv set bridge domain br_default untagged 1
+
+# Configure BGP
+nv set router bgp autonomous-system 65184
+nv set router bgp router-id 10.10.7.216
+
+# Advertise Frontend Network
+nv set vrf default router bgp address-family ipv4-unicast network 10.10.9.128/25
+
+# Apply Configuration
+nv config apply
