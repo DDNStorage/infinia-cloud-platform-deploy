@@ -3,7 +3,7 @@ name: Infinia Build, Deploy and Cleanup
 on:
   push:
     branches:
-      - add-infinia-deploy-pipeline
+      - main
   workflow_dispatch:
     inputs:
       action:
