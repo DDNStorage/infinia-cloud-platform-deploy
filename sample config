@@ -1,0 +1,585 @@
+  2025-01-28   17:07.06   /home/mobaxterm  scp root@10.10.5.1:/scratch/sfa_logs/2025*deploy*.tar.gz .
+root@10.10.5.1's password:
+root@10.10.5.1's password:
+                                                                                                                                                 ✗
+
+  2025-01-28   17:08.07   /home/mobaxterm  scp root@10.10.5.3:/scratch/sfa_logs/2025*deploy*.tar.gz .
+root@10.10.5.3's password:
+2025-01-27-19-51-12-10.10.5.1-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                      100%  179KB  12.8MB/s   00:00
+2025-01-27-19-51-12-10.10.5.101-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                    100%  167KB  12.7MB/s   00:00
+2025-01-27-19-51-12-10.10.5.11-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                     100%  145KB  11.5MB/s   00:00
+2025-01-27-19-51-12-10.10.5.111-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                    100%  169KB  14.8MB/s   00:00
+2025-01-27-19-51-12-10.10.5.121-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                    100%  173KB  12.9MB/s   00:00
+2025-01-27-19-51-12-10.10.5.131-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                    100%  169KB  13.1MB/s   00:00
+2025-01-27-19-51-12-10.10.5.141-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                    100%  175KB  13.4MB/s   00:00
+2025-01-27-19-51-12-10.10.5.151-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                    100%  178KB  14.7MB/s   00:00
+2025-01-27-19-51-12-10.10.5.161-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                    100%  172KB  13.4MB/s   00:00
+2025-01-27-19-51-12-10.10.5.171-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                    100%  179KB  13.3MB/s   00:00
+2025-01-27-19-51-12-10.10.5.21-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                     100%  146KB  11.9MB/s   00:00
+2025-01-27-19-51-12-10.10.5.31-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                     100%  167KB  15.6MB/s   00:00
+2025-01-27-19-51-12-10.10.5.41-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                     100%  166KB  15.3MB/s   00:00
+2025-01-27-19-51-12-10.10.5.51-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                     100%  167KB  14.5MB/s   00:00
+2025-01-27-19-51-12-10.10.5.61-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                     100%  167KB  14.8MB/s   00:00
+2025-01-27-19-51-12-10.10.5.71-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                     100%  169KB  15.5MB/s   00:00
+2025-01-27-19-51-12-10.10.5.81-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                     100%  169KB  13.9MB/s   00:00
+2025-01-27-19-51-12-10.10.5.91-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz                                     100%  167KB  15.1MB/s   00:00
+                                                                                                                                                 ✓
+
+  2025-01-28   17:08.21   /home/mobaxterm  ls
+2025-01-27-19-51-12-10.10.5.1-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.101-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.11-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.111-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.121-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.131-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.141-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.151-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.161-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.171-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.21-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.31-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.41-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.51-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.61-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.71-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.81-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.91-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+Desktop
+LauncherFolder
+MyDocuments
+                                                                                                                                                 ✓
+
+  2025-01-28   17:08.24   /home/mobaxterm  ls
+2025-01-27-19-51-12-10.10.5.1-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.101-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.11-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.111-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.121-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.131-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.141-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.151-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.161-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.171-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.21-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.31-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.41-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.51-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.61-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.71-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.81-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+2025-01-27-19-51-12-10.10.5.91-SRcoupang_deploy-SFA400NVX2TE-sfainfo.tar.gz
+Desktop
+LauncherFolder
+MyDocuments
+                                                                                                                                                 ✓
+
+  2025-01-29   16:49.37   /home/mobaxterm  cd Desktop
+                                                                                                                                                 ✓
+
+  2025-01-29   16:51.59   /home/mobaxterm/Desktop  ls
+desktop.ini  exa-csi-driver-2.3.1.tar.gz
+                                                                                                                                                 ✓
+
+  2025-01-29   16:52.01   /home/mobaxterm/Desktop  scp exa-csi-driver-2.3.1.tar.gz root@10.10.5.3:/scratch/
+root@10.10.5.3's password:
+exa-csi-driver-2.3.1.tar.gz                                                                                     100%   37MB  19.1MB/s   00:01
+                                                                                                                                                 ✓
+
+  2025-01-29   16:52.32   /home/mobaxterm/Desktop  cd ..
+                                                                                                                                                 ✓
+
+  2025-01-29   16:52.44   /home/mobaxterm  ssh root@10.10.4.201
+
+                                                                                                                                                           ✗
+
+  2025-02-12   10:57.36   /home/mobaxterm  ping 10.10.4.201
+
+Pinging 10.10.4.201 with 32 bytes of data:
+Request timed out.
+
+                                                                                                                                                           ✗
+
+  2025-02-12   10:57.47   /home/mobaxterm  ping 10.10.2.201
+
+Pinging 10.10.2.201 with 32 bytes of data:
+Reply from 10.10.2.201: bytes=32 time<1ms TTL=58
+Reply from 10.10.2.201: bytes=32 time<1ms TTL=58
+Reply from 10.10.2.201: bytes=32 time<1ms TTL=58
+Reply from 10.10.2.201: bytes=32 time<1ms TTL=58
+
+Ping statistics for 10.10.2.201:
+    Packets: Sent = 4, Received = 4, Lost = 0 (0% loss),
+Approximate round trip times in milli-seconds:
+    Minimum = 0ms, Maximum = 0ms, Average = 0ms
+
+                                                                                                                                                           ✗
+
+  2025-02-12   10:57.59   /home/mobaxterm  ping 10.10.6.144
+
+Pinging 10.10.6.144 with 32 bytes of data:
+
+                                                                                                                                                           ✗
+
+  2025-02-12   10:58.44   /home/mobaxterm  ssh cumulus@10.10.2.29
+Warning: Permanently added '10.10.2.29' (ECDSA) to the list of known hosts.
+Welcome to NVIDIA Cumulus (R) Linux (R)
+cumulus@10.10.2.29's password:
+X11 forwarding request failed on channel 0
+Linux cumulus 6.1.0-cl-1-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.94-1+cl5.11.0u10 (2024-10-10) x86_64
+Welcome to NVIDIA Cumulus (R) Linux (R)
+For support and online technical documentation, visit https://www.nvidia.com/en-us/support
+The registered trademark Linux (R) is used pursuant to a sublicense from LMI, the exclusive licensee of Linus Torvalds, owner of the mark on a world-wide ba                                                                            sis.
+Last login: Wed Feb 12 08:18:35 UTC 2025 from 10.10.6.45 on ssh
+Number of total successful connections since last 1 days: 2
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$ nv set interface lo ip address 10.10.7.217/32
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$ nv set interface vlan101 ip address 10.10.6.129/25
+cumulus@cumulus:mgmt:~$ nv set vlan101 vlan id 101
+Error: 'vlan101' is not one of ['platform', 'interface', 'system', 'acl', 'router', 'bridge', 'mlag', 'evpn', 'qos', 'service', 'vrf', 'nve']
+cumulus@cumulus:mgmt:~$ nv set interface vlan101 vlan id 101
+Error: 'id' is not an integer
+cumulus@cumulus:mgmt:~$ nv set interface vlan101 vlan id 101
+Error: 'id' is not an integer
+cumulus@cumulus:mgmt:~$ nv set interface vlan101 bridge vlan-aware yes
+Error: 'vlan-aware' is not one of ['domain']
+cumulus@cumulus:mgmt:~$ nv set interface vlan101 vlan.ids 101
+Error: 'vlan.ids' is not one of ['ip', 'link', 'description', 'router', 'lldp', 'bond', 'bridge', 'evpn', 'ptp', 'acl', 'tunnel', 'qos', 'storm-control', 's                                                                            ynce', 'neighbor', 'dot1x', 'telemetry', 'vlan', 'type', 'base-interface']
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$ nv set interface swp22-43 bridge domain br_default
+cumulus@cumulus:mgmt:~$ nv set bridge domain br_dfault vlan 101,102
+cumulus@cumulus:mgmt:~$ nv set bridge domain br_default untagged 1
+cumulus@cumulus:mgmt:~$ nv show interface
+Interface  Admin Status  Oper Status  Speed  MTU    Type      Remote Host      Remote Port  Summary
+---------  ------------  -----------  -----  -----  --------  ---------------  -----------  ----------------------------------------
+eth0       up            up           1G     1500   eth       kr1asup00olf007  swp11        IP Address:                10.10.2.29/22
+                                                                                            IP Address: fe80::966d:aeff:fe9a:140a/64
+lo         up            unknown             65536  loopback                                IP Address:               10.10.7.215/32
+                                                                                            IP Address:                  127.0.0.1/8
+                                                                                            IP Address:                      ::1/128
+mgmt       up            up                  65575  vrf                                     IP Address:                  127.0.0.1/8
+                                                                                            IP Address:                  127.0.1.1/8
+                                                                                            IP Address:                      ::1/128
+swp1       down          down                9216   swp
+swp2       down          down                9216   swp
+swp3       down          down                9216   swp
+swp4       down          down                9216   swp
+swp5       down          down                9216   swp
+swp6       down          down                9216   swp
+swp7       down          down                9216   swp
+swp8       down          down                9216   swp
+swp9       down          down                9216   swp
+swp10      down          down                9216   swp
+swp11      down          down                9216   swp
+swp12      down          down                9216   swp
+swp13      down          down                9216   swp
+swp14      down          down                9216   swp
+swp15      down          down                9216   swp
+swp16      down          down                9216   swp
+swp17      down          down                9216   swp
+swp18      down          down                9216   swp
+swp19      down          down                9216   swp
+swp20      down          down                9216   swp
+swp21      down          down                9216   swp
+swp22      down          down                9216   swp
+swp23      down          down                9216   swp
+swp24      down          down                9216   swp
+swp25      down          down                9216   swp
+swp26      down          down                9216   swp
+swp27      down          down                9216   swp
+swp28      down          down                9216   swp
+swp29      down          down                9216   swp
+swp30      down          down                9216   swp
+swp31      down          down                9216   swp
+swp32      down          down                9216   swp
+swp33      down          down                9216   swp
+swp34      down          down                9216   swp
+swp35      down          down                9216   swp
+swp36      down          down                9216   swp
+swp37      down          down                9216   swp
+swp38      down          down                9216   swp
+swp39      down          down                9216   swp
+swp40      down          down                9216   swp
+swp41      down          down                9216   swp
+swp42      down          down                9216   swp
+swp43      down          down                9216   swp
+swp44      down          down                9216   swp
+swp45      down          down                9216   swp
+swp46      down          down                9216   swp
+swp47      down          down                9216   swp
+swp48      down          down                9216   swp
+swp49      down          down                9216   swp
+swp50      down          down                9216   swp
+swp51      down          down                9216   swp
+swp52      down          down                9216   swp
+swp53      down          down                9216   swp
+swp54      down          down                9216   swp
+swp55      down          down                9216   swp
+swp56      down          down                9216   swp
+swp57      down          down                9216   swp
+swp58      down          down                9216   swp
+swp59      down          down                9216   swp
+swp60      down          down                9216   swp
+swp61      down          down                9216   swp
+swp62      down          down                9216   swp
+swp63      down          down                9216   swp
+swp64      down          down                9216   swp
+cumulus@cumulus:mgmt:~$ nv config diff
+- set:
+    bridge:
+      domain:
+        br_default:
+          untagged: 1
+        br_dfault:
+          vlan:
+            101-102: {}
+    interface:
+      lo:
+        ip:
+          address:
+            10.10.7.217/32: {}
+      swp22-43:
+        bridge:
+          domain:
+            br_default: {}
+        type: swp
+      vlan101:
+        ip:
+          address:
+            10.10.6.129/25: {}
+        type: svi
+        vlan: 101
+cumulus@cumulus:mgmt:~$ nv config apply
+applied_and_saved [rev_id: 6]
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$ nv show interface
+Interface   Admin Status  Oper Status  Speed  MTU    Type      Remote Host      Remote Port  Summary
+----------  ------------  -----------  -----  -----  --------  ---------------  -----------  ----------------------------------------
+br_default  up            down                9216   bridge
+br_dfault   up            unknown             9216   bridge                                  IP Address:  fe80::806b:7ff:fe25:6a4f/64
+eth0        up            up           1G     1500   eth       kr1asup00olf007  swp11        IP Address:                10.10.2.29/22
+                                                                                             IP Address: fe80::966d:aeff:fe9a:140a/64
+lo          up            unknown             65536  loopback                                IP Address:               10.10.7.215/32
+                                                                                             IP Address:               10.10.7.217/32
+                                                                                             IP Address:                  127.0.0.1/8
+                                                                                             IP Address:                      ::1/128
+mgmt        up            up                  65575  vrf                                     IP Address:                  127.0.0.1/8
+                                                                                             IP Address:                  127.0.1.1/8
+                                                                                             IP Address:                      ::1/128
+swp1        down          down                9216   swp
+swp2        down          down                9216   swp
+swp3        down          down                9216   swp
+swp4        down          down                9216   swp
+swp5        down          down                9216   swp
+swp6        down          down                9216   swp
+swp7        down          down                9216   swp
+swp8        down          down                9216   swp
+swp9        down          down                9216   swp
+swp10       down          down                9216   swp
+swp11       down          down                9216   swp
+swp12       down          down                9216   swp
+swp13       down          down                9216   swp
+swp14       down          down                9216   swp
+swp15       down          down                9216   swp
+swp16       down          down                9216   swp
+swp17       down          down                9216   swp
+swp18       down          down                9216   swp
+swp19       down          down                9216   swp
+swp20       down          down                9216   swp
+swp21       down          down                9216   swp
+swp22       up            down                9216   swp
+swp23       up            down                9216   swp
+swp24       up            down                9216   swp
+swp25       up            down                9216   swp
+swp26       up            down                9216   swp
+swp27       up            down                9216   swp
+swp28       up            down                9216   swp
+swp29       up            down                9216   swp
+swp30       up            down                9216   swp
+swp31       up            down                9216   swp
+swp32       up            down                9216   swp
+swp33       up            down                9216   swp
+swp34       up            down                9216   swp
+swp35       up            down                9216   swp
+swp36       up            down                9216   swp
+swp37       up            down                9216   swp
+swp38       up            down                9216   swp
+swp39       up            down                9216   swp
+swp40       up            down                9216   swp
+swp41       up            down                9216   swp
+swp42       up            down                9216   swp
+swp43       up            down                9216   swp
+swp44       down          down                9216   swp
+swp45       down          down                9216   swp
+swp46       down          down                9216   swp
+swp47       down          down                9216   swp
+swp48       down          down                9216   swp
+swp49       down          down                9216   swp
+swp50       down          down                9216   swp
+swp51       down          down                9216   swp
+swp52       down          down                9216   swp
+swp53       down          down                9216   swp
+swp54       down          down                9216   swp
+swp55       down          down                9216   swp
+swp56       down          down                9216   swp
+swp57       down          down                9216   swp
+swp58       down          down                9216   swp
+swp59       down          down                9216   swp
+swp60       down          down                9216   swp
+swp61       down          down                9216   swp
+swp62       down          down                9216   swp
+swp63       down          down                9216   swp
+swp64       down          down                9216   swp
+vlan101     up            up                  9216   svi                                     IP Address:               10.10.6.129/25
+                                                                                             IP Address:  fe80::806b:7ff:fe25:6a4f/64
+cumulus@cumulus:mgmt:~$ nv show interface
+Interface   Admin Status  Oper Status  Speed  MTU    Type      Remote Host      Remote Port  Summary
+----------  ------------  -----------  -----  -----  --------  ---------------  -----------  ----------------------------------------
+br_default  up            up                  9216   bridge                                  IP Address:  fe80::b2cf:eff:fe3e:98fd/64
+br_dfault   up            unknown             9216   bridge                                  IP Address:  fe80::806b:7ff:fe25:6a4f/64
+eth0        up            up           1G     1500   eth       kr1asup00olf007  swp11        IP Address:                10.10.2.29/22
+                                                                                             IP Address: fe80::966d:aeff:fe9a:140a/64
+lo          up            unknown             65536  loopback                                IP Address:               10.10.7.215/32
+                                                                                             IP Address:               10.10.7.217/32
+                                                                                             IP Address:                  127.0.0.1/8
+                                                                                             IP Address:                      ::1/128
+mgmt        up            up                  65575  vrf                                     IP Address:                  127.0.0.1/8
+                                                                                             IP Address:                  127.0.1.1/8
+                                                                                             IP Address:                      ::1/128
+swp1        down          down                9216   swp
+swp2        down          down                9216   swp
+swp3        down          down                9216   swp
+swp4        down          down                9216   swp
+swp5        down          down                9216   swp
+swp6        down          down                9216   swp
+swp7        down          down                9216   swp
+swp8        down          down                9216   swp
+swp9        down          down                9216   swp
+swp10       down          down                9216   swp
+swp11       down          down                9216   swp
+swp12       down          down                9216   swp
+swp13       down          down                9216   swp
+swp14       down          down                9216   swp
+swp15       down          down                9216   swp
+swp16       down          down                9216   swp
+swp17       down          down                9216   swp
+swp18       down          down                9216   swp
+swp19       down          down                9216   swp
+swp20       down          down                9216   swp
+swp21       down          down                9216   swp
+swp22       up            up           200G   9216   swp
+swp23       up            up           200G   9216   swp
+swp24       up            up           200G   9216   swp
+swp25       up            up           200G   9216   swp
+swp26       up            up           200G   9216   swp
+swp27       up            up           200G   9216   swp
+swp28       up            down                9216   swp
+swp29       up            down                9216   swp
+swp30       up            down                9216   swp
+swp31       up            down                9216   swp
+swp32       up            down                9216   swp
+swp33       up            down                9216   swp
+swp34       up            down                9216   swp
+swp35       up            down                9216   swp
+swp36       up            down                9216   swp
+swp37       up            down                9216   swp
+swp38       up            down                9216   swp
+swp39       up            down                9216   swp
+swp40       up            down                9216   swp
+swp41       up            down                9216   swp
+swp42       up            down                9216   swp
+swp43       up            down                9216   swp
+swp44       down          down                9216   swp
+swp45       down          down                9216   swp
+swp46       down          down                9216   swp
+swp47       down          down                9216   swp
+swp48       down          down                9216   swp
+swp49       down          down                9216   swp
+swp50       down          down                9216   swp
+swp51       down          down                9216   swp
+swp52       down          down                9216   swp
+swp53       down          down                9216   swp
+swp54       down          down                9216   swp
+swp55       down          down                9216   swp
+swp56       down          down                9216   swp
+swp57       down          down                9216   swp
+swp58       down          down                9216   swp
+swp59       down          down                9216   swp
+swp60       down          down                9216   swp
+swp61       down          down                9216   swp
+swp62       down          down                9216   swp
+swp63       down          down                9216   swp
+swp64       down          down                9216   swp
+vlan101     up            up                  9216   svi                                     IP Address:               10.10.6.129/25
+                                                                                             IP Address:  fe80::806b:7ff:fe25:6a4f/64
+cumulus@cumulus:mgmt:~$ ping google.com
+vrf-wrapper.sh: switching to vrf "default"; use '--no-vrf-switch' to disable
+
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$ .
+-bash: .: filename argument required
+.: usage: . filename [arguments]
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$ nv set interface swp1-21 bridge trunk vlans 101,102
+Error: 'trunk' is not one of ['domain']
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$ nv set router bgp autonomous-system 65181
+cumulus@cumulus:mgmt:~$ nv set router bgp router-id 10.10.7.217
+cumulus@cumulus:mgmt:~$ nv set vrf default router bgp address-family ipv4-unicast network 10.10.6.128/25
+cumulus@cumulus:mgmt:~$ nv config apply
+Warning: The frr service will need to be restarted because the list of router services has changed.  This will disrupt traffic for any existing routing prot                                                                            ocols.
+
+Are you sure? [y/N]
+Aborted apply after warnings [rev_id: 7]
+  Timeout while waiting for client response
+cumulus@cumulus:mgmt:~$ nv config apply
+Warning: The frr service will need to be restarted because the list of router services has changed.  This will disrupt traffic for any existing routing prot                                                                            ocols.
+
+Are you sure? [y/N] y
+applied_and_saved [rev_id: 7]
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$ nv config save
+saved [rev_id: applied]
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$
+cumulus@cumulus:mgmt:~$ nv config show
+- header:
+    model: msn4600
+    nvue-api-version: nvue_v1
+    rev-id: 1.0
+    version: Cumulus Linux 5.11.0
+- set:
+    bridge:
+      domain:
+        br_default:
+          untagged: 1
+        br_dfault:
+          vlan:
+            101-102: {}
+    interface:
+      eth0:
+        ip:
+          address:
+            10.10.2.29/22: {}
+          gateway:
+            10.10.3.254: {}
+          vrf: mgmt
+        type: eth
+      lo:
+        ip:
+          address:
+            10.10.7.215/32: {}
+            10.10.7.217/32: {}
+        type: loopback
+      swp22-43:
+        bridge:
+          domain:
+            br_default: {}
+        type: swp
+      vlan101:
+        ip:
+          address:
+            10.10.6.129/25: {}
+        type: svi
+        vlan: 101
+    router:
+      bgp:
+        autonomous-system: 65181
+        enable: on
+        router-id: 10.10.7.217
+    service:
+      ntp:
+        mgmt:
+          server:
+            0.cumulusnetworks.pool.ntp.org: {}
+            1.cumulusnetworks.pool.ntp.org: {}
+            2.cumulusnetworks.pool.ntp.org: {}
+            3.cumulusnetworks.pool.ntp.org: {}
+    system:
+      aaa:
+        class:
+          nvapply:
+            action: allow
+            command-path:
+              /:
+                permission: all
+          nvshow:
+            action: allow
+            command-path:
+              /:
+                permission: ro
+          sudo:
+            action: allow
+            command-path:
+              /:
+                permission: all
+        role:
+          nvue-admin:
+            class:
+              nvapply: {}
+          nvue-monitor:
+            class:
+              nvshow: {}
+          system-admin:
+            class:
+              nvapply: {}
+              sudo: {}
+        user:
+          cumulus:
+            full-name: cumulus,,,
+            hashed-password: '*'
+            role: system-admin
+      api:
+        state: enabled
+      config:
+        auto-save:
+          state: enabled
+      control-plane:
+        acl:
+          acl-default-dos:
+            inbound: {}
+          acl-default-whitelist:
+            inbound: {}
+      hostname: cumulus
+      reboot:
+        mode: cold
+      ssh-server:
+        state: enabled
+      wjh:
+        channel:
+          forwarding:
+            trigger:
+              l2: {}
+              l3: {}
+              tunnel: {}
+        enable: on
+    vrf:
+      default:
+        router:
+          bgp:
+            address-family:
+              ipv4-unicast:
+                enable: on
+                network:
+                  10.10.6.128/25: {}
+            enable: on
