@@ -28,7 +28,7 @@ jobs:
   infinia-deploy:
     name: Deploy Infinia Infrastructure
     needs: packer-build
-    uses: ./.github/workflows/infinia-deploy.yml
+    uses: ./.github/workflows/infinia-deploy-aws.yml
     with:
       ami_id: ${{ needs.packer-build.outputs.ami_id }}
       aws_region: us-east-1
