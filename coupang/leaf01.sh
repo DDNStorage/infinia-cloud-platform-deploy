@@ -35,6 +35,18 @@ nv set vrf default router bgp neighbor swp14 peer-group UPLINK
 nv set vrf default router bgp neighbor swp14 type unnumbered
 nv set vrf default router bgp neighbor swp15 peer-group UPLINK
 nv set vrf default router bgp neighbor swp15 type unnumbered
+nv set vrf default router bgp neighbor swp16 peer-group UPLINK
+nv set vrf default router bgp neighbor swp16 type unnumbered
+nv set vrf default router bgp neighbor swp17 peer-group UPLINK
+nv set vrf default router bgp neighbor swp17 type unnumbered
+nv set vrf default router bgp neighbor swp18 peer-group UPLINK
+nv set vrf default router bgp neighbor swp18 type unnumbered
+nv set vrf default router bgp neighbor swp19 peer-group UPLINK
+nv set vrf default router bgp neighbor swp19 type unnumbered
+nv set vrf default router bgp neighbor swp20 peer-group UPLINK
+nv set vrf default router bgp neighbor swp20 type unnumbered
+nv set vrf default router bgp neighbor swp21 peer-group UPLINK
+nv set vrf default router bgp neighbor swp21 type unnumbered
 nv set vrf default router bgp path-selection multipath aspath-ignore on
 nv set vrf default router bgp peer-group UPLINK bfd enable on
 nv set vrf default router bgp peer-group UPLINK remote-as external
