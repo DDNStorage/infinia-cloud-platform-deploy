@@ -11,15 +11,13 @@ on:
         description: "Infinia Version"
         required: true
         type: string
-    outputs:
-      ami_id:
-        description: "Built AMI ID"
-        value: ${{ jobs.packer-build.outputs.output1 }}
 
 jobs:
   packer-build:
     name: Build Packer Template
     runs-on: small-dynamic-amd64-u24
+    outputs:
+      ami_id: ${{ steps.packer_build.outputs.ami_id }}
     defaults:
       run:
         working-directory: vm-images/aws/packer
