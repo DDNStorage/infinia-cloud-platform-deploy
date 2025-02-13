@@ -1,0 +1,91 @@
+##########
+# Leaf01 #
+##########
+nv set system hostname leaf01
+nv set interface lo ip address 10.10.7.217/32
+nv set interface lo type loopback
+nv set interface vlan101 ip address 10.10.6.1/25
+nv set interface swp22-64 bridge domain br_default access 101
+nv set bridge domain br_default vlan 101
+nv set bridge domain br_default untagged 1
+nv set router bgp autonomous-system 65181
+nv set router bgp router-id 10.10.7.217
+nv set vrf default router bgp address-family ipv4-unicast enable on
+nv set vrf default router bgp address-family ipv4-unicast redistribute connected enable on
+nv set vrf default router bgp address-family ipv6-unicast enable on
+nv set vrf default router bgp enable on
+nv set vrf default router bgp neighbor swp1-21 peer-group UPLINK
+nv set vrf default router bgp neighbor swp1-21 type unnumbered
+nv set vrf default router bgp path-selection multipath aspath-ignore on
+nv set vrf default router bgp peer-group UPLINK bfd enable on
+nv set vrf default router bgp peer-group UPLINK remote-as external
+nv config apply
+nv config save
+
+##########
+# Leaf02 #
+##########
+nv set system hostname leaf02
+nv set interface lo ip address 10.10.7.218/32
+nv set interface lo type loopback
+nv set interface vlan101 ip address 10.10.7.1/25
+nv set interface swp22-64 bridge domain br_default access 101
+nv set router bgp autonomous-system 65182
+nv set router bgp router-id 10.10.7.218
+nv set vrf default router bgp address-family ipv4-unicast enable on
+nv set vrf default router bgp address-family ipv4-unicast redistribute connected enable on
+nv set vrf default router bgp address-family ipv6-unicast enable on
+nv set vrf default router bgp enable on
+nv set vrf default router bgp neighbor swp1-21 peer-group UPLINK
+nv set vrf default router bgp neighbor swp1-21 type unnumbered
+nv set vrf default router bgp path-selection multipath aspath-ignore on
+nv set vrf default router bgp peer-group UPLINK bfd enable on
+nv set vrf default router bgp peer-group UPLINK remote-as external
+nv config apply
+nv config save
+
+##########
+# Leaf03 #
+##########
+nv set system hostname leaf03
+nv set interface lo ip address 10.10.7.215/32
+nv set interface lo type loopback
+nv set interface vlan101 ip address 10.10.8.1/25
+nv set interface swp22-64 bridge domain br_default access 101
+nv set router bgp autonomous-system 65183
+nv set router bgp enable on
+nv set router bgp router-id 10.10.7.215
+nv set vrf default router bgp address-family ipv4-unicast enable on
+nv set vrf default router bgp address-family ipv4-unicast redistribute connected enable on
+nv set vrf default router bgp address-family ipv6-unicast enable on
+nv set vrf default router bgp enable on
+nv set vrf default router bgp neighbor swp1-21 peer-group UPLINK
+nv set vrf default router bgp neighbor swp1-21 type unnumbered
+nv set vrf default router bgp path-selection multipath aspath-ignore on
+nv set vrf default router bgp peer-group UPLINK bfd enable on
+nv set vrf default router bgp peer-group UPLINK remote-as external
+nv config apply
+nv config save
+
+##########
+# Leaf04 #
+##########
+nv set system hostname leaf04
+nv set interface lo ip address 10.10.7.216/32
+nv set interface lo type loopback
+nv set interface vlan101 ip address 10.10.9.1/25
+nv set interface swp22-64 bridge domain br_default access 101
+nv set router bgp autonomous-system 65184
+nv set router bgp enable on
+nv set router bgp router-id 10.10.7.216
+nv set vrf default router bgp address-family ipv4-unicast enable on
+nv set vrf default router bgp address-family ipv4-unicast redistribute connected enable on
+nv set vrf default router bgp address-family ipv6-unicast enable on
+nv set vrf default router bgp enable on
+nv set vrf default router bgp neighbor swp1-21 peer-group UPLINK
+nv set vrf default router bgp neighbor swp1-21 type unnumbered
+nv set vrf default router bgp path-selection multipath aspath-ignore on
+nv set vrf default router bgp peer-group UPLINK bfd enable on
+nv set vrf default router bgp peer-group UPLINK remote-as external
+nv config apply
+nv config save
