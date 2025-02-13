@@ -131,3 +131,20 @@
       when: "'role_realm' in group_names"
       become: yes
       tags: configure
+
+    - block: # Verify Infina setup
+        - name: Verify Infinia Setup
+          shell: |
+            bash -c '
+            redcli user login realm_admin -p "{{ admin_password }}" >> /var/log/infinia/setup.log 2>&1
+            redcli inventory show | tee -a /var/log/infinia/setup.log
+            '
+          become: yes
+          register: inventory_output
+
+        - name: Display Inventory Output
+          debug:
+            msg: "{{ inventory_output.stdout_lines }}"
+        when: "'role_realm' in group_names"
+      become: yes
+      tags: verify
