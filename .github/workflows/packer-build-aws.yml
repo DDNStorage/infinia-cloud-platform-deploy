@@ -11,6 +11,10 @@ on:
         description: "Infinia Version"
         required: true
         type: string
+    outputs:
+      ami_id:
+        description: "Built AMI ID"
+        value: ${{ jobs.packer-build.outputs.ami_id }}
 
 jobs:
   packer-build:
