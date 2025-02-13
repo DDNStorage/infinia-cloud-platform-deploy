@@ -49,8 +49,8 @@ jobs:
       # Step 3: Validate Packer template with conditional argument
       - name: Validate Packer template
         run: |
-          if [ -n "${{ github.event.inputs.infinia_version }}" ]; then
-            packer validate -var "infinia_version=${{ github.event.inputs.infinia_version }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
+          if [ -n "${{ inputs.infinia_version }}" ]; then
+            packer validate -var "infinia_version=${{ inputs.infinia_version }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
           else
             packer validate -var-file=aws.pkrvars.hcl template.pkr.hcl
           fi
@@ -63,8 +63,8 @@ jobs:
       # Step 5: Build the Packer template with conditional argument
       - name: Build AMI with Packer
         run: |
-          if [ -n "${{ github.event.inputs.infinia_version }}" ]; then
-            packer build -var "infinia_version=${{ github.event.inputs.infinia_version }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
+          if [ -n "${{ inputs.infinia_version }}" ]; then
+            packer build -var "infinia_version=${{ inputs.infinia_version }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
           else
             packer build -var-file=aws.pkrvars.hcl template.pkr.hcl
           fi
