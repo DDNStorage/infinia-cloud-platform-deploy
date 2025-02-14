@@ -1,14 +1,12 @@
 name: Destroy Infinia Infrastructure
 
 on:
-  workflow_dispatch:
   workflow_call:
     inputs:
       aws_region:
         description: "AWS Region"
         required: true
         type: string
-
 env:
   TERRAFORM_DIR: deployments/aws
 
@@ -27,18 +25,16 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ inputs.aws_region }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Destroy (Manual Confirmation)
+      - name: Terraform Destroy
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
-          echo "Review deployment before destroying."
-          read -p "Proceed with terraform destroy? (yes/no): " confirm
-          if [[ "$confirm" == "yes" ]]; then
-            terraform destroy -auto-approve
-          else
-            echo "Terraform destroy canceled."
-            exit 1
-          fi
+          terraform destroy -auto-approve
