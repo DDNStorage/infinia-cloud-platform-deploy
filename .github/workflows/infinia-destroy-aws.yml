@@ -1,6 +1,7 @@
 name: Destroy Infinia Infrastructure
 
 on:
+  workflow_dispatch:
   workflow_call:
     inputs:
       aws_region:

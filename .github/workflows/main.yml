@@ -3,16 +3,7 @@ name: Infinia Build, Deploy and Cleanup
 on:
   push:
     branches:
-      - main
-  workflow_dispatch:
-    inputs:
-      action:
-        description: "Choose action: destroy (optional)"
-        required: false
-        default: ""
-        type: choice
-        options:
-          - destroy
+      - add-infinia-deploy-pipeline
 
 env:
   AWS_REGION: us-east-1
@@ -37,11 +28,10 @@ jobs:
       infinia_version: 2.0.8
     secrets: inherit
 
-  infinia-destroy:
-    if: github.event.inputs.action == 'destroy'
-    name: Destroy Infinia Infrastructure
-    needs: infinia-deploy
-    uses: ./.github/workflows/infinia-destroy-aws.yml
-    with:
-      aws_region: us-east-1
-    secrets: inherit 
+  # infinia-destroy:
+  #   name: Destroy Infinia Infrastructure
+  #   needs: infinia-deploy
+  #   uses: ./.github/workflows/infinia-destroy-aws.yml
+  #   with:
+  #     aws_region: us-east-1
+  #   secrets: inherit 
