@@ -1,19 +1,27 @@
 name: Build Infinia AMI with Packer
 
 on:
-  push:
-    branches:
-      - add-packer
-  workflow_dispatch:
+  workflow_call:
     inputs:
+      aws_region:
+        description: "AWS Region"
+        required: true
+        type: string
       infinia_version:
         description: "Infinia Version"
-        required: false  # Make it optional
+        required: true
+        type: string
+    outputs:
+      ami_id:
+        description: "Built AMI ID"
+        value: ${{ jobs.packer-build.outputs.ami_id }}
 
 jobs:
   packer-build:
     name: Build Packer Template
     runs-on: small-dynamic-amd64-u24
+    outputs:
+      ami_id: ${{ steps.packer_build.outputs.ami_id }}
     defaults:
       run:
         working-directory: vm-images/aws/packer
@@ -29,7 +37,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
+          aws-region: ${{ inputs.aws_region }}
 
       - name: Setup `packer`
         uses: hashicorp/setup-packer@main
@@ -43,8 +51,8 @@ jobs:
       # Step 3: Validate Packer template with conditional argument
       - name: Validate Packer template
         run: |
-          if [ -n "${{ github.event.inputs.infinia_version }}" ]; then
-            packer validate -var "infinia_version=${{ github.event.inputs.infinia_version }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
+          if [ -n "${{ inputs.infinia_version }}" ]; then
+            packer validate -var "infinia_version=${{ inputs.infinia_version }}" -var "region=${{ inputs.aws_region }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
           else
             packer validate -var-file=aws.pkrvars.hcl template.pkr.hcl
           fi
@@ -56,13 +64,12 @@ jobs:
 
       # Step 5: Build the Packer template with conditional argument
       - name: Build AMI with Packer
+        id: packer_build
         run: |
-          if [ -n "${{ github.event.inputs.infinia_version }}" ]; then
-            packer build -var "infinia_version=${{ github.event.inputs.infinia_version }}" -var-file=aws.pkrvars.hcl template.pkr.hcl
-          else
-            packer build -var-file=aws.pkrvars.hcl template.pkr.hcl
-          fi
+          AMI_ID=$(packer build -var "infinia_version=${{ inputs.infinia_version }}" -var "region=${{ inputs.aws_region }}" -var-file=aws.pkrvars.hcl template.pkr.hcl | tee /dev/tty | grep -oE 'ami-[a-zA-Z0-9]+' | tail -n1)
+          echo "ami_id=$AMI_ID" >> $GITHUB_OUTPUT
+          echo "Built AMI ID: $AMI_ID"
 
-      # Step 6: Notify Build Success
       - name: Notify Build Success
-        run: echo "Packer build completed successfully!"
+        run: |
+          echo "Packer build completed successfully! AMI ID: ${{ steps.packer_build.outputs.ami_id }}"

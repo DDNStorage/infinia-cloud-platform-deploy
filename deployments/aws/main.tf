@@ -153,38 +153,17 @@ hostnames:
 EOT
 }
 
-
-# # Deploy Load Balancer Instance
-# resource "aws_instance" "load_balancer" {
-#   ami           = var.client_ami_id
-#   instance_type = "t3.medium"
-#   subnet_id     = element(var.subnet_ids, 0)
-#   security_groups = [var.security_group_id]
-#   key_name      = var.key_pair_name
-
-#   lifecycle {
-#     create_before_destroy = false
-#     ignore_changes = [
-#       subnet_id,
-#       security_groups,
-#       ami,
-#       instance_type,
-#       key_name,
-#       root_block_device,
-#       tags,
-#       volume_tags
-#     ]
-#   }
-
-#   root_block_device {
-#     volume_size           = 150
-#     volume_type           = "gp3"
-#     delete_on_termination = true
-#   }
-
-#   tags = {
-#     Name = "${var.infinia_deployment_name}-nginx"
-#   }
-# }
-
+resource "local_file" "ansible_vars" {
+  filename = "${path.module}/ansible/vars.yml"
+  content  = <<EOT
+# vars.yml
+# Non-sensitive variables
+infinia_version: ${var.infinia_version}
+ansible_connection: aws_ssm
+ansible_aws_ssm_bucket_name: red-ansible-scripts
+ansible_aws_ssm_region: us-east-1
+ansible_aws_ssm_timeout: 3600
+ansible_aws_ssm_retries: 200
+EOT
+}
 
