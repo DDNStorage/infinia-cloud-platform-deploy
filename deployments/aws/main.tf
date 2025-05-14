@@ -81,11 +81,12 @@ resource "aws_instance" "infinia" {
 
   # Attach EBS volumes only if use_ebs_volumes is true
   dynamic "ebs_block_device" {
-    for_each = var.use_ebs_volumes ? range(var.num_ephemeral_devices) : []
+ #   for_each = var.use_ebs_volumes ? range(var.num_ephemeral_devices) : []
+    for_each = var.use_ebs_volumes ? range(var.ebs_volumes_per_vm) : []
     content {
       device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
       volume_size           = var.ebs_volume_size # Default size for each disk
-      volume_type           = "gp3"
+      volume_type           = "st1"
       delete_on_termination = true
     }
   }
