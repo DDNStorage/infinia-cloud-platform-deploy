@@ -141,7 +141,7 @@ resource "local_file" "ansible_inventory" {
   content  = <<EOT
 plugin: aws_ec2
 regions:
-  - us-east-1
+  - var.aws_region
 filters:
   tag:Role: ['realm', 'nonrealm']
   tag:Deployment: "${var.infinia_deployment_name}"
@@ -162,7 +162,7 @@ resource "local_file" "ansible_vars" {
 infinia_version: ${var.infinia_version}
 ansible_connection: aws_ssm
 ansible_aws_ssm_bucket_name: red-ansible-scripts
-ansible_aws_ssm_region: us-east-1
+ansible_aws_ssm_region: var.aws_region
 ansible_aws_ssm_timeout: 3600
 ansible_aws_ssm_retries: 200
 EOT
