@@ -86,7 +86,7 @@ resource "aws_instance" "infinia" {
     content {
       device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
       volume_size           = var.ebs_volume_size # Default size for each disk
-      volume_type           = "st1"
+      volume_type           = "gp3"
       delete_on_termination = true
     }
   }
