@@ -86,7 +86,7 @@ resource "aws_instance" "infinia" {
     content {
       device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
       volume_size           = var.ebs_volume_size # Default size for each disk
-      volume_type           = "st1"
+      volume_type           = "gp3"
       delete_on_termination = true
     }
   }
@@ -161,7 +161,7 @@ resource "local_file" "ansible_vars" {
 # Non-sensitive variables
 infinia_version: ${var.infinia_version}
 ansible_connection: aws_ssm
-ansible_aws_ssm_bucket_name: red-ansible-scripts
+ansible_aws_ssm_bucket_name: ${var.bucket_name}
 ansible_aws_ssm_region: us-east-1
 ansible_aws_ssm_timeout: 3600
 ansible_aws_ssm_retries: 200

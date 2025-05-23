@@ -5,11 +5,11 @@ variable "instance_type" {
 
 variable "region" {
   type    = string
-  default = "ap-northeast-2"
+  default = "us-east-1"
 }
 
 variable "infinia_version" {
-  default = "1.3.36"
+  default = "2.1.30"
 }
 
 variable "base_pkg_url" {
@@ -37,6 +37,8 @@ source "amazon-ebs" "infina" {
   ami_name                    = "infinia-${replace(var.infinia_version, ".", "-")}"
   instance_type               = var.instance_type
   region                      = var.region
+  vpc_id                      = "vpc-0dcdd979d726f2beb"    #Added for defining VPC
+  subnet_id                   = "subnet-02b1f138ddafa32bc" #Added for defining Subnet
   ssh_username                = "ubuntu"
   associate_public_ip_address = true
 
@@ -90,6 +92,7 @@ build {
       "wget ${var.base_pkg_url}/releases/rmd_template.json -O /tmp/rmd_template.json",
       "envsubst < /tmp/rmd_template.json > /tmp/rmd.json",
       "redsetup -realm-entry -realm-entry-secret PA-ssW00r^d --admin-password PA-ssW00r^d -ctrl-plane-ip $(hostname --ip-address) -release-metadata-file /tmp/rmd.json -skip-reboot -skip-hardware-check",
+      "rm -rf /etc/red/deploy/config.lock",
       "redsetup -reset",
       "rm -rf /var/cache/apt /tmp/*",
       "apt-get autoremove -y && apt-get clean",

@@ -3,7 +3,7 @@ variable "infinia_deployment_name" {
   type        = string
 
   validation {
-    condition     = length(var.infinia_deployment_name) >= 4 && length(var.infinia_deployment_name) <= 8 && var.infinia_deployment_name == lower(var.infinia_deployment_name)
+    condition     = length(var.infinia_deployment_name) >= 4 && length(var.infinia_deployment_name) <= 28 && var.infinia_deployment_name == lower(var.infinia_deployment_name)
     error_message = "The deployment name must be between 4 and 8 characters, all lowercase."
   }
 }
@@ -111,4 +111,10 @@ variable "infinia_version" {
   description = "The infinia version"
   type        = string
   default     = "1.3.36"
+}
+
+variable "bucket_name" {
+  description = "Name of the AWS S3 bucket for Ansible SSM"
+  type        = string
+  default     = "red-ansible-scripts-test"
 }
