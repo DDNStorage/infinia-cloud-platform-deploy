@@ -21,7 +21,7 @@ locals {
 
   # Calculate the required number of VMs based on desired capacity
   vm_capacity_tb = 9 # Each VM provides 9TB of capacity
-  vm_count = ceil(var.desired_capacity / local.vm_capacity_tb)
+  vm_count       = ceil(var.desired_capacity / local.vm_capacity_tb)
 
   # Generate instance names dynamically
   instance_names = [for i in range(local.vm_count) : "${var.goog_cm_deployment_name}-${format("%03d", i)}"]
@@ -35,11 +35,11 @@ locals {
 
   # Metadata for each VM instance
   metadata = {
-    realm-entry-secret = random_password.realm_entry_secret.result
-    admin-password = random_password.admin_password.result
-    infinia-enable-https = title(var.httpsEnabled)
-    enable-os-login = "TRUE"
-    google-logging-enable = var.enable_cloud_logging ? "1" : "0"
+    realm-entry-secret       = random_password.realm_entry_secret.result
+    admin-password           = random_password.admin_password.result
+    infinia-enable-https     = title(var.httpsEnabled)
+    enable-os-login          = "TRUE"
+    google-logging-enable    = var.enable_cloud_logging ? "1" : "0"
     google-monitoring-enable = var.enable_cloud_monitoring ? "1" : "0"
   }
 }
@@ -53,14 +53,14 @@ resource "google_compute_instance" "instances" {
   zone         = var.zone
 
   # Enable deletion protection
-  deletion_protection = true
-  
+  deletion_protection = var.project_id == "red-101" ? false : true
+
   # Configure scheduling for instances with local NVMe SSDs
   scheduling {
-    automatic_restart   = true         # Automatically restart if terminated
-    on_host_maintenance = "MIGRATE"    # Support live migration with Local SSDs
-    preemptible        = false        # Ensures instance is not preemptible
-    provisioning_model = "STANDARD"    # Standard VM for Local SSD support
+    automatic_restart   = true       # Automatically restart if terminated
+    on_host_maintenance = "MIGRATE"  # Support live migration with Local SSDs
+    preemptible         = false      # Ensures instance is not preemptible
+    provisioning_model  = "STANDARD" # Standard VM for Local SSD support
   }
 
   tags = ["${var.goog_cm_deployment_name}-deployment"]
@@ -85,14 +85,14 @@ resource "google_compute_instance" "instances" {
   }
 
   metadata = merge(local.metadata, {
-    infinia_version         = var.infinia_version
-    infinia_license         = var.infinia_license
-    startup-script-url      = "https://storage.cloud.google.com/infinia-hp-gcp-mp/startup-script.sh"
-    infinia_instances       = join(",", local.instance_names)
-    realm_entry_host        = local.instance_names[0]
-    infinia_instance_count  = tostring(local.vm_count)
-    realm-entry-secret      = random_password.realm_entry_secret.result
-    admin-password          = random_password.admin_password.result
+    infinia_version        = var.infinia_version
+    infinia_license        = var.infinia_license
+    startup-script-url     = "https://storage.cloud.google.com/infinia-hp-gcp-mp/startup-script.sh"
+    infinia_instances      = join(",", local.instance_names)
+    realm_entry_host       = local.instance_names[0]
+    infinia_instance_count = tostring(local.vm_count)
+    realm-entry-secret     = random_password.realm_entry_secret.result
+    admin-password         = random_password.admin_password.result
   })
 
   # Configure network interfaces
@@ -145,8 +145,8 @@ resource "google_compute_instance" "client_instances" {
   }
 
   metadata = {
-    infinia_version        = var.infinia_version
-    infinia_instance_type  = "client"
+    infinia_version       = var.infinia_version
+    infinia_instance_type = "client"
   }
 
   # Configure network interfaces
