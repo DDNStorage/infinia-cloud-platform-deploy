@@ -122,8 +122,8 @@ variable "local_disks" {
 }
 
 variable "infinia_version" {
-  type        = string
-  default     = "1.3.52"
+  type    = string
+  default = "1.3.52"
 }
 
 variable "num_clients" {

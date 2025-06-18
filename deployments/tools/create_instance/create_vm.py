@@ -3,7 +3,9 @@
 import argparse
 import os
 
+
 from Terraform import TerraformTfvarsGenerator, TerraformRunner,TerraformVariableChecker
+from _utils import terrafrom_cleanup
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate terraform.tfvars from variables.tf or user input")
@@ -88,6 +90,8 @@ if __name__ == "__main__":
                 print(out)
                 if err:
                     print("Apply Error:", err)
+                else:    
+                    terrafrom_cleanup(directory)
 
     except Exception as e:
         print(f"Error: {e}")
