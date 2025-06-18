@@ -48,7 +48,8 @@ locals {
 resource "google_compute_instance" "instances" {
   count = local.vm_count
 
-  name         = local.instance_names[count.index]
+  #name         = local.instance_names[count.index]
+  name         = "${var.goog_cm_deployment_name}-${format("%03d", count.index)}"
   machine_type = var.machine_type
   zone         = var.zone
 

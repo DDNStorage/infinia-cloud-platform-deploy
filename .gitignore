@@ -1,5 +1,7 @@
 *terraform*
+*.terraform*
 vars.yml
 aws_ec2.yml
 terraform.tfvars
 __pycache*
+tfplan

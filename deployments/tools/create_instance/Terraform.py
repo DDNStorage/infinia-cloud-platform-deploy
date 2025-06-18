@@ -3,13 +3,22 @@ import re
 
 import subprocess
 
+class TerraformVariableChecker(object):
+    def __init__(self, provider: str):
+        provider_paths = {
+            'gcp': os.path.join('..', '..', 'gcp'),
+            'aws': os.path.join('..', '..', 'aws')
+        }
 
-class TerraformVariableChecker:
-    def __init__(self, directory_path):
-        if not os.path.isdir(directory_path):
-            raise FileNotFoundError(f"Directory '{directory_path}' not found.")
-        self.directory_path = directory_path
-        self.variables_file = os.path.join(directory_path, "variables.tf")
+        if provider not in provider_paths:
+            raise ValueError("Provider must be either 'gcp' or 'aws'.")
+
+        self.directory_path = provider_paths[provider]
+
+        if not os.path.isdir(self.directory_path):
+            raise FileNotFoundError(f"Directory '{self.directory_path}' not found.")
+
+        self.variables_file = os.path.join(self.directory_path, "variables.tf")
 
     def list_variables(self):
         if not os.path.isfile(self.variables_file):
@@ -29,27 +38,45 @@ class TerraformVariableChecker:
                 print(f" - {var}")
         return variables
 
-class TerraformTfvarsGenerator:
-    def __init__(self, directory_path):
-        if not os.path.isdir(directory_path):
-            raise FileNotFoundError(f"Directory '{directory_path}' not found.")
-        self.directory_path = directory_path
-        self.tfvars_file = os.path.join(directory_path, "terraform.tfvars")
 
-    def create_tfvars_file(self, variables: dict = {}):
-        lines = []
+class TerraformTfvarsGenerator(object):
+    def __init__(self, provider: str):
+        provider_paths = {
+            'gcp': os.path.join('..', '..', 'gcp'),
+            'aws': os.path.join('..', '..', 'aws')
+        }
 
+        if provider not in provider_paths:
+            raise ValueError("Provider must be either 'gcp' or 'aws'.")
+
+        self.directory_path = provider_paths[provider]
+
+        if not os.path.isdir(self.directory_path):
+            raise FileNotFoundError(f"Directory '{self.directory_path}' not found.")
+
+        self.tfvars_file = os.path.join(self.directory_path, "terraform.tfvars")
+        self.provider = provider
+       
+    def create_tfvars_file(self, variables: dict={}):
+        defaults = {}
+
+        if self.provider == "aws":
+            defaults = {
+                "aws_region": "us-east-1"
+            }
+        elif self.provider == "gcp":
+            defaults = {
+                "zone": "us-central1-a",
+                "project_id": "red-101",
+                "desired_capacity": "9"
+            }
+
+        merged = defaults.copy()
         if variables:
-            for key, value in variables.items():
-                lines.append(f'{key} = "{value}"')
-        else:
-            dir_lower = self.directory_path.lower()
-            if "aws" in dir_lower:
-                lines.append('aws_region = "us-east-1"')
-            elif "gcp" in dir_lower:
-                lines.append('zone = "us-central1"')
-            else:
-                lines.append('# No variables provided and no default cloud detected')
+            merged.update(variables)
+
+        # Write to terraform.tfvars
+        lines = [f'{key} = "{value}"' for key, value in merged.items()]
 
         with open(self.tfvars_file, 'w') as f:
             f.write('\n'.join(lines))
@@ -57,7 +84,8 @@ class TerraformTfvarsGenerator:
         print(f"terraform.tfvars created at {self.tfvars_file}")
 
 
-class TerraformRunner:
+    
+class TerraformRunner(object):
     def __init__(self, terraform_dir: str):
         self.terraform_dir = terraform_dir
 
@@ -82,4 +110,5 @@ class TerraformRunner:
             return result.stdout, result.stderr
         except subprocess.CalledProcessError as e:
             return e.stdout, e.stderr
+
 
