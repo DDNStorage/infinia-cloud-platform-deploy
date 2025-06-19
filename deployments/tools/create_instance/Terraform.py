@@ -58,6 +58,9 @@ class TerraformTfvarsGenerator(object):
         self.provider = provider
        
     def create_tfvars_file(self, variables: dict={}):
+        if variables is None:
+            variables = {}
+
         defaults = {}
 
         if self.provider == "aws":
@@ -66,7 +69,8 @@ class TerraformTfvarsGenerator(object):
                 "vpc_id": "vpc-02adcd19590b5bbd0",
                 "security_group": "sg-0de3d39aa32fc75d3",
                 "key_pair_name": "red-poc-keys",
-                "infinia_ami_id": "ami-08391efc712c82150"
+                "infinia_ami_id": "ami-08391efc712c82150",
+                "num_ephemeral_device": "0",
             }
         elif self.provider == "gcp":
             defaults = {
@@ -76,10 +80,10 @@ class TerraformTfvarsGenerator(object):
             }
 
         merged = defaults.copy()
+        merged.update(variables)
         if variables:
             merged.update(variables)
 
-        # Write to terraform.tfvars
         lines = [f'{key} = "{value}"' for key, value in merged.items()]
 
         with open(self.tfvars_file, 'w') as f:

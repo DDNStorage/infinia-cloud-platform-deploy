@@ -1,5 +1,0 @@
-aws_region = "us-east-1"
-vpc_id = "vpc-02adcd19590b5bbd0"
-security_group = "sg-0de3d39aa32fc75d3"
-key_pair_name = "red-poc-keys"
-infinia_ami_id = "ami-08391efc712c82150"
