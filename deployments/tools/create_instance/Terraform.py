@@ -58,8 +58,6 @@ class TerraformTfvarsGenerator(object):
         self.provider = provider
        
     def create_tfvars_file(self, variables: dict={}):
-        if variables is None:
-            variables = {}
 
         defaults = {}
 
@@ -67,10 +65,12 @@ class TerraformTfvarsGenerator(object):
             defaults = {
                 "aws_region": "us-east-1",
                 "vpc_id": "vpc-02adcd19590b5bbd0",
-                "security_group": "sg-0de3d39aa32fc75d3",
+                "security_group_id": "sg-0de3d39aa32fc75d3",
                 "key_pair_name": "red-poc-keys",
                 "infinia_ami_id": "ami-08391efc712c82150",
                 "num_ephemeral_device": "0",
+                "subnet_ids": ['subnet-047805b425b67e6c6'],
+                "infinia_version": "2.1.30"
             }
         elif self.provider == "gcp":
             defaults = {
@@ -84,7 +84,14 @@ class TerraformTfvarsGenerator(object):
         if variables:
             merged.update(variables)
 
-        lines = [f'{key} = "{value}"' for key, value in merged.items()]
+
+        lines = []
+        for key, value in merged.items():
+            if isinstance(value, list):
+                formatted_list = "[" + ", ".join(f'"{item}"' for item in value) + "]"
+                lines.append(f'{key} = {formatted_list}')
+            else:
+                lines.append(f'{key} = "{value}"')
 
         with open(self.tfvars_file, 'w') as f:
             f.write('\n'.join(lines))

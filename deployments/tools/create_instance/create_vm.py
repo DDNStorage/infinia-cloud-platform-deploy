@@ -4,6 +4,7 @@ import argparse
 import os
 
 
+from shutil import copy
 from Terraform import TerraformTfvarsGenerator, TerraformRunner,TerraformVariableChecker
 from _utils import terrafrom_cleanup
 
@@ -60,38 +61,38 @@ if __name__ == "__main__":
         if args.list_vars:
             checker = TerraformVariableChecker(provider)
             available_vars = checker.list_variables()
-        else:
-            user_variables = parse_user_vars(args.var) if args.var else None
+        if args.var: 
+            user_variables = parse_user_vars(args.var)
             tfvars_creator = TerraformTfvarsGenerator(provider)
-            tfvars_creator.create_tfvars_file(user_variables)
+            tf_vars = tfvars_creator.create_tfvars_file(user_variables)
+ 
+        if args.deploy:
+            runner = TerraformRunner(directory)
 
-            if args.deploy:
-                runner = TerraformRunner(directory)
+            out, err = runner.run("init")
+            print(out)
+            if err:
+                print("Init Error:", err)
 
-                out, err = runner.run("init")
-                print(out)
-                if err:
-                    print("Init Error:", err)
+            out, err = runner.run("plan", "-input=false", "-out=tfplan", "-var-file=terraform.tfvars")
+            print(out)
+            if err:
+                print("Plan Error:", err)
 
-                out, err = runner.run("plan", "-input=false", "-out=tfplan", "-var-file=terraform.tfvars")
-                print(out)
-                if err:
-                    print("Plan Error:", err)
-
-                print("Deploying cluster")
-                out, err = runner.run("apply", "-input=false", "tfplan")
-                print(out)
-                if err:
-                    print("Apply Error:", err)
-            if args.destroy:
-                runner = TerraformRunner(directory)
-                print("Destroying cluster")
-                out, err = runner.run("destroy", "-auto-approve", "-input=false")
-                print(out)
-                if err:
-                    print("Apply Error:", err)
-                else:    
-                    terrafrom_cleanup(directory)
+            print("Deploying cluster")
+            out, err = runner.run("apply", "-input=false", "tfplan")
+            print(out)
+            if err:
+                print("Apply Error:", err)
+        if args.destroy:
+            runner = TerraformRunner(directory)
+            print("Destroying cluster")
+            out, err = runner.run("destroy", "-auto-approve", "-input=false")
+            print(out)
+            if err:
+                print("Apply Error:", err)
+            else:
+                terrafrom_cleanup(directory)
 
     except Exception as e:
         print(f"Error: {e}")
