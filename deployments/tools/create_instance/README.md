@@ -33,7 +33,7 @@ This Python script automates the process of generating terraform.tfvars, initial
      python create_vm.py  [aws|gcp]  --destroy
   ```
 
-## Variable overdie 
+## Variable overide
 
  ```bash 
     python create_vm.py  [aws|gcp] --var infinia_version="2.1.1" --deploy
