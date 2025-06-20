@@ -17,7 +17,7 @@ This Python script automates the process of generating terraform.tfvars, initial
  - Terraform installed and available in $PATH
 
 📌 Usage
-Basic Command Format 
+## Basic Command Format 
  ``` bash
     python create_vm.py [gcp|aws] [OPTIONS]
     
@@ -28,23 +28,22 @@ Basic Command Format
     python create_vm.py aws  --var infinia_deployment_name=raidtest --deploy
 ```
 
-#  Destroy cluster
+## Destroy cluster
   ```bash 
      python create_vm.py  [aws|gcp]  --destroy
   ```
 
-# Variable overdie 
+## Variable overdie 
 
  ```bash 
-    python create_vm.py  [aws|gcp] --var infinia_version="custom_version" --deploy
+    python create_vm.py  [aws|gcp] --var infinia_version="2.1.1" --deploy
 
   # List availble variuabls 
     python create_vm.py [aws|gcp] --list-vars 
-
-📝 Note on Default Variables
+```
  
 ⚙️ Provider Default Variables
-# AWS 
+## AWS 
 | Variable               | Default Value                  |
 | ---------------------- | ------------------------------ |
 | `aws_region`           | `us-east-1`                    |
@@ -56,10 +55,10 @@ Basic Command Format
 | `subnet_ids`           | `['subnet-047805b425b67e6c6']` |
 | `infinia_version`      | `2.1.30`                       |
 
-# GCP 
+## GCP 
 | Variable           | Default Value   |
 | ------------------ | --------------- |
 | `zone`             | `us-central1-a` |
 | `project_id`       | `red-101`       |
 | `desired_capacity` | `9`             |
-| `infinia_version`  | `2.1.30`                       |
+| `infinia_version`  | `2.1.30`        |
