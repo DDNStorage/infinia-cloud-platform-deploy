@@ -69,7 +69,7 @@ class TerraformTfvarsGenerator(object):
                 "key_pair_name": "red-poc-keys",
                 "infinia_ami_id": "ami-08391efc712c82150",
                 "num_ephemeral_device": "0",
-                "subnet_ids": ['subnet-047805b425b67e6c6'],
+                "subnet_ids": ['subnet-09c1c04d8d15c16e2'],
                 "infinia_version": "2.1.30"
             }
         elif self.provider == "gcp":
