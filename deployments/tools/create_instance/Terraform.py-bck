@@ -3,7 +3,7 @@ import re
 
 import subprocess
 
-class TerraformManager(object):
+class TerraformVariableChecker(object):
     def __init__(self, provider: str):
         provider_paths = {
             'gcp': os.path.join('..', '..', 'gcp'),
@@ -13,14 +13,12 @@ class TerraformManager(object):
         if provider not in provider_paths:
             raise ValueError("Provider must be either 'gcp' or 'aws'.")
 
-        self.provider = provider
         self.directory_path = provider_paths[provider]
 
         if not os.path.isdir(self.directory_path):
             raise FileNotFoundError(f"Directory '{self.directory_path}' not found.")
 
         self.variables_file = os.path.join(self.directory_path, "variables.tf")
-        self.tfvars_file = os.path.join(self.directory_path, "terraform.tfvars")
 
     def list_variables(self):
         if not os.path.isfile(self.variables_file):
@@ -40,7 +38,27 @@ class TerraformManager(object):
                 print(f" - {var}")
         return variables
 
-    def create_tfvars_file(self, variables: dict = {}):
+
+class TerraformTfvarsGenerator(object):
+    def __init__(self, provider: str):
+        provider_paths = {
+            'gcp': os.path.join('..', '..', 'gcp'),
+            'aws': os.path.join('..', '..', 'aws')
+        }
+
+        if provider not in provider_paths:
+            raise ValueError("Provider must be either 'gcp' or 'aws'.")
+
+        self.directory_path = provider_paths[provider]
+
+        if not os.path.isdir(self.directory_path):
+            raise FileNotFoundError(f"Directory '{self.directory_path}' not found.")
+
+        self.tfvars_file = os.path.join(self.directory_path, "terraform.tfvars")
+        self.provider = provider
+       
+    def create_tfvars_file(self, variables: dict={}):
+
         defaults = {}
 
         if self.provider == "aws":
@@ -63,6 +81,9 @@ class TerraformManager(object):
 
         merged = defaults.copy()
         merged.update(variables)
+        if variables:
+            merged.update(variables)
+
 
         lines = []
         for key, value in merged.items():
@@ -77,6 +98,8 @@ class TerraformManager(object):
 
         print(f"terraform.tfvars created at {self.tfvars_file}")
 
+
+    
 class TerraformRunner(object):
     def __init__(self, terraform_dir: str):
         self.terraform_dir = terraform_dir

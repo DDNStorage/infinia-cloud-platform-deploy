@@ -4,8 +4,7 @@ import argparse
 import os
 
 
-from shutil import copy
-from Terraform import TerraformTfvarsGenerator, TerraformRunner,TerraformVariableChecker
+from Terraform import TerraformManager,TerraformRunner
 from _utils import terrafrom_cleanup
 
 def parse_args():
@@ -59,11 +58,11 @@ if __name__ == "__main__":
         directory = provider_paths[provider]
 
         if args.list_vars:
-            checker = TerraformVariableChecker(provider)
+            checker = TerraformManager(provider)
             available_vars = checker.list_variables()
         if args.var: 
             user_variables = parse_user_vars(args.var)
-            tfvars_creator = TerraformTfvarsGenerator(provider)
+            tfvars_creator = TerraformManager(provider)
             tf_vars = tfvars_creator.create_tfvars_file(user_variables)
  
         if args.deploy:
