@@ -9,7 +9,7 @@ variable "region" {
 }
 
 variable "infinia_version" {
-  default = "1.3.36"
+  default = "2.2.99"
 }
 
 variable "base_pkg_url" {
@@ -22,6 +22,19 @@ variable "release_type" {
 
 variable "rel_dist_path" {
   default = "ubuntu/24.04"
+}
+
+# NEW: VPC & Subnet Variables
+variable "vpc_id" {
+  type        = string
+  description = "The ID of the VPC (for documentation/reference)"
+  default     = ""
+}
+
+variable "subnet_id" {
+  type        = string
+  description = "The ID of the subnet within the VPC to launch the instance in"
+  default     = ""
 }
 
 packer {
@@ -39,6 +52,9 @@ source "amazon-ebs" "infina" {
   region                      = var.region
   ssh_username                = "ubuntu"
   associate_public_ip_address = true
+
+  # NEW: Subnet support
+  subnet_id                   = var.subnet_id != "" ? var.subnet_id : null
 
   source_ami_filter {
     filters = {
@@ -99,7 +115,6 @@ build {
     ]
   }
 
-  # Truncate machine-id to ensure uniqueness per instance boot
   provisioner "shell" {
     inline_shebang  = "/bin/bash"
     execute_command = "sudo -E bash -c '{{.Vars}}{{.Path}}'"
@@ -112,3 +127,4 @@ build {
     ]
   }
 }
+

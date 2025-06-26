@@ -46,12 +46,12 @@ class TerraformManager(object):
         if self.provider == "aws":
             defaults = {
                 "aws_region": "us-east-1",
-                "vpc_id": "vpc-02adcd19590b5bbd0",
-                "security_group_id": "sg-0de3d39aa32fc75d3",
+                "vpc_id": "vpc-0643ea52b06790437",
+                "security_group_id": "sg-0514508ec0ae982b9",
                 "key_pair_name": "red-poc-keys",
                 "infinia_ami_id": "ami-08391efc712c82150",
                 "num_ephemeral_device": "0",
-                "subnet_ids": ['subnet-09c1c04d8d15c16e2'],
+                "subnet_ids": ['subnet-091be229cfbae2e0a'],
                 "infinia_version": "2.1.30"
             }
         elif self.provider == "gcp":

@@ -1,5 +1,6 @@
-- name: Infinia Setup and Configuration
-  hosts: all
+- hosts: all
+  gather_facts: true
+  become: true
   vars_files:
     - vars.yml
     - secret.yml
@@ -50,13 +51,13 @@
             '
           args:
             chdir: /tmp
-          when: "'role_realm' in group_names"
+          #when: "'role_realm' in group_names"
           become: yes
 
         - name: Reboot realm node
           reboot:
             reboot_timeout: 600
-          when: "'role_realm' in group_names"
+          #when: "'role_realm' in group_names"
           become: yes
 
         - name: Wait for 60 seconds after reboot
@@ -88,19 +89,19 @@
             '
           args:
             chdir: /tmp
-          when: "'role_nonrealm' in group_names"
+          #when: "'role_nonrealm' in group_names"
           become: yes
 
         - name: Reboot non-realm node
           reboot:
             reboot_timeout: 600
-          when: "'role_nonrealm' in group_names"
+          #when: "'role_nonrealm' in group_names"
           become: yes
 
         - name: Wait for 60 seconds after reboot
           pause:
             seconds: 60
-          when: "'role_nonrealm' in group_names"
+          #when: "'role_nonrealm' in group_names"
       tags: setup
 
     - block: # Infinia Cluster Setup
@@ -128,7 +129,7 @@
             '
           become: yes
 
-      when: "'role_realm' in group_names"
+      #when: "'role_realm' in group_names"
       become: yes
       tags: configure
 
@@ -171,6 +172,6 @@
         - name: Display Cluster Verification Output
           debug:
             msg: "{{ cluster_verification.stdout_lines | select('search', 'Cluster State|Total Nodes|Evicted CATs|✅|❌') | list }}"
-      when: "'role_realm' in group_names"
+      #when: "'role_realm' in group_names"
       become: yes
       tags: verify
