@@ -110,3 +110,9 @@ variable "infinia_version" {
   type        = string
   default     = "1.3.36"
 }
+
+variable "use_nat_gateway" {
+  description = "Enable to use NAT Gateway when public IP is disabled"
+  type        = bool
+  default     = false
+}
