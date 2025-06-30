@@ -29,9 +29,7 @@ resource "aws_iam_instance_profile" "ssm_instance_profile" {
 }
 
 # Search for NATGW
-data "aws_nat_gateway" "vpc_natgw" {
-  count = var.use_nat_gateway ? 1 : 0
-
+data "aws_nat_gateways" "all" {
   filter {
     name   = "vpc-id"
     values = [var.vpc_id]
@@ -41,6 +39,10 @@ data "aws_nat_gateway" "vpc_natgw" {
     name   = "state"
     values = ["available"]
   }
+}
+
+data "aws_nat_gateway" "selected" {
+  id = data.aws_nat_gateways.all.ids[0]
 }
 
 
@@ -71,10 +73,10 @@ resource "aws_instance" "infinia" {
   }
 
   # Use subnet_id, security_groups, and public IP only if interface_type is empty
-  subnet_id       = var.interface_type == "" ? element(var.subnet_ids, count.index % length(var.subnet_ids)) : null
-  security_groups = var.interface_type == "" ? [var.security_group_id] : null
+  subnet_id                   = var.interface_type == "" ? element(var.subnet_ids, count.index % length(var.subnet_ids)) : null
+  security_groups             = var.interface_type == "" ? [var.security_group_id] : null
+  associate_public_ip_address = var.use_nat_gateway ? false : var.enable_public_ip
   #associate_public_ip_address = var.interface_type == "" ? var.enable_public_ip : null
-  associate_public_ip_address = var.interface_type == "" && !var.use_nat_gateway && var.enable_public_ip ? true : false
 
   lifecycle {
     create_before_destroy = false
@@ -151,15 +153,16 @@ resource "aws_instance" "client" {
     Deployment = var.infinia_deployment_name
   }
 }
-
 resource "local_file" "ansible_inventory" {
   filename = "${path.module}/ansible/aws_ec2.yml"
   content  = <<EOT
 plugin: aws_ec2
 regions:
-  - var.aws_region
+  - ${var.aws_region}
 filters:
-  tag:Role: ['realm', 'nonrealm']
+  tag:Role:
+    - realm
+    - nonrealm
   tag:Deployment: "${var.infinia_deployment_name}"
 use_extra_vars: true
 keyed_groups:
@@ -178,7 +181,7 @@ resource "local_file" "ansible_vars" {
 infinia_version: ${var.infinia_version}
 ansible_connection: aws_ssm
 ansible_aws_ssm_bucket_name: red-ansible-scripts
-ansible_aws_ssm_region: var.aws_region
+ansible_aws_ssm_region: ${var.aws_region}
 ansible_aws_ssm_timeout: 3600
 ansible_aws_ssm_retries: 200
 EOT

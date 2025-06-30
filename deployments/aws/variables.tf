@@ -22,6 +22,7 @@ variable "infinia_ami_id" {
 variable "client_ami_id" {
   description = "AMI ID for the client instances"
   type        = string
+  default     = ""
 }
 
 variable "num_infinia_instances" {
@@ -33,7 +34,7 @@ variable "num_infinia_instances" {
 variable "num_client_instances" {
   description = "Number of client instances to deploy"
   type        = number
-  default     = 1
+  default     = 0
 }
 
 variable "key_pair_name" {
@@ -71,16 +72,19 @@ variable "security_group_id" {
 variable "root_device_size" {
   description = "The size for the root device"
   type        = number
+  default     = "256"
 }
 
 variable "num_ephemeral_devices" {
   description = "The number of ephemeral devices"
   type        = number
+  default     = 0
 }
 
 variable "interface_type" {
   description = "The ethernet interface type"
   type        = string
+  default     = ""
 }
 
 variable "use_ebs_volumes" {
@@ -98,7 +102,7 @@ variable "ebs_volume_size" {
 variable "enable_public_ip" {
   description = "Flag to determin whether enalbe public IP"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "infinia_version" {
@@ -112,4 +116,3 @@ variable "use_nat_gateway" {
   type        = bool
   default     = false
 }
-
