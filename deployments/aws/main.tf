@@ -58,8 +58,7 @@ resource "aws_instance" "infinia" {
   # Use subnet_id, security_groups, and public IP only if interface_type is empty
   subnet_id                   = var.interface_type == "" ? element(var.subnet_ids, count.index % length(var.subnet_ids)) : null
   security_groups             = var.interface_type == "" ? [var.security_group_id] : null
-  associate_public_ip_address = var.use_nat_gateway ? false : var.enable_public_ip
-  #associate_public_ip_address = var.interface_type == "" ? var.enable_public_ip : null
+  associate_public_ip_address = var.interface_type == "" ? var.enable_public_ip : null
 
   lifecycle {
     create_before_destroy = false

@@ -51,10 +51,9 @@ class TerraformManager(object):
                 "key_pair_name": "dev-keys",
                 "infinia_ami_id": "ami-055bf27bf881fe1c5",
                 "num_ephemeral_device": "0",
-                "subnet_ids": ['subnet-091be229cfbae2e0a'],
-                "infinia_version": "2.1.30",
+                "subnet_ids": ['subnet-0d359ef1e9d5e45be'],
+                "infinia_version": "2.2.15",
                 "enable_public_ip": "false",
-                "use_nat_gw": "true"
             }
         elif self.provider == "gcp":
             defaults = {
