@@ -5,11 +5,11 @@ variable "instance_type" {
 
 variable "region" {
   type    = string
-  default = "ap-northeast-2"
+  default = "us-east-1"
 }
 
 variable "infinia_version" {
-  default = "2.2.99"
+  default = "2.1.30"
 }
 
 variable "base_pkg_url" {
@@ -28,7 +28,7 @@ variable "rel_dist_path" {
 variable "vpc_id" {
   type        = string
   description = "The ID of the VPC (for documentation/reference)"
-  default     = ""
+  default     = "vpc-0643ea52b06790437"
 }
 
 variable "subnet_id" {
@@ -51,6 +51,7 @@ source "amazon-ebs" "infina" {
   instance_type               = var.instance_type
   region                      = var.region
   ssh_username                = "ubuntu"
+  key_pair_name               =  "dev-keys"
   associate_public_ip_address = true
 
   # NEW: Subnet support

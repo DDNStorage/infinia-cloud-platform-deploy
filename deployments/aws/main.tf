@@ -134,15 +134,16 @@ resource "aws_instance" "client" {
     Deployment = var.infinia_deployment_name
   }
 }
-
 resource "local_file" "ansible_inventory" {
   filename = "${path.module}/ansible/aws_ec2.yml"
   content  = <<EOT
 plugin: aws_ec2
 regions:
-  - var.aws_region
+  - ${var.aws_region}
 filters:
-  tag:Role: ['realm', 'nonrealm']
+  tag:Role:
+    - realm
+    - nonrealm
   tag:Deployment: "${var.infinia_deployment_name}"
 use_extra_vars: true
 keyed_groups:
@@ -161,7 +162,7 @@ resource "local_file" "ansible_vars" {
 infinia_version: ${var.infinia_version}
 ansible_connection: aws_ssm
 ansible_aws_ssm_bucket_name: red-ansible-scripts
-ansible_aws_ssm_region: var.aws_region
+ansible_aws_ssm_region: ${var.aws_region}
 ansible_aws_ssm_timeout: 3600
 ansible_aws_ssm_retries: 200
 EOT

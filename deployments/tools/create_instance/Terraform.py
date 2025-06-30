@@ -48,8 +48,8 @@ class TerraformManager(object):
                 "aws_region": "us-east-1",
                 "vpc_id": "vpc-0643ea52b06790437",
                 "security_group_id": "sg-0514508ec0ae982b9",
-                "key_pair_name": "red-poc-keys",
-                "infinia_ami_id": "ami-08391efc712c82150",
+                "key_pair_name": "dev-keys",
+                "infinia_ami_id": "ami-055bf27bf881fe1c5",
                 "num_ephemeral_device": "0",
                 "subnet_ids": ['subnet-091be229cfbae2e0a'],
                 "infinia_version": "2.1.30"
