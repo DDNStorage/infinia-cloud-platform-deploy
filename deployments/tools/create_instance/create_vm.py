@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
             print("Deploying cluster")
             out, err = runner.run("apply", "-input=false", "tfplan")
-            print(out)
+            print("Applying:", out)
             if err:
                 print("Apply Error:", err)
         if args.destroy:

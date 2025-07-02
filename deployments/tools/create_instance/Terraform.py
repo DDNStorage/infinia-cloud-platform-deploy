@@ -52,7 +52,7 @@ class TerraformManager(object):
                 "infinia_ami_id": "ami-055bf27bf881fe1c5",
                 "num_ephemeral_device": "0",
                 "subnet_ids": ['subnet-0d359ef1e9d5e45be'],
-                "infinia_version": "2.2.15",
+                "infinia_version": "2.2.16",
                 "enable_public_ip": "false",
             }
         elif self.provider == "gcp":
