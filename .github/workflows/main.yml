@@ -45,4 +45,8 @@ jobs:
     uses: ./.github/workflows/infinia-destroy-aws.yml
     with:
       aws_region: ${{ inputs.aws_region }}
+<<<<<<< HEAD
     secrets: inherit
+=======
+    secrets: inherit
+>>>>>>> 65d80a202c13621cf3dc275cb983156894b16da8
