@@ -1,0 +1,18 @@
+# Example Terraform variables for AWS deployment
+infinia_deployment_name = "example"
+aws_region              = "us-east-1"
+vpc_id                  = "vpc-xxxxxxxxxxxxxxxxx"
+subnet_ids              = ["subnet-aaaaaaaaaaaaaaaaa", "subnet-bbbbbbbbbbbbbbbbb"]
+security_group_id       = "sg-xxxxxxxxxxxxxxxxx"
+infinia_ami_id          = "ami-xxxxxxxxxxxxxxxxx"
+client_ami_id           = "ami-yyyyyyyyyyyyyyyyy"
+num_infinia_instances   = 2
+num_client_instances    = 0
+key_pair_name           = "my-key-pair"
+instance_type_infinia   = "i3en.6xlarge"
+instance_type_client    = "t3.large"
+root_device_size        = 256
+num_ephemeral_devices   = 0
+interface_type          = ""
+ebs_volume_size         = 7500
+

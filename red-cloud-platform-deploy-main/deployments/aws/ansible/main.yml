@@ -1,0 +1,242 @@
+##############################################################################
+#  Install RED (Infinia) and configure the cluster                           #
+##############################################################################
+- name: Install RED (Infinia) and configure the cluster
+  hosts: all
+  become: yes
+
+  vars_files:
+    - vars.yml              # contains  infinia_version: 2.2.0
+    - secret.yml            # realm_secret, admin_password, license_key
+
+  vars:
+    script_home: /opt/infinia/bin
+    s3_bucket:   red-ansible-scripts-shiloh-t2
+    realm_node:  "{{ groups['role_realm'][0] }}"
+
+# ---------------------------------------------------------------------------
+# Controller‑side pre‑flight (runs exactly once, locally)
+# ---------------------------------------------------------------------------
+  pre_tasks:
+    - name: Upload helper scripts to S3
+      amazon.aws.s3_object:
+        bucket: "{{ s3_bucket }}"
+        object: "{{ item }}"
+        src: "{{ playbook_dir | dirname }}/scripts/{{ item }}"
+        mode: put
+      loop:
+        - infinia-node-setup.sh
+        - infinia-cluster-configure.sh
+      run_once: true
+      delegate_to: 127.0.0.1
+      vars: { ansible_connection: local }
+      become: false
+
+    - name: Verify that the redsetup .deb exists
+      uri:
+        url: "https://storage.googleapis.com/ddn-redsetup-public/releases/ubuntu/24.04/redsetup_{{ infinia_version }}_amd64.deb"
+        method: HEAD
+        status_code: 200
+      run_once: true
+      delegate_to: 127.0.0.1
+      vars: { ansible_connection: local }
+      become: false
+
+# ---------------------------------------------------------------------------
+# Preparations that run on **every** EC2 instance
+# ---------------------------------------------------------------------------
+  tasks:
+    - name: Ensure {{ script_home }} exists
+      file: { path: "{{ script_home }}", state: directory, mode: '0755' }
+
+    - name: Download helper scripts from S3
+      amazon.aws.s3_object:
+        bucket: "{{ s3_bucket }}"
+        object: "{{ item }}"
+        dest: "{{ script_home }}/{{ item }}"
+        mode: get
+      loop:
+        - infinia-node-setup.sh
+        - infinia-cluster-configure.sh
+
+    - name: Make helper scripts executable
+      file:
+        path: "{{ script_home }}/{{ item }}"
+        mode: '0755'
+      loop:
+        - infinia-node-setup.sh
+        - infinia-cluster-configure.sh
+
+    - name: Private log folder
+      file:
+        path: /var/log/infinia
+        state: directory
+        mode: '0600'
+
+# ---------------------------------------------------------------------------
+# Realm node – install / bootstrap
+# ---------------------------------------------------------------------------
+    - name: Bootstrap the realm node
+      when: "'role_realm' in group_names"
+      block:
+        - name: Remove any stale RED install
+          shell: |
+            rm -f /etc/red/deploy/config.lock
+            redsetup --reset-with-images || redsetup --reset || true
+          args: { executable: /bin/bash }
+
+        - name: Run realm‑entry installer (NO reboot)
+          command: >-
+            {{ script_home }}/infinia-node-setup.sh
+            --realm-entry
+            --version {{ infinia_version }}
+            --realm-secret {{ realm_secret }}
+            --admin-password {{ admin_password }}
+          register: realm_setup
+
+# ---------------------------------------------------------------------------
+# Worker nodes – join the realm
+# ---------------------------------------------------------------------------
+    - name: Join non‑realm nodes
+      when:
+        - "'role_nonrealm' in group_names"
+        - hostvars[realm_node].realm_setup.rc | default(1) == 0
+      block:
+        - name: Run non‑realm installer (NO reboot)
+          command: >-
+            {{ script_home }}/infinia-node-setup.sh
+            --non-realm-entry
+            --version {{ infinia_version }}
+            --ip {{ hostvars[realm_node].private_ip_address }}
+            --realm-secret {{ realm_secret }}
+            --admin-password {{ admin_password }}
+          register: nonrealm_setup
+
+# ---------------------------------------------------------------------------
+# Configure the cluster – executes once on the realm node
+# ---------------------------------------------------------------------------
+    - name: Wait for nodes to reboot and become ready
+      pause:
+        minutes: 5
+      when: inventory_hostname == realm_node
+      tags: setup
+
+    - name: Configure RED cluster components
+      when:
+        - inventory_hostname == realm_node
+        - realm_setup.rc == 0
+      block:
+        - name: Login as realm admin
+          shell: |
+            redcli user login realm_admin -p '{{ admin_password }}'
+          changed_when: false
+
+        - name: Wait for containers
+          shell: |
+            echo "Waiting for containers to be 'Up'..."
+            timeout=120
+            while [[ $timeout -gt 0 ]]; do
+              total=$(docker ps -q | wc -l)
+              running=$(docker ps | grep -c "Up")
+              if [[ $running -gt 0 ]]; then
+                echo "All containers are up ($total)."
+                break
+              fi
+              echo "($timeout seconds left) - Up: $running / $total"
+              sleep 5
+              timeout=$((timeout - 5))
+            done
+
+            if [[ $timeout -le 0 ]]; then
+              echo "ERROR: Some containers did not become 'Up' in time!"
+              sudo docker ps
+              exit 1
+            fi
+          args:
+            executable: /bin/bash
+          changed_when: false
+
+        - name: Configure realm
+          shell: |
+            echo "Generating realm config..."
+            redcli realm config generate -a
+            redcli realm config update -f realm_config.yaml -a
+            sleep 30
+          args:
+            executable: /bin/bash
+          changed_when: false
+
+        - name: Run discovery and check nodes
+          shell: |
+            echo "Running discovery..."
+            redcli inventory discover
+            sleep 30
+
+            echo "Re-running discovery..."
+            redcli inventory discover
+            sleep 30
+
+            # Now check node count
+            redcli inventory show
+          args:
+            executable: /bin/bash
+          changed_when: false
+          register: inventory_result
+
+        - name: Create and configure cluster
+          shell: |
+            echo "Generating realm config..."
+            redcli realm config generate -a
+            redcli realm config update -f realm_config.yaml -a
+
+            echo "Creating cluster..."
+            redcli cluster create infinia-cluster -S=false -z
+
+            # Wait for cluster to become running
+            timeout=900
+            while [[ $timeout -gt 0 ]]; do
+              state=$(redcli cluster show infinia-cluster -s -o json | jq -r '.cluster_state')
+              if [[ "$state" == "running" ]]; then
+                echo "Cluster is running!"
+                break
+              fi
+              echo "($timeout left) Current cluster state: $state"
+              sleep 15
+              timeout=$((timeout - 15))
+            done
+            if [[ $timeout -le 0 ]]; then
+              echo "ERROR: Cluster not running after 900s"
+              exit 1
+            fi
+          args:
+            executable: /bin/bash
+          register: cluster_cfg
+
+# ---------------------------------------------------------------------------
+# Verify cluster health
+# ---------------------------------------------------------------------------
+    - name: Verify cluster health
+      when:
+        - inventory_hostname == realm_node
+        - cluster_cfg.rc == 0
+      shell: |
+        redcli user login realm_admin -p '{{ admin_password }}'
+        redcli cluster show -o json
+      args: { executable: /bin/bash }
+      register: cluster_verify
+      changed_when: false
+
+# ---------------------------------------------------------------------------
+# One‑line summary
+# ---------------------------------------------------------------------------
+  post_tasks:
+    - name: Summary
+      debug:
+        msg: |
+          Realm setup rc:    {{ hostvars[realm_node].realm_setup.rc | default('N/A') }}
+          Cluster config rc: {{ cluster_cfg.rc                      | default('N/A') }}
+          Cluster verify rc: {{ cluster_verify.rc                   | default('N/A') }}
+      run_once: true
+      delegate_to: 127.0.0.1
+      vars: { ansible_connection: local }
+      become: false
