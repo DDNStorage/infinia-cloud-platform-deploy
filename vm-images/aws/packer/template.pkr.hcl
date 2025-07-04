@@ -51,7 +51,6 @@ source "amazon-ebs" "infina" {
   instance_type               = var.instance_type
   region                      = var.region
   ssh_username                = "ubuntu"
-  key_pair_name               =  "dev-keys"
   associate_public_ip_address = true
 
   # NEW: Subnet support
@@ -113,6 +112,7 @@ build {
       "rm -rf /var/lib/apt/lists/*",
       "journalctl --rotate && journalctl --vacuum-time=1s",
       "rm -rf /var/log/* /tmp/* /var/tmp/*",
+      "rm -rf /etc/red/deploy/config.lock"
     ]
   }
 

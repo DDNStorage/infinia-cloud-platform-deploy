@@ -106,5 +106,23 @@ variable "enable_public_ip" {
 }
 
 variable "infinia_version" {
-  default = "2.2.15"
+  type    = string
+  default = "2.2.16"
 }
+
+
+variable "base_pkg_url" {
+  type    = string
+  default = "https://storage.googleapis.com/ddn-redsetup-public"
+}
+
+variable "release_type" {
+  type    = string
+  default = ""
+}
+
+variable "rel_dist_path" {
+  type    = string
+  default = "ubuntu/24.04"
+}
+

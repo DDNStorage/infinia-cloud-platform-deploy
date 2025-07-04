@@ -49,11 +49,11 @@ class TerraformManager(object):
                 "vpc_id": "vpc-0643ea52b06790437",
                 "security_group_id": "sg-0514508ec0ae982b9",
                 "key_pair_name": "dev-keys",
-                "infinia_ami_id": "ami-055bf27bf881fe1c5",
+                "infinia_ami_id": "ami-07e9088e7c795b957",
                 "num_ephemeral_device": "0",
-                "subnet_ids": ['subnet-0d359ef1e9d5e45be'],
+                "subnet_ids": ['subnet-0bcc62fd072a08b7e'],
                 "infinia_version": "2.2.16",
-                "enable_public_ip": "false",
+                "enable_public_ip": "true",
             }
         elif self.provider == "gcp":
             defaults = {

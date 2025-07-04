@@ -39,17 +39,15 @@ resource "aws_network_interface" "efa" {
   }
 }
 
-locals {
-  startup_script = templatefile("${path.module}/startup.sh", {
-    infinia_version = var.infinia_version
-    base_pkg_url    = "https://storage.googleapis.com/ddn-redsetup-public"
-    release_type    = ""
-    rel_dist_path   = "ubuntu/24.04"
-  })
-}
-
-
-
+# locals {
+#   startup_script = templatefile("${path.module}/startup.sh", {
+#     infinia_version = var.infinia_version
+#     base_pkg_url    = "https://storage.googleapis.com/ddn-redsetup-public"
+#     release_type    = ""
+#     rel_dist_path   = "ubuntu/24.04"
+#   })
+# }
+#
 
 # Deploy Infinia SDS Instances
 resource "aws_instance" "infinia" {
@@ -58,7 +56,7 @@ resource "aws_instance" "infinia" {
   instance_type        = var.instance_type_infinia
   key_name             = var.key_pair_name
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
-  user_data            = local.startup_script
+  # user_data            = local.startup_script
 
   dynamic "network_interface" {
     for_each = var.interface_type != "" ? [1] : []
@@ -150,37 +148,3 @@ resource "aws_instance" "client" {
     Deployment = var.infinia_deployment_name
   }
 }
-resource "local_file" "ansible_inventory" {
-  filename = "${path.module}/ansible/aws_ec2.yml"
-  content  = <<EOT
-plugin: aws_ec2
-regions:
-  - ${var.aws_region}
-filters:
-  tag:Role:
-    - realm
-    - nonrealm
-  tag:Deployment: "${var.infinia_deployment_name}"
-use_extra_vars: true
-keyed_groups:
-  - prefix: role
-    key: tags['Role']
-hostnames:
-  - instance-id
-EOT
-}
-
-resource "local_file" "ansible_vars" {
-  filename = "${path.module}/ansible/vars.yml"
-  content  = <<EOT
-# vars.yml
-# Non-sensitive variables
-infinia_version: ${var.infinia_version}
-ansible_connection: aws_ssm
-ansible_aws_ssm_bucket_name: red-ansible-scripts
-ansible_aws_ssm_region: ${var.aws_region}
-ansible_aws_ssm_timeout: 3600
-ansible_aws_ssm_retries: 200
-EOT
-}
-
