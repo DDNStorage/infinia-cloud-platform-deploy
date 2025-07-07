@@ -61,6 +61,7 @@
             chdir: /tmp
           when: "'role_realm' in group_names"
           become: yes
+          ignore_errors: true
 
         - name: Reboot realm node
           reboot:
@@ -99,6 +100,7 @@
             chdir: /tmp
           when: "'role_nonrealm' in group_names"
           become: yes
+          ignore_errors: true
 
         - name: Reboot non-realm node
           reboot:
