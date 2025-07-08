@@ -1,0 +1,12 @@
+goog_cm_deployment_name = "dynamo-test"
+zone = "us-central1-a"
+project_id = "infinia-solutions-436513"
+infinia_version = "2.2.20"
+source_image = "projects/red-101/global/images/ddn-infinia-2-2-20-ubuntu-2404-amd-2025-07-02"
+local_disks = 0
+machine_type = "n2-standard-16"
+pd_disk_size = 375
+pd_disk_count = 2
+pd_disk_type = "pd-ssd"
+num_infinia_instances = 3
+#desired_capacity = 27
