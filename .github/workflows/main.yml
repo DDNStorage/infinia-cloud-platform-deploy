@@ -3,7 +3,8 @@ name: Infinia Build, Deploy and Cleanup
 on:
   push:
     branches:
-    - test-pipeline
+      - test-pipeline
+  # Uncomment below to allow manual dispatch with inputs
   # workflow_dispatch:
   #   inputs:
   #     aws_region:
@@ -21,14 +22,16 @@ on:
 
 env:
   AWS_REGION: "ap-southeast-2"
+  INFINIA_VERSION: "2.2.20"
+  DEPLOYMENT_NAME: "infinia-deployment-test"
 
 jobs:
   packer-build:
     name: Build Packer AMI
     uses: ./.github/workflows/packer-build-aws.yml
     with:
-      aws_region: "ap-southeast-2"
-      infinia_version: "2.2.20"
+      aws_region: ${{ env.AWS_REGION }}
+      infinia_version: ${{ env.INFINIA_VERSION }}
     secrets: inherit
 
   infinia-deploy:
@@ -37,9 +40,9 @@ jobs:
     uses: ./.github/workflows/infinia-deploy-aws.yml
     with:
       ami_id: ${{ needs.packer-build.outputs.ami_id }}
-      aws_region: ${{ inputs.aws_region }}
-      deployment_name: ${{ inputs.deployment_name }}
-      infinia_version: ${{ inputs.infinia_version }}
+      aws_region: ${{ env.AWS_REGION }}
+      deployment_name: ${{ env.DEPLOYMENT_NAME }}
+      infinia_version: ${{ env.INFINIA_VERSION }}
     secrets: inherit
 
   infinia-destroy:
@@ -47,5 +50,5 @@ jobs:
     needs: infinia-deploy
     uses: ./.github/workflows/infinia-destroy-aws.yml
     with:
-      aws_region: "ap-southeast-2"
+      aws_region: ${{ env.AWS_REGION }}
     secrets: inherit
