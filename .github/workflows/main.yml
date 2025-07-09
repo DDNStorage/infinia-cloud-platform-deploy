@@ -1,31 +1,34 @@
 name: Infinia Build, Deploy and Cleanup
 
 on:
-  workflow_dispatch:
-    inputs:
-      aws_region:
-        description: "AWS Region"
-        required: true
-        type: string
-      deployment_name:
-        description: "Deployment Name"
-        required: true
-        type: string
-      infinia_version:
-        description: "Infinia Version"
-        required: true
-        type: string
+  push:
+    branches:
+    - test-pipeline
+  # workflow_dispatch:
+  #   inputs:
+  #     aws_region:
+  #       description: "AWS Region"
+  #       required: true
+  #       type: string
+  #     deployment_name:
+  #       description: "Deployment Name"
+  #       required: true
+  #       type: string
+  #     infinia_version:
+  #       description: "Infinia Version"
+  #       required: true
+  #       type: string
 
 env:
-  AWS_REGION: ${{ inputs.aws_region }}
+  AWS_REGION: "ap-southeast-2"
 
 jobs:
   packer-build:
     name: Build Packer AMI
     uses: ./.github/workflows/packer-build-aws.yml
     with:
-      aws_region: ${{ inputs.aws_region }}
-      infinia_version: ${{ inputs.infinia_version }}
+      aws_region: "ap-southeast-2"
+      infinia_version: "2.2.20"
     secrets: inherit
 
   infinia-deploy:
@@ -44,5 +47,5 @@ jobs:
     needs: infinia-deploy
     uses: ./.github/workflows/infinia-destroy-aws.yml
     with:
-      aws_region: ${{ inputs.aws_region }}
+      aws_region: "ap-southeast-2"
     secrets: inherit
