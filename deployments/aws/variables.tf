@@ -11,7 +11,7 @@ variable "infinia_deployment_name" {
 variable "aws_region" {
   description = "AWS region where resources will be deployed"
   type        = string
-  default     = "us-west-2"
+  default     = "us-east-1"
 }
 
 variable "infinia_ami_id" {
@@ -22,6 +22,7 @@ variable "infinia_ami_id" {
 variable "client_ami_id" {
   description = "AMI ID for the client instances"
   type        = string
+  default     = ""
 }
 
 variable "num_infinia_instances" {
@@ -33,7 +34,7 @@ variable "num_infinia_instances" {
 variable "num_client_instances" {
   description = "Number of client instances to deploy"
   type        = number
-  default     = 1
+  default     = 0
 }
 
 variable "key_pair_name" {
@@ -71,16 +72,19 @@ variable "security_group_id" {
 variable "root_device_size" {
   description = "The size for the root device"
   type        = number
+  default     = 0
 }
 
 variable "num_ephemeral_devices" {
   description = "The number of ephemeral devices"
   type        = number
+  default     = 0
 }
 
 variable "interface_type" {
   description = "The ethernet interface type"
   type        = string
+  default     = ""
 }
 
 variable "use_ebs_volumes" {
@@ -98,13 +102,13 @@ variable "ebs_volume_size" {
 variable "enable_public_ip" {
   description = "Flag to determin whether enalbe public IP"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "infinia_version" {
   description = "The infinia version"
   type        = string
-  default     = "1.3.36"
+  default     = "2.2.16"
 }
 
 variable "infinia_license" {
@@ -122,4 +126,31 @@ variable "realm_entry_host" {
   type    = string
   default = ""
 
+}
+
+variable "realm_secret" {
+  description = "Secret for the Infinia realm"
+  type        = string
+  sensitive   = true # Mark as sensitive to prevent logging
+  default     = "PA-ssW00r^d"
+}
+
+variable "admin_password" {
+  description = "Admin password for Infinia"
+  type        = string
+  sensitive   = true # Mark as sensitive to prevent logging
+  default     = "PA-ssW00r^d"
+}
+
+variable "base_pkg_url" {
+  type    = string
+  default = "https://storage.googleapis.com/ddn-redsetup-public"
+}
+
+variable "release_type" {
+  default = ""
+}
+
+variable "rel_dist_path" {
+  default = "ubuntu/24.04"
 }

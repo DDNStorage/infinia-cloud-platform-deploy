@@ -39,29 +39,6 @@ resource "aws_network_interface" "efa" {
   }
 }
 
-# locals {
-#   startup_script = templatefile("${path.module}/startup.sh", {
-#     infinia_version = var.infinia_version
-#     base_pkg_url    = "https://storage.googleapis.com/ddn-redsetup-public"
-#     release_type    = ""
-#     rel_dist_path   = "ubuntu/24.04"
-#   })
-# }
-#
-locals {
-  startup_script = templatefile("${path.module}/startup.sh", {
-    infinia_version        = var.infinia_version
-    realm_entry_host       = var.realm_entry_host
-    realm_entry_secret     = var.realm_entry_secret
-    admin_password         = ""
-    infinia_instance_count = var.num_infinia_instances
-    infinia_license        = var.infinia_license
-    base_pkg_url           = "https://storage.googleapis.com/ddn-redsetup-public"
-    release_type           = ""
-    rel_dist_path          = "ubuntu/24.04"
-  })
-}
-
 # Deploy Infinia SDS Instances
 resource "aws_instance" "infinia" {
   count                = var.num_infinia_instances
@@ -69,7 +46,7 @@ resource "aws_instance" "infinia" {
   instance_type        = var.instance_type_infinia
   key_name             = var.key_pair_name
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
-  user_data            = local.startup_script
+  #user_data            = local.user_startup_script
 
   dynamic "network_interface" {
     for_each = var.interface_type != "" ? [1] : []
@@ -95,7 +72,7 @@ resource "aws_instance" "infinia" {
       instance_type,
       key_name,
       root_block_device,
-      tags,
+      tags, #
       volume_tags
     ]
   }
