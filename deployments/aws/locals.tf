@@ -18,21 +18,27 @@ else
 fi
 
 wget "${var.base_pkg_url}/releases${var.release_type}/${var.rel_dist_path}/redsetup_${var.infinia_version}_$(dpkg --print-architecture)${var.release_type}.deb?cache-time=$(date +%s)" -O /tmp/redsetup.deb
-apt install -y /tmp/redsetup.deb >> /tmp/log
+apt install -y /tmp/redsetup.deb >> log
 
 wget "${var.base_pkg_url}/releases/rmd_template.json" -O /tmp/rmd_template.json
 envsubst < /tmp/rmd_template.json > /tmp/rmd.json
 
-rm  -rf "/etc/red/deploy/config.lock"  && redsetup -reset >> /tmp/log || echo "Error running redsetup reset" >> log
+rm  -rf "/etc/red/deploy/config.lock"  && redsetup -reset >> log || echo "Error running redsetup reset" >> log
 redsetup -realm-entry -realm-entry-secret PA-ssW00r^d --admin-password PA-ssW00r^d -ctrl-plane-ip $(hostname --ip-address)  -skip-reboot -skip-hardware-check >> log
 #redsetup -reset >> /tmp/log
+redcli user login realm_admin -p 'PA-ssW00r^d'  >> log || echo "Error: redcli login failed" >> log
+redcli realm config generate >> log || echo "Error: redcli config generate failed" >> log
+redcli realm config update >> log || echo "Error: redcli config update failed"
+redcli license install -a 1DE94FE1-BE7D-4A4B-8DA2-7761ED7B66EA -y >> log
+redcli cluster create c${var.num_infinia_instances} >> log || echo "Error: failed to create cluster"
+
 
 rm -rf /var/lib/apt/lists/*
 journalctl --rotate && journalctl --vacuum-time=1s
 EOT
 }
 
-# SSM Document
+#SSM Document
 resource "aws_ssm_document" "redsetup_script" {
   name          = "RunRedsetupScript"
   document_type = "Command"
