@@ -4,8 +4,8 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "infinia-tf-state"
+    bucket         = "infinia-tf-state-910424551974"
     key            = "infinia/state.tfstate"
-    region         = "us-east-1"
+    region         = "ap-southeast-2"
   }
 }
