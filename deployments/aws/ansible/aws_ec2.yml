@@ -1,0 +1,12 @@
+plugin: aws_ec2
+regions:
+  - ap-southeast-2
+filters:
+  tag:Role: ['realm', 'nonrealm']
+  tag:Deployment: "infinia-deployment-2-2-20"
+use_extra_vars: true
+keyed_groups:
+  - prefix: role
+    key: tags['Role']
+hostnames:
+  - instance-id
