@@ -57,3 +57,8 @@ variable "ebs_volume_size" {
   type        = number
   default     = 128
 }
+
+variable "infinia_version" {
+  type    = string
+  default = "2.2.20"
+}
