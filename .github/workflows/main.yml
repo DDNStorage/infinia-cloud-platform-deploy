@@ -21,7 +21,7 @@ jobs:
     with:
       ami_id: ${{ needs.packer-build.outputs.ami_id }}
       aws_region: "ap-southeast-2"
-      deployment_name: "infinia-deployment-test"
+      deployment_name: "infinia_deployment"
       infinia_version: "2.2.20"
     secrets: inherit
 
