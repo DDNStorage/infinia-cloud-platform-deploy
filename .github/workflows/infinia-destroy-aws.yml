@@ -8,7 +8,7 @@ on:
         required: true
         type: string
 env:
-  TERRAFORM_DIR: deployments/aws
+  TERRAFORM_DIR: deployments/aws-test
 
 jobs:
   destroy-infinia:

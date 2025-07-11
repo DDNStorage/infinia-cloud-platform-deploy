@@ -21,7 +21,7 @@ on:
         type: string
 
 env:
-  TERRAFORM_DIR: deployments/aws
+  TERRAFORM_DIR: deployments/aws-test
   ANSIBLE_DIR: deployments/aws/ansible
 
 jobs:
