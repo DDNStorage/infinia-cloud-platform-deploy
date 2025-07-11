@@ -5,11 +5,11 @@ key_pair_name     = "dev-keys"
 #infinia_ami_id    = "ami-020cba7c55df1f615" #clean
 infinia_ami_id          = "ami-055bf27bf881fe1c5"
 num_ephemeral_device    = "0"
-subnet_ids              = ["subnet-0bcc62fd072a08b7e"]
+subnet_ids              = ["subnet-06c1a6ccde3dec102"]
 infinia_version         = "2.2.16"
-enable_public_ip        = "true"
-infinia_deployment_name = "eliaso"
+enable_public_ip        = "false"
+infinia_deployment_name = "raidr"
 root_device_size        = 256
 num_infinia_instances   = "2"
-instance_type_infinia   = "i3en.24xlarge"
+instance_type_infinia   = "m7a.2xlarge"
 

@@ -30,7 +30,7 @@ redcli user login realm_admin -p 'PA-ssW00r^d'  >> log || echo "Error: redcli lo
 redcli realm config generate >> log || echo "Error: redcli config generate failed" >> log
 redcli realm config update >> log || echo "Error: redcli config update failed"
 redcli license install -a 1DE94FE1-BE7D-4A4B-8DA2-7761ED7B66EA -y >> log
-redcli cluster create c${var.num_infinia_instances} >> log || echo "Error: failed to create cluster"
+redcli cluster create c1   -S=false -z  >> log || echo "Error: failed to create cluster"
 
 
 rm -rf /var/lib/apt/lists/*
@@ -65,7 +65,7 @@ resource "null_resource" "trigger_redsetup" {
 
   provisioner "local-exec" {
     command     = <<EOF
-      sleep 60 # Wait for ssm
+      sleep 300 # Wait for ssm
       aws ssm send-command \
         --instance-ids ${aws_instance.infinia[count.index].id} \
         --document-name "${aws_ssm_document.redsetup_script.name}" \

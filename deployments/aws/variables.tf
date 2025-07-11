@@ -154,3 +154,8 @@ variable "release_type" {
 variable "rel_dist_path" {
   default = "ubuntu/24.04"
 }
+
+variable "force_cluster_config" {
+  type    = bool
+  default = false
+}
