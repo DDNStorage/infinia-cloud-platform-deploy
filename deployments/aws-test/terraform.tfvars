@@ -12,5 +12,5 @@ instance_type_infinia = "i3en.6xlarge" # Override with your desired instance typ
 # instance_type_client  = "t3.large"     # Override with your desired instance type
 root_device_size      = 256
 num_ephemeral_devices = 0
-interface_type        = "" # Keep it empty if not using EFA interaces
-ebs_volume_size       = 128
+# interface_type        = "" # Keep it empty if not using EFA interaces
+ebs_volume_size = 128
