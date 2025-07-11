@@ -1,3 +1,7 @@
+locals {
+  sanitized_deployment_name = replace(var.infinia_deployment_name, "_", "-")
+}
+
 resource "aws_iam_instance_profile" "ssm_instance_profile" {
   name = "${var.infinia_deployment_name}-ssm-instance-profile"
   role = aws_iam_role.ssm_role.name
@@ -67,14 +71,14 @@ resource "aws_ec2_instance_state" "infinia_grouped_instances" {
 
 
 resource "aws_lb" "internal_nlb" {
-  name               = "${var.infinia_deployment_name}-nlb"
+  name               = "${local.sanitized_deployment_name}-nlb"
   internal           = true
   load_balancer_type = "network"
   subnets            = [aws_subnet.private.id]
 }
 
 resource "aws_lb_target_group" "nlb_target_group" {
-  name     = "${var.infinia_deployment_name}-tg"
+  name     = "${local.sanitized_deployment_name}-tg"
   port     = 8111
   protocol = "TCP"
   vpc_id   = aws_vpc.infinia_vpc.id

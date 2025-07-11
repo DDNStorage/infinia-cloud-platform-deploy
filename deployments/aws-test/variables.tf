@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "infinia_deployment_name" {
   description = "Name prefix for Infinia deployment"
   type        = string
-  default     = "infinia-deployment-2-2-20"
+  default     = "infinia"
 }
 
 variable "num_infinia_instances" {
