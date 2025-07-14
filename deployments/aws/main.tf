@@ -46,8 +46,7 @@ resource "aws_instance" "infinia" {
   instance_type        = var.instance_type_infinia
   key_name             = var.key_pair_name
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
-  user_data            = local.user_startup_script
-
+  user_data            = local.cloud_init_user_data
   dynamic "network_interface" {
     for_each = var.interface_type != "" ? [1] : []
     content {
@@ -60,8 +59,6 @@ resource "aws_instance" "infinia" {
   subnet_id                   = var.interface_type == "" ? element(var.subnet_ids, count.index % length(var.subnet_ids)) : null
   security_groups             = var.interface_type == "" ? [var.security_group_id] : null
   associate_public_ip_address = var.interface_type == "" ? var.enable_public_ip : null
-
-
 
   lifecycle {
     create_before_destroy = false
@@ -138,3 +135,6 @@ resource "aws_instance" "client" {
     Deployment = var.infinia_deployment_name
   }
 }
+
+
+
