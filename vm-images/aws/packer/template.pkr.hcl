@@ -5,11 +5,11 @@ variable "instance_type" {
 
 variable "region" {
   type    = string
-  default = "ap-northeast-2"
+  default = "us-east-1"
 }
 
 variable "infinia_version" {
-  default = "1.3.36"
+  default = "2.1.30"
 }
 
 variable "base_pkg_url" {
@@ -96,8 +96,23 @@ build {
       "rm -rf /var/lib/apt/lists/*",
       "journalctl --rotate && journalctl --vacuum-time=1s",
       "rm -rf /var/log/* /tmp/* /var/tmp/*",
+      "cat <<EOF > /etc/systemd/system/cloudinit-rerun.service",
+      "[Unit]",
+      "Description=Re-run cloud-init after reboot",
+      "After=network.target",
+      "",
+      "[Service]",
+      "Type=oneshot",
+      "ExecStart=/bin/bash -c 'cloud-init clean && cloud-init init && cloud-init modules --mode=config && cloud-init modules --mode=final'",
+      "RemainAfterExit=true",
+      "",
+      "[Install]",
+      "WantedBy=multi-user.target",
+      "EOF",
+      "systemctl enable cloudinit-rerun.service"
     ]
   }
+
 
   # Truncate machine-id to ensure uniqueness per instance boot
   provisioner "shell" {
