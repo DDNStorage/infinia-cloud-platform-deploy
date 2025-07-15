@@ -1,11 +1,5 @@
-# ======================================
-# Data source
-# ======================================
 data "aws_availability_zones" "available" {}
 
-# ======================================
-# VPC
-# ======================================
 resource "aws_vpc" "infinia_vpc" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_support   = true
@@ -15,9 +9,6 @@ resource "aws_vpc" "infinia_vpc" {
   }
 }
 
-# ======================================
-# Internet Gateway
-# ======================================
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.infinia_vpc.id
   tags = {
@@ -25,14 +16,11 @@ resource "aws_internet_gateway" "igw" {
   }
 }
 
-# ======================================
-# Subnets
-# ======================================
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.infinia_vpc.id
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
-  availability_zone       = data.aws_availability_zones.available.names[0]
+  availability_zone       = local.selected_az
   tags = {
     Name = "${var.infinia_deployment_name}-public-subnet"
   }
@@ -41,21 +29,16 @@ resource "aws_subnet" "public" {
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.infinia_vpc.id
   cidr_block        = "10.0.2.0/24"
-  availability_zone = data.aws_availability_zones.available.names[0]
+  availability_zone = local.selected_az
   tags = {
     Name = "${var.infinia_deployment_name}-private-subnet"
   }
 }
-# ======================================
-# Elastic IP for NAT Gateway
-# ======================================
+
 resource "aws_eip" "nat" {
   depends_on = [aws_internet_gateway.igw]
 }
 
-# ======================================
-# NAT Gateway
-# ======================================
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.public.id
@@ -64,9 +47,6 @@ resource "aws_nat_gateway" "nat" {
   }
 }
 
-# ======================================
-# Route Tables
-# ======================================
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.infinia_vpc.id
 
@@ -93,9 +73,6 @@ resource "aws_route_table" "private" {
   }
 }
 
-# ======================================
-# Route Table Associations
-# ======================================
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
   route_table_id = aws_route_table.public.id
@@ -106,18 +83,43 @@ resource "aws_route_table_association" "private" {
   route_table_id = aws_route_table.private.id
 }
 
-# ======================================
-# Security Group
-# ======================================
 resource "aws_security_group" "infinia_sg" {
   name        = "${var.infinia_deployment_name}-sg"
-  description = "Allow TCP 8111 internally"
+  description = "Allow internal traffic and required external access"
   vpc_id      = aws_vpc.infinia_vpc.id
 
   ingress {
     from_port   = 8111
     to_port     = 8111
     protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
     cidr_blocks = ["10.0.0.0/16"]
   }
 

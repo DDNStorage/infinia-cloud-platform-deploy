@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set error handling
-set -e  # Exit on error
+set -e
 trap 'echo "Error occurred at line $LINENO. Command: $BASH_COMMAND"' ERR
 
 # Function to display usage
@@ -14,16 +14,16 @@ usage() {
     echo "  -v, --version            RedSetup version (mandatory)"
     echo "  -s, --realm-secret       Realm entry secret (optional, default: PA-ssW00r^d)"
     echo "  -p, --admin-password     Admin password (optional, default: PA-ssW00r^d)"
-    echo "  --skip-reboot           Skip automatic reboot after installation (optional)"
+    echo "  --skip-reboot            Skip automatic reboot after installation (optional)"
     exit 1
 }
 
-# Function for logging
+# Logging function
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
 
-# Parse command line arguments
+# Parse arguments
 REALM_ENTRY=false
 NON_REALM_ENTRY=false
 REALM_ENTRY_IP=""
@@ -77,7 +77,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Validate arguments
+# Validation
 log "Validating arguments..."
 if [[ "$NON_REALM_ENTRY" == "true" && -z "$REALM_ENTRY_IP" ]]; then
     log "Error: --ip is mandatory when using --non-realm-entry"
@@ -99,7 +99,7 @@ if [[ "$REALM_ENTRY" == "false" && "$NON_REALM_ENTRY" == "false" ]]; then
     usage
 fi
 
-# Common setup
+# Setup environment
 log "Setting up environment variables..."
 export BASE_PKG_URL="https://storage.googleapis.com/ddn-redsetup-public"
 export RELEASE_TYPE=""
@@ -113,7 +113,7 @@ log "- Architecture: $TARGET_ARCH"
 log "- Distribution path: $REL_DIST_PATH"
 log "- Package URL: $REL_PKG_URL"
 
-# Download and install redsetup
+# Download and install
 log "Downloading redsetup package..."
 if ! wget "$REL_PKG_URL/redsetup_${RED_VER}_${TARGET_ARCH}${RELEASE_TYPE}.deb?cache-time=$(date +%s)" \
     -O /tmp/redsetup.deb; then
@@ -127,38 +127,28 @@ if ! sudo apt install -y /tmp/redsetup.deb; then
     exit 1
 fi
 
-# Configure based on node type
+# Run redsetup
 if [[ "$REALM_ENTRY" == "true" ]]; then
     log "Configuring realm entry node..."
-    log "Downloading template..."
-    if ! wget "$BASE_PKG_URL/releases/rmd_template.json" -O /tmp/rmd_template.json; then
-        log "Error: Failed to download template"
-        exit 1
-    fi
-
-    log "Processing template..."
-    if ! envsubst < /tmp/rmd_template.json > /tmp/rmd.json; then
-        log "Error: Failed to process template"
-        exit 1
-    fi
-
-    log "Executing redsetup for realm entry node..."
-    if ! sudo redsetup --realm-entry-secret "$REALM_SECRET" --admin-password "$ADMIN_PASSWORD" \
-        --realm-entry --ctrl-plane-ip "$(hostname -I | awk '{print $1}' | tr -d ' ')" \
-        --release-metadata-file /tmp/rmd.json $([ "$SKIP_REBOOT" == "true" ] && echo "-skip-reboot"); then
+    CMD="sudo redsetup --realm-entry-secret \"$REALM_SECRET\" --admin-password \"$ADMIN_PASSWORD\" --realm-entry --ctrl-plane-ip \"$(hostname -I | awk '{print $1}' | tr -d ' ')\""
+    [[ "$SKIP_REBOOT" == "true" ]] && CMD="$CMD --skip-reboot"
+    log "Executing: $CMD"
+    eval $CMD || {
         log "Error: Failed to configure realm entry node"
         exit 1
-    fi
+    }
 elif [[ "$NON_REALM_ENTRY" == "true" ]]; then
     log "Configuring non-realm entry node..."
-    if ! sudo redsetup --realm-entry-address "$REALM_ENTRY_IP" --realm-entry-secret "$REALM_SECRET" \
-        $([ "$SKIP_REBOOT" == "true" ] && echo "-skip-reboot"); then
+    CMD="sudo redsetup --realm-entry-address \"$REALM_ENTRY_IP\" --realm-entry-secret \"$REALM_SECRET\""
+    [[ "$SKIP_REBOOT" == "true" ]] && CMD="$CMD --skip-reboot"
+    log "Executing: $CMD"
+    eval $CMD || {
         log "Error: Failed to configure non-realm entry node"
         exit 1
-    fi
+    }
 fi
 
 log "Cleaning up temporary files..."
-rm -f /tmp/redsetup.deb /tmp/rmd_template.json /tmp/rmd.json
+rm -f /tmp/redsetup.deb
 
 log "Deployment completed successfully!"

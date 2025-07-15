@@ -1,4 +1,4 @@
-infinia_deployment_name = "deployment_name"
+infinia_deployment_name = "infinia"
 aws_region              = "ap-southeast-2"
 # vpc_id                  = "vpc-07077509cd5b0bbfd"
 # subnet_ids              = ["subnet-00c82fa683b0b31d8", "subnet-05c8a5c5a03e5e2e9"]
@@ -10,6 +10,6 @@ num_infinia_instances = 3
 instance_type_infinia = "i3en.6xlarge" # Override with your desired instance type
 # instance_type_client  = "t3.large"     # Override with your desired instance type
 root_device_size      = 256
-num_ephemeral_devices = 0
+num_ephemeral_devices = 4
 # interface_type        = "" # Keep it empty if not using EFA interaces
 ebs_volume_size = 128

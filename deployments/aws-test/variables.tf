@@ -4,6 +4,13 @@ variable "aws_region" {
   default     = "ap-southeast-2"
 }
 
+variable "allowed_azs" {
+  description = "List of AZs to choose from (excluding those with known capacity issues)"
+  type        = list(string)
+  default     = ["ap-southeast-2b", "ap-southeast-2c"]
+}
+
+
 variable "infinia_deployment_name" {
   description = "Name prefix for Infinia deployment"
   type        = string
@@ -25,7 +32,7 @@ variable "infinia_ami_id" {
 variable "instance_type_infinia" {
   description = "EC2 instance type for Infinia"
   type        = string
-  default     = "i3en.2xlarge"
+  default     = "i3en.6xlarge"
 }
 
 # variable "key_pair_name" {
@@ -55,7 +62,7 @@ variable "num_ephemeral_devices" {
 variable "ebs_volume_size" {
   description = "Size of each additional EBS volume"
   type        = number
-  default     = 128
+  default     = 7500
 }
 
 variable "infinia_version" {

@@ -1,5 +1,6 @@
 locals {
   sanitized_deployment_name = replace(var.infinia_deployment_name, "_", "-")
+  selected_az               = element(var.allowed_azs, 0)
 }
 
 resource "aws_iam_instance_profile" "ssm_instance_profile" {
@@ -12,15 +13,13 @@ resource "aws_iam_role" "ssm_role" {
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        },
-        Action = "sts:AssumeRole"
-      }
-    ]
+    Statement = [{
+      Effect = "Allow",
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }]
   })
 }
 
@@ -29,12 +28,10 @@ resource "aws_iam_role_policy_attachment" "ssm_core_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-
 resource "aws_instance" "infinia" {
-  count         = var.num_infinia_instances
-  ami           = var.infinia_ami_id
-  instance_type = var.instance_type_infinia
-  #   key_name                    = var.key_pair_name
+  count                       = var.num_infinia_instances
+  ami                         = var.infinia_ami_id
+  instance_type               = var.instance_type_infinia
   iam_instance_profile        = aws_iam_instance_profile.ssm_instance_profile.name
   subnet_id                   = aws_subnet.private.id
   security_groups             = [aws_security_group.infinia_sg.id]
@@ -50,11 +47,22 @@ resource "aws_instance" "infinia" {
     for_each = var.use_ebs_volumes ? range(var.num_ephemeral_devices) : []
     content {
       device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
-      volume_size           = var.ebs_volume_size
+      volume_size           = var.ebs_volume_size # Default size for each disk
       volume_type           = "gp3"
       delete_on_termination = true
     }
   }
+
+  # dynamic "ebs_block_device" {
+  #   for_each = var.use_ebs_volumes ? range(var.num_ephemeral_devices) : []
+  #   content {
+  #     # device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
+  #     device_name           = "/dev/sd${["f", "g", "h", "i"][ebs_block_device.value]}"
+  #     volume_size           = var.ebs_volume_size
+  #     volume_type           = "gp3"
+  #     delete_on_termination = true
+  #   }
+  # }
 
   tags = {
     Name       = "${var.infinia_deployment_name}-sn-${format("%02d", count.index)}"
@@ -68,7 +76,6 @@ resource "aws_ec2_instance_state" "infinia_grouped_instances" {
   instance_id = each.value
   state       = "running"
 }
-
 
 resource "aws_lb" "internal_nlb" {
   name               = "${local.sanitized_deployment_name}-nlb"

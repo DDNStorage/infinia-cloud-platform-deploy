@@ -98,11 +98,23 @@ if ! redcli license install -a "$LICENSE_KEY" -y; then
     exit 1
 fi
 
-log "Creating cluster..."
-if ! redcli cluster create c1 -S=false -z; then
-    log "Error: Failed to create cluster"
-    exit 1
+# log "Creating cluster..."
+# if ! redcli cluster create c1 -S=false -z; then
+#     log "Error: Failed to create cluster"
+#     exit 1
+# fi
+
+log "Checking if cluster 'c1' already exists..."
+if redcli cluster show c1 >/dev/null 2>&1; then
+    log "Cluster 'c1' already exists. Skipping creation."
+else
+    log "Creating cluster..."
+    if ! redcli cluster create c1 -S=false -z --force; then
+        log "Error: Failed to create cluster"
+        exit 1
+    fi
 fi
+
 
 log "Displaying cluster information..."
 if ! redcli cluster show; then
