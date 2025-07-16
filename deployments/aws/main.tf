@@ -28,7 +28,6 @@ resource "aws_iam_instance_profile" "ssm_instance_profile" {
   role = aws_iam_role.ssm_role.name
 }
 
-
 resource "aws_network_interface" "efa" {
   count           = var.num_infinia_instances
   subnet_id       = element(var.subnet_ids, count.index % length(var.subnet_ids))
@@ -47,10 +46,7 @@ resource "aws_instance" "infinia" {
   key_name             = var.key_pair_name
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
   user_data            = local.user_startup_script
-  metadata_options {
-    http_tokens   = "optional"
-    http_endpoint = "enabled"
-  }
+
   dynamic "network_interface" {
     for_each = var.interface_type != "" ? [1] : []
     content {
@@ -73,7 +69,7 @@ resource "aws_instance" "infinia" {
       instance_type,
       key_name,
       root_block_device,
-      tags, #
+      tags,
       volume_tags
     ]
   }
@@ -139,6 +135,4 @@ resource "aws_instance" "client" {
     Deployment = var.infinia_deployment_name
   }
 }
-
-
 
