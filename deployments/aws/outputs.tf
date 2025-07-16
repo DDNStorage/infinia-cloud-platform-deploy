@@ -43,6 +43,10 @@ output "client_instance_count" {
   value       = var.num_client_instances
 }
 
+output "infinia_realm_node_ip" {
+  value = aws_network_interface.efa[0].private_ip
+}
+
 # output "load_balancer_private_ip" {
 #   description = "The private IP address of the load balancer instance"
 #   value       = aws_instance.load_balancer.private_ip

@@ -47,6 +47,10 @@ resource "aws_instance" "infinia" {
   key_name             = var.key_pair_name
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
   user_data            = local.user_startup_script
+  metadata_options {
+    http_tokens   = "optional"
+    http_endpoint = "enabled"
+  }
   dynamic "network_interface" {
     for_each = var.interface_type != "" ? [1] : []
     content {

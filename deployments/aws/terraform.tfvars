@@ -11,6 +11,7 @@ infinia_version         = "2.2.16"
 enable_public_ip        = "true"
 infinia_deployment_name = "jazmin-1"
 root_device_size        = 256
-num_infinia_instances   = "1"
+num_infinia_instances   = "2"
 instance_type_infinia   = "i3en.2xlarge"
+ebs_volume_size         = 7500
 

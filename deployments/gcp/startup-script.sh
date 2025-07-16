@@ -81,6 +81,7 @@ check_infinia_instance_count() {
 # Function to validate and activate license
 validate_and_activate_license() {
     local license=$1
+/crede
 
     if [ -n "$license" ]; then
         log_info "License provided. Activating license..."
