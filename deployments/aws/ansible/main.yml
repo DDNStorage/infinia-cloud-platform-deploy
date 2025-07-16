@@ -30,12 +30,16 @@
         - name: Log Realm Node Setup Start
           shell: 'echo "$(date) 🚀 Starting Realm Node Setup..." >> /var/log/infinia/setup.log'
           become: yes
-        
-        # - name: Reset Redsetup Before Running Setup
-        #   shell: |
-        #     echo "$(date) 🔄 Running redsetup --reset..." >> /var/log/infinia/setup.log
-        #     sudo redsetup --reset >> /var/log/infinia/setup.log 2>&1 || echo "⚠️ Redsetup Reset Failed!" >> /var/log/infinia/setup.log
-        #   become: yes
+
+        - name: Reset Redsetup Before Running Setup
+          shell: |
+            echo "$(date) 🔄 Running redsetup --reset..." >> /var/log/infinia/setup.log
+            sudo rm -rf /etc/red/deploy/config.lock
+            sudo redsetup --reset >> /var/log/infinia/setup.log 2>&1 || echo "⚠️ Redsetup Reset Failed!" >> /var/log/infinia/setup.log
+          become: yes
+          tags: cleanup
+          when: "'cleanup' in ansible_run_tags"
+
 
         - name: Realm Node Setup
           shell: |
@@ -46,8 +50,8 @@
               --version {{ infinia_version }} \
               --realm-secret "{{ realm_secret }}" \
               --admin-password "{{ admin_password }}" >> /var/log/infinia/setup.log 2>&1 \
-              --skip-reboot
-            '
+              --skip-reboot'
+
           args:
             chdir: /tmp
           when: "'role_realm' in group_names"

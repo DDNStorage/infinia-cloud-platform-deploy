@@ -81,7 +81,8 @@ resource "aws_instance" "infinia" {
 
   # Attach EBS volumes only if use_ebs_volumes is true
   dynamic "ebs_block_device" {
-    for_each = var.use_ebs_volumes ? range(var.num_ephemeral_devices) : []
+ #   for_each = var.use_ebs_volumes ? range(var.num_ephemeral_devices) : []
+    for_each = var.use_ebs_volumes ? range(var.ebs_volumes_per_vm) : []
     content {
       device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
       volume_size           = var.ebs_volume_size # Default size for each disk
@@ -140,9 +141,9 @@ resource "local_file" "ansible_inventory" {
   content  = <<EOT
 plugin: aws_ec2
 regions:
-  - var.aws_region
+  - ${var.aws_region}
 filters:
-  tag:Role: ['realm', 'nonrealm']
+#  tag:Role: ['realm', 'nonrealm']
   tag:Deployment: "${var.infinia_deployment_name}"
 use_extra_vars: true
 keyed_groups:
@@ -150,6 +151,12 @@ keyed_groups:
     key: tags['Role']
 hostnames:
   - instance-id
+#new code for client node
+groups:
+  client_nodes: "tags.Name is defined and 'cn' in tags.Name"
+  realm_nodes: "tags.Role is defined and tags.Role == 'realm'"
+  nonrealm_nodes: "tags.Role is defined and tags.Role == 'nonrealm'"
+
 EOT
 }
 
@@ -160,8 +167,8 @@ resource "local_file" "ansible_vars" {
 # Non-sensitive variables
 infinia_version: ${var.infinia_version}
 ansible_connection: aws_ssm
-ansible_aws_ssm_bucket_name: red-ansible-scripts
-ansible_aws_ssm_region: var.aws_region
+ansible_aws_ssm_bucket_name: ${var.bucket_name}
+ansible_aws_ssm_region: ${var.aws_region}  #us-east-1
 ansible_aws_ssm_timeout: 3600
 ansible_aws_ssm_retries: 200
 EOT

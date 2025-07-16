@@ -44,7 +44,7 @@ This file contains non-sensitive variables used in the playbook. Example:
 
 ```yaml
 infinia_version: 1.3.36
-ansible_aws_ssm_bucket_name: red-ansible-scripts
+ansible_aws_ssm_bucket_name: red-ansible-scripts-test
 ansible_aws_ssm_region: us-east-1
 ansible_aws_ssm_timeout: 3600
 
@@ -94,6 +94,14 @@ You can run specific parts of the playbook using tags
   ```bash
   ansible-playbook main.yml -i inventory.yml --tags configure
   ```
+  - **Cleanup the RED config file**:
+  ```bash
+  ansible-playbook main.yml -i inventory.yml --tags cleanup
+  ```
+  
+  - **Install the RED Clients**:
+  ```bash
+  ansible-playbook -i aws_ec2.yml -e @vars.yml install-clients-enhanced.yml
 
 ## Encryption with Ansible Vault
 Sensitive data in secret.yml is encrypted using Ansible Vault. To edit the encrypted file, use:
