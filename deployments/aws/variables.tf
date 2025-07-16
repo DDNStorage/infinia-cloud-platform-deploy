@@ -106,3 +106,7 @@ variable "infinia_version" {
   type        = string
   default     = "1.3.36"
 }
+variable "ansible_aws_ssm_bucket_name" {
+  description = "The bucket to have ansible playbook runs"
+  type        = string
+}
