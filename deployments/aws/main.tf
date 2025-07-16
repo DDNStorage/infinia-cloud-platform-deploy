@@ -140,7 +140,7 @@ resource "local_file" "ansible_inventory" {
   content  = <<EOT
 plugin: aws_ec2
 regions:
-  - var.aws_region
+  - ${var.aws_region}
 filters:
   tag:Role: ['realm', 'nonrealm']
   tag:Deployment: "${var.infinia_deployment_name}"

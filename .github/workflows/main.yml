@@ -28,10 +28,10 @@ jobs:
       infinia_version: "2.2.24"
     secrets: inherit
 
-  infinia-destroy:
-    name: Destroy Infinia Infrastructure
-    needs: infinia-deploy
-    uses: ./.github/workflows/infinia-destroy-aws.yml
-    with:
-      aws_region: "ap-southeast-2"
-    secrets: inherit
+  # infinia-destroy:
+  #   name: Destroy Infinia Infrastructure
+  #   needs: infinia-deploy
+  #   uses: ./.github/workflows/infinia-destroy-aws.yml
+  #   with:
+  #     aws_region: "ap-southeast-2"
+  #   secrets: inherit
