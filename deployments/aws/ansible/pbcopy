@@ -1,0 +1,147 @@
+{
+    "VpcEndpoints": [
+        {
+            "VpcEndpointId": "vpce-06ce60aaa9046eba6",
+            "VpcEndpointType": "Interface",
+            "VpcId": "vpc-00299f7d7f21a3f96",
+            "ServiceName": "com.amazonaws.ap-southeast-2.ssm",
+            "State": "available",
+            "PolicyDocument": "{\n  \"Statement\": [\n    {\n      \"Action\": \"*\", \n      \"Effect\": \"Allow\", \n      \"Principal\": \"*\", \n      \"Resource\": \"*\"\n    }\n  ]\n}",
+            "RouteTableIds": [],
+            "SubnetIds": [
+                "subnet-025e1a9037f9fe929"
+            ],
+            "Groups": [
+                {
+                    "GroupId": "sg-0082215d91c7d5148",
+                    "GroupName": "infinia-sg"
+                }
+            ],
+            "IpAddressType": "ipv4",
+            "DnsOptions": {
+                "DnsRecordIpType": "ipv4"
+            },
+            "PrivateDnsEnabled": true,
+            "RequesterManaged": false,
+            "NetworkInterfaceIds": [
+                "eni-0702c4ca54e10f7b8"
+            ],
+            "DnsEntries": [
+                {
+                    "DnsName": "vpce-06ce60aaa9046eba6-851w7sxr.ssm.ap-southeast-2.vpce.amazonaws.com",
+                    "HostedZoneId": "ZDK2GCRPAFKGO"
+                },
+                {
+                    "DnsName": "vpce-06ce60aaa9046eba6-851w7sxr-ap-southeast-2b.ssm.ap-southeast-2.vpce.amazonaws.com",
+                    "HostedZoneId": "ZDK2GCRPAFKGO"
+                },
+                {
+                    "DnsName": "ssm.ap-southeast-2.amazonaws.com",
+                    "HostedZoneId": "Z09872943AEK50G9DBNLT"
+                },
+                {
+                    "DnsName": "ssm-facade.ap-southeast-2.amazonaws.com",
+                    "HostedZoneId": "Z10110291P9IY3CL2GHSN"
+                },
+                {
+                    "DnsName": "ssm.ap-southeast-2.api.aws",
+                    "HostedZoneId": "Z101105423A5S4M47UV5O"
+                }
+            ],
+            "CreationTimestamp": "2025-07-16T06:30:09.660000+00:00",
+            "Tags": [],
+            "OwnerId": "102800183015",
+            "ServiceRegion": "ap-southeast-2"
+        },
+        {
+            "VpcEndpointId": "vpce-03cee3c78be50a8f0",
+            "VpcEndpointType": "Interface",
+            "VpcId": "vpc-00299f7d7f21a3f96",
+            "ServiceName": "com.amazonaws.ap-southeast-2.ec2messages",
+            "State": "available",
+            "PolicyDocument": "{\n  \"Statement\": [\n    {\n      \"Action\": \"*\", \n      \"Effect\": \"Allow\", \n      \"Principal\": \"*\", \n      \"Resource\": \"*\"\n    }\n  ]\n}",
+            "RouteTableIds": [],
+            "SubnetIds": [
+                "subnet-025e1a9037f9fe929"
+            ],
+            "Groups": [
+                {
+                    "GroupId": "sg-0082215d91c7d5148",
+                    "GroupName": "infinia-sg"
+                }
+            ],
+            "IpAddressType": "ipv4",
+            "DnsOptions": {
+                "DnsRecordIpType": "ipv4"
+            },
+            "PrivateDnsEnabled": true,
+            "RequesterManaged": false,
+            "NetworkInterfaceIds": [
+                "eni-0019258f80b662c90"
+            ],
+            "DnsEntries": [
+                {
+                    "DnsName": "vpce-03cee3c78be50a8f0-q7woyelf.ec2messages.ap-southeast-2.vpce.amazonaws.com",
+                    "HostedZoneId": "ZDK2GCRPAFKGO"
+                },
+                {
+                    "DnsName": "vpce-03cee3c78be50a8f0-q7woyelf-ap-southeast-2b.ec2messages.ap-southeast-2.vpce.amazonaws.com",
+                    "HostedZoneId": "ZDK2GCRPAFKGO"
+                },
+                {
+                    "DnsName": "ec2messages.ap-southeast-2.amazonaws.com",
+                    "HostedZoneId": "Z01544793HFXWMTNV9BCA"
+                }
+            ],
+            "CreationTimestamp": "2025-07-16T06:30:51.229000+00:00",
+            "Tags": [],
+            "OwnerId": "102800183015",
+            "ServiceRegion": "ap-southeast-2"
+        },
+        {
+            "VpcEndpointId": "vpce-0b19e474e7c691362",
+            "VpcEndpointType": "Interface",
+            "VpcId": "vpc-00299f7d7f21a3f96",
+            "ServiceName": "com.amazonaws.ap-southeast-2.ssmmessages",
+            "State": "available",
+            "PolicyDocument": "{\n  \"Statement\": [\n    {\n      \"Action\": \"*\", \n      \"Effect\": \"Allow\", \n      \"Principal\": \"*\", \n      \"Resource\": \"*\"\n    }\n  ]\n}",
+            "RouteTableIds": [],
+            "SubnetIds": [
+                "subnet-025e1a9037f9fe929"
+            ],
+            "Groups": [
+                {
+                    "GroupId": "sg-0082215d91c7d5148",
+                    "GroupName": "infinia-sg"
+                }
+            ],
+            "IpAddressType": "ipv4",
+            "DnsOptions": {
+                "DnsRecordIpType": "ipv4"
+            },
+            "PrivateDnsEnabled": true,
+            "RequesterManaged": false,
+            "NetworkInterfaceIds": [
+                "eni-085d7fcdd80d82ee5"
+            ],
+            "DnsEntries": [
+                {
+                    "DnsName": "vpce-0b19e474e7c691362-1wkw8xva.ssmmessages.ap-southeast-2.vpce.amazonaws.com",
+                    "HostedZoneId": "ZDK2GCRPAFKGO"
+                },
+                {
+                    "DnsName": "vpce-0b19e474e7c691362-1wkw8xva-ap-southeast-2b.ssmmessages.ap-southeast-2.vpce.amazonaws.com",
+                    "HostedZoneId": "ZDK2GCRPAFKGO"
+                },
+                {
+                    "DnsName": "ssmmessages.ap-southeast-2.amazonaws.com",
+                    "HostedZoneId": "Z101013116852Z29QUHQQ"
+                }
+            ],
+            "CreationTimestamp": "2025-07-16T06:30:59.737000+00:00",
+            "Tags": [],
+            "OwnerId": "102800183015",
+            "ServiceRegion": "ap-southeast-2"
+        }
+    ]
+}

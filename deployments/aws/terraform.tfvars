@@ -1,8 +1,8 @@
 infinia_deployment_name     = "infinia"
 aws_region                  = "ap-southeast-2"
-vpc_id                      = "vpc-00299f7d7f21a3f96"
-subnet_ids                  = ["subnet-025e1a9037f9fe929", "subnet-0cc4e45ff83b1dc96"]
-security_group_id           = "sg-0082215d91c7d5148"
+vpc_id                      = "pc-0b96150176bcd169b"
+subnet_ids                  = ["subnet-0f5d5639636a4e756"]
+security_group_id           = "sg-016a3c65e68b8bc01"
 infinia_ami_id              = "ami-02594a29e08fc36e4"
 client_ami_id               = "ami-02594a29e08fc36e4"
 num_infinia_instances       = 6
