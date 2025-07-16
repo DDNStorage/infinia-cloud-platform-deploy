@@ -4,7 +4,7 @@
   become: true
   gather_facts: true
   vars:
-    red_version: "2.2.24"
+    red_version: "2.2.28"
     base_url: "https://storage.googleapis.com/ddn-redsetup-public/releases/ubuntu/24.04"
     qatest_url: "https://storage.googleapis.com/ddn-redsetup-public/releases/ubuntu/24.04/qatest"
     arch: "amd64"
