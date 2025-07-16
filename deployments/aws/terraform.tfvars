@@ -17,4 +17,4 @@ ebs_volume_size         = 64
 use_ebs_volumes         = true
 ebs_volumes_per_vm      = 4
 infinia_version         = "2.2.24"
-bucket_name             = "infinia-tf-state-dev"
+bucket_name             = "infinia-poc-test-gy"
