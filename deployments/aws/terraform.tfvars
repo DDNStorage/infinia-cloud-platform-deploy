@@ -15,4 +15,4 @@ num_ephemeral_devices       = 2
 interface_type              = "" # Keep it empty if not using EFA interaces
 ebs_volume_size             = 128
 ansible_aws_ssm_bucket_name = "red-ansible-scripts-102800183015"
-infinia_version             = "2.2.28"
+infinia_version             = "2.2.24"
