@@ -99,7 +99,7 @@ if ! redcli license install -a "$LICENSE_KEY" -y; then
 fi
 
 log "Creating cluster..."
-if ! redcli cluster create c1 -S=false -z; then
+if ! redcli cluster create c1 -S=false -z -f; then
     log "Error: Failed to create cluster"
     exit 1
 fi

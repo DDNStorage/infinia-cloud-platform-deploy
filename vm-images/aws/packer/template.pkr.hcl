@@ -39,6 +39,9 @@ source "amazon-ebs" "infina" {
   region                      = var.region
   ssh_username                = "ubuntu"
   associate_public_ip_address = true
+  subnet_id                   = "subnet-0ae2769d0810f7f1d"
+  vpc_id                      = "vpc-0b96150176bcd169b" # Only required if using some plugins
+
 
   source_ami_filter {
     filters = {
