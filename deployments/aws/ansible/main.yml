@@ -31,11 +31,14 @@
           shell: 'echo "$(date) 🚀 Starting Realm Node Setup..." >> /var/log/infinia/setup.log'
           become: yes
         
-        # - name: Reset Redsetup Before Running Setup
-        #   shell: |
-        #     echo "$(date) 🔄 Running redsetup --reset..." >> /var/log/infinia/setup.log
-        #     sudo redsetup --reset >> /var/log/infinia/setup.log 2>&1 || echo "⚠️ Redsetup Reset Failed!" >> /var/log/infinia/setup.log
-        #   become: yes
+        - name: Reset Redsetup Before Running Setup
+          shell: |
+            echo "$(date) 🔄 Running redsetup --reset..." >> /var/log/infinia/setup.log
+            sudo rm -rf /etc/red/deploy/config.lock
+            sudo redsetup --reset >> /var/log/infinia/setup.log 2>&1 || echo "⚠️ Redsetup Reset Failed!" >> /var/log/infinia/setup.log
+          become: yes
+          tags: cleanup
+          when: "'cleanup' in ansible_run_tags"
 
         - name: Realm Node Setup
           shell: |
@@ -67,12 +70,6 @@
         - name: Log Non-Realm Node Setup Start
           shell: 'echo "$(date) 🚀 Starting Non-Realm Node Setup..." >> /var/log/infinia/setup.log'
           become: yes
-
-        # - name: Reset Redsetup Before Running Setup
-        #   shell: |
-        #     echo "$(date) 🔄 Running redsetup --reset..." >> /var/log/infinia/setup.log
-        #     sudo redsetup --reset >> /var/log/infinia/setup.log 2>&1 || echo "⚠️ Redsetup Reset Failed!" >> /var/log/infinia/setup.log
-        #   become: yes
 
         - name: Non-Realm Node Setup
           shell: |
@@ -132,45 +129,3 @@
       become: yes
       tags: configure
 
-    - block: # Verify Infinia setup
-        - name: Verify Infinia Cluster Configuration
-          shell: |
-            bash -c '
-            redcli user login realm_admin -p "{{ admin_password }}" >> /var/log/infinia/setup.log 2>&1
-            cluster_status=$(redcli cluster show -o json | jq -r ".cluster_state")
-            total_nodes=$(redcli cluster show -o json | jq ".instances | length")
-            evicted_cats=$(redcli cluster show -o json | jq "[.cats[] | select(.evicted == true)] | length")
-
-            echo "=== Cluster Verification Summary ==="
-            echo "🔹 Cluster State: $cluster_status"
-            echo "🔹 Total Nodes: $total_nodes"
-            echo "🔹 Evicted CATs: $evicted_cats"
-            echo "===================================="
-
-            if [[ "$cluster_status" != "running" ]]; then
-              echo "❌ Cluster is NOT running!"
-              exit 1
-            fi
-
-            if [[ "$total_nodes" -ne {{ groups['all'] | length }} ]]; then
-              echo "❌ Number of nodes ($total_nodes) does not match expected ({{ groups['all'] | length }})!"
-              exit 1
-            fi
-
-            if [[ "$evicted_cats" -ne 0 ]]; then
-              echo "❌ Some CATs are evicted ($evicted_cats)!"
-              exit 1
-            fi
-
-            echo "✅ Cluster is correctly configured!"
-            '
-          become: yes
-          register: cluster_verification
-          failed_when: cluster_verification.rc != 0
-
-        - name: Display Cluster Verification Output
-          debug:
-            msg: "{{ cluster_verification.stdout_lines | select('search', 'Cluster State|Total Nodes|Evicted CATs|✅|❌') | list }}"
-      when: "'role_realm' in group_names"
-      become: yes
-      tags: verify

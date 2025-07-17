@@ -3,15 +3,15 @@ variable "infinia_deployment_name" {
   type        = string
 
   validation {
-    condition     = length(var.infinia_deployment_name) >= 4 && length(var.infinia_deployment_name) <= 8 && var.infinia_deployment_name == lower(var.infinia_deployment_name)
-    error_message = "The deployment name must be between 4 and 8 characters, all lowercase."
+    condition     = length(var.infinia_deployment_name) >= 3 && length(var.infinia_deployment_name) <= 28 && var.infinia_deployment_name == lower(var.infinia_deployment_name)
+    error_message = "The deployment name must be between 3 and 28 characters, all lowercase."
   }
 }
 
 variable "aws_region" {
   description = "AWS region where resources will be deployed"
   type        = string
-  default     = "us-west-2"
+  default     = "us-east-1"
 }
 
 variable "infinia_ami_id" {
@@ -27,13 +27,13 @@ variable "client_ami_id" {
 variable "num_infinia_instances" {
   description = "Number of Infinia SDS instances to deploy"
   type        = number
-  default     = 1
+  default     = 6
 }
 
 variable "num_client_instances" {
   description = "Number of client instances to deploy"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "key_pair_name" {
@@ -44,13 +44,13 @@ variable "key_pair_name" {
 variable "instance_type_infinia" {
   description = "Instance type for Infinia SDS instances"
   type        = string
-  default     = "i3en.24xlarge"
+  default     = "m7a.2xlarge"
 }
 
 variable "instance_type_client" {
   description = "Instance type for client instances"
   type        = string
-  default     = "t3.medium"
+  default     = "m7a.2xlarge"
 }
 
 variable "vpc_id" {
@@ -73,16 +73,6 @@ variable "root_device_size" {
   type        = number
 }
 
-variable "num_ephemeral_devices" {
-  description = "The number of ephemeral devices"
-  type        = number
-}
-
-variable "interface_type" {
-  description = "The ethernet interface type"
-  type = string
-}
-
 variable "use_ebs_volumes" {
   description = "Flag to determine whether EBS volumes should be attached"
   type        = bool
@@ -92,7 +82,13 @@ variable "use_ebs_volumes" {
 variable "ebs_volume_size" {
   description = "Size of each EBS volume (in GB)"
   type        = number
-  default     = 7500
+  default     = 128
+}
+
+variable "ebs_volumes_per_vm" {
+  description = "Number of EBS volumes attached to each VM"
+  type        = number
+  default     = 2
 }
 
 variable "enable_public_ip" {
@@ -104,5 +100,10 @@ variable "enable_public_ip" {
 variable "infinia_version" {
   description = "The infinia version"
   type = string
-  default = "1.3.36"
+  default = "2.2.28"
+}
+
+variable "bucket_name" {
+  description = "Name of the AWS S3 bucket for Ansible SSM"
+  type        = string
 }
