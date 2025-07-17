@@ -8,6 +8,8 @@ This Ansible playbook automates the setup and configuration of Infinia nodes and
 
 Before using this playbook, ensure you have the following:
 
+- **License Key**: Contact DDN Sales to obtain a valid Infinia license key required for cluster configuration.
+
 - **Ansible (Version 2.9 or Higher)**
 📌 [Installation Guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)  
 
@@ -43,7 +45,7 @@ The project directory should look like this:
 This file contains non-sensitive variables used in the playbook. Example:
 
 ```yaml
-infinia_version: 1.3.36
+infinia_version: 2.2.28
 ansible_aws_ssm_bucket_name: red-ansible-scripts
 ansible_aws_ssm_region: us-east-1
 ansible_aws_ssm_timeout: 3600
@@ -76,23 +78,32 @@ hostnames:
 ```
 
 ### 2. Run the Playbook
-```bash
-ansible-playbook main.yml -i aws_ec2.yml --ask-vault-pass
-```
+
+1. Export AWS Credentials:
+   ```bash
+   export AWS_ACCESS_KEY_ID="..."
+   export AWS_SECRET_ACCESS_KEY="..."
+   export AWS_SESSION_TOKEN="..."
+   ```
+
+2. Execute the playbook:
+   ```bash
+   ansible-playbook main.yml -i aws_ec2.yml --ask-vault-pass
+   ```
 
 ### Tags
 You can run specific parts of the playbook using tags
 - **Download scripts**:
   ```bash
-  ansible-playbook main.yml -i inventory.yml --tags download
+  ansible-playbook main.yml -i aws_ec2.yml --tags download
   ```
 - **Setup nodes**:
   ```bash
-  ansible-playbook main.yml -i inventory.yml --tags setup
+  ansible-playbook main.yml -i aws_ec2.yml --tags setup
   ```
 - **Configure cluster**:
   ```bash
-  ansible-playbook main.yml -i inventory.yml --tags configure
+  ansible-playbook main.yml -i aws_ec2.yml --tags configure
   ```
 
 ## Encryption with Ansible Vault

@@ -28,16 +28,6 @@ resource "aws_iam_instance_profile" "ssm_instance_profile" {
   role = aws_iam_role.ssm_role.name
 }
 
-resource "aws_network_interface" "efa" {
-  count           = var.num_infinia_instances
-  subnet_id       = element(var.subnet_ids, count.index % length(var.subnet_ids))
-  security_groups = [var.security_group_id]
-  interface_type  = var.interface_type == "" ? null : var.interface_type
-  tags = {
-    Name = "${var.infinia_deployment_name}-efa-eni-${format("%02d", count.index)}"
-  }
-}
-
 # Deploy Infinia SDS Instances
 resource "aws_instance" "infinia" {
   count                = var.num_infinia_instances
@@ -46,18 +36,9 @@ resource "aws_instance" "infinia" {
   key_name             = var.key_pair_name
   iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
 
-  dynamic "network_interface" {
-    for_each = var.interface_type != "" ? [1] : []
-    content {
-      network_interface_id = aws_network_interface.efa[count.index].id
-      device_index         = 0
-    }
-  }
-
-  # Use subnet_id, security_groups, and public IP only if interface_type is empty
-  subnet_id                   = var.interface_type == "" ? element(var.subnet_ids, count.index % length(var.subnet_ids)) : null
-  security_groups             = var.interface_type == "" ? [var.security_group_id] : null
-  associate_public_ip_address = var.interface_type == "" ? var.enable_public_ip : null
+  subnet_id                   = element(var.subnet_ids, count.index % length(var.subnet_ids))
+  security_groups             = [var.security_group_id]
+  associate_public_ip_address = var.enable_public_ip
 
   lifecycle {
     create_before_destroy = false
@@ -79,17 +60,15 @@ resource "aws_instance" "infinia" {
     delete_on_termination = true
   }
 
-  # Attach EBS volumes only if use_ebs_volumes is true
   dynamic "ebs_block_device" {
-    for_each = var.use_ebs_volumes ? range(var.num_ephemeral_devices) : []
+    for_each = var.use_ebs_volumes ? range(var.ebs_volumes_per_vm) : []
     content {
       device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
-      volume_size           = var.ebs_volume_size # Default size for each disk
+      volume_size           = var.ebs_volume_size
       volume_type           = "gp3"
       delete_on_termination = true
     }
   }
-
 
   tags = {
     Name       = "${var.infinia_deployment_name}-sn-${format("%02d", count.index)}"
@@ -124,7 +103,7 @@ resource "aws_instance" "client" {
   }
 
   root_block_device {
-    volume_size           = var.root_device_size # Set root volume size to 150 GB
+    volume_size           = var.root_device_size
     volume_type           = "gp3"
     delete_on_termination = true
   }
@@ -135,14 +114,14 @@ resource "aws_instance" "client" {
   }
 }
 
+# Ansible Inventory Output
 resource "local_file" "ansible_inventory" {
   filename = "${path.module}/ansible/aws_ec2.yml"
   content  = <<EOT
 plugin: aws_ec2
 regions:
-  - var.aws_region
+  - ${var.aws_region}
 filters:
-  tag:Role: ['realm', 'nonrealm']
   tag:Deployment: "${var.infinia_deployment_name}"
 use_extra_vars: true
 keyed_groups:
@@ -150,20 +129,23 @@ keyed_groups:
     key: tags['Role']
 hostnames:
   - instance-id
+groups:
+  client_nodes: "tags.Name is defined and 'cn' in tags.Name"
+  realm_nodes: "tags.Role is defined and tags.Role == 'realm'"
+  nonrealm_nodes: "tags.Role is defined and tags.Role == 'nonrealm'"
 EOT
 }
 
+# Ansible Variables Output
 resource "local_file" "ansible_vars" {
   filename = "${path.module}/ansible/vars.yml"
   content  = <<EOT
 # vars.yml
-# Non-sensitive variables
 infinia_version: ${var.infinia_version}
 ansible_connection: aws_ssm
-ansible_aws_ssm_bucket_name: red-ansible-scripts
-ansible_aws_ssm_region: var.aws_region
+ansible_aws_ssm_bucket_name: ${var.bucket_name}
+ansible_aws_ssm_region: ${var.aws_region}
 ansible_aws_ssm_timeout: 3600
 ansible_aws_ssm_retries: 200
 EOT
 }
-

@@ -130,22 +130,11 @@ fi
 # Configure based on node type
 if [[ "$REALM_ENTRY" == "true" ]]; then
     log "Configuring realm entry node..."
-    log "Downloading template..."
-    if ! wget "$BASE_PKG_URL/releases/rmd_template.json" -O /tmp/rmd_template.json; then
-        log "Error: Failed to download template"
-        exit 1
-    fi
-
-    log "Processing template..."
-    if ! envsubst < /tmp/rmd_template.json > /tmp/rmd.json; then
-        log "Error: Failed to process template"
-        exit 1
-    fi
 
     log "Executing redsetup for realm entry node..."
     if ! sudo redsetup --realm-entry-secret "$REALM_SECRET" --admin-password "$ADMIN_PASSWORD" \
-        --realm-entry --ctrl-plane-ip "$(hostname -I | awk '{print $1}' | tr -d ' ')" \
-        --release-metadata-file /tmp/rmd.json $([ "$SKIP_REBOOT" == "true" ] && echo "-skip-reboot"); then
+        --realm-entry --ctrl-plane-ip "$(hostname -I | awk '{print $1}')" \
+        $([ "$SKIP_REBOOT" == "true" ] && echo "-skip-reboot"); then
         log "Error: Failed to configure realm entry node"
         exit 1
     fi
