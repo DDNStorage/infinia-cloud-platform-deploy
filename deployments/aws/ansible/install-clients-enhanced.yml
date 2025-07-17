@@ -3,8 +3,10 @@
   hosts: client_nodes
   become: true
   gather_facts: true
+  vars_files:
+    - vars.yml
   vars:
-    red_version: "2.2.28"
+    red_version: "{{ infinia_version }}"
     base_url: "https://storage.googleapis.com/ddn-redsetup-public/releases/ubuntu/24.04"
     qatest_url: "https://storage.googleapis.com/ddn-redsetup-public/releases/ubuntu/24.04/qatest"
     arch: "amd64"

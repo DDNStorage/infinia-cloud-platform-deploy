@@ -73,11 +73,6 @@ variable "root_device_size" {
   type        = number
 }
 
-variable "interface_type" {
-  description = "The ethernet interface type"
-  type = string
-}
-
 variable "use_ebs_volumes" {
   description = "Flag to determine whether EBS volumes should be attached"
   type        = bool
@@ -87,13 +82,14 @@ variable "use_ebs_volumes" {
 variable "ebs_volume_size" {
   description = "Size of each EBS volume (in GB)"
   type        = number
-  default     = 7500
+  default     = 128
 }
 
 variable "ebs_volumes_per_vm" {
   description = "Number of EBS volumes attached to each VM"
   type        = number
   default     = 2
+}
 
 variable "enable_public_ip" {
   description = "Flag to determin whether enalbe public IP"
@@ -110,4 +106,4 @@ variable "infinia_version" {
 variable "bucket_name" {
   description = "Name of the AWS S3 bucket for Ansible SSM"
   type        = string
-  default     = "infinia-tf-state-customer"
+}

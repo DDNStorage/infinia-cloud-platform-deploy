@@ -15,4 +15,4 @@ ebs_volume_size         = 128
 use_ebs_volumes         = true
 ebs_volumes_per_vm      = 2
 infinia_version         = "2.2.28"
-bucket_name             = "infinia-tf-state-pasokan" # we need a unique bucket_name and should be part of the terrform deploy outputpasokan@pasokan-dev:~/gopal/deployments
+bucket_name             = "test-bucket"
