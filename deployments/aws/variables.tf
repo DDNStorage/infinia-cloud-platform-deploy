@@ -4,7 +4,7 @@ variable "infinia_deployment_name" {
 
   validation {
     condition     = length(var.infinia_deployment_name) >= 3 && length(var.infinia_deployment_name) <= 28 && var.infinia_deployment_name == lower(var.infinia_deployment_name)
-    error_message = "The deployment name must be between 4 and 8 characters, all lowercase."
+    error_message = "The deployment name must be between 3 and 28 characters, all lowercase."
   }
 }
 
