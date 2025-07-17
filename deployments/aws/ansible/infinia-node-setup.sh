@@ -144,8 +144,8 @@ if [[ "$REALM_ENTRY" == "true" ]]; then
 
     log "Executing redsetup for realm entry node..."
     if ! sudo redsetup --realm-entry-secret "$REALM_SECRET" --admin-password "$ADMIN_PASSWORD" \
-        --realm-entry --ctrl-plane-ip "$(hostname -I | awk '{print $1}' | tr -d ' ')" \
-        --release-metadata-file /tmp/rmd.json $([ "$SKIP_REBOOT" == "true" ] && echo "-skip-reboot"); then
+        --realm-entry --ctrl-plane-ip "$(hostname -I | awk '{print $1}')" \
+        $([ "$SKIP_REBOOT" == "true" ] && echo "-skip-reboot"); then
         log "Error: Failed to configure realm entry node"
         exit 1
     fi

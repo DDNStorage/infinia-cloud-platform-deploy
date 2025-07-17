@@ -3,8 +3,8 @@ variable "infinia_deployment_name" {
   type        = string
 
   validation {
-    condition     = length(var.infinia_deployment_name) >= 4 && length(var.infinia_deployment_name) <= 8 && var.infinia_deployment_name == lower(var.infinia_deployment_name)
-    error_message = "The deployment name must be between 4 and 8 characters, all lowercase."
+    condition     = length(var.infinia_deployment_name) >= 3 && length(var.infinia_deployment_name) <= 28 && var.infinia_deployment_name == lower(var.infinia_deployment_name)
+    error_message = "The deployment name must be between 3 and 8 characters, all lowercase."
   }
 }
 
@@ -80,13 +80,13 @@ variable "num_ephemeral_devices" {
 
 variable "interface_type" {
   description = "The ethernet interface type"
-  type = string
+  type        = string
 }
 
 variable "use_ebs_volumes" {
   description = "Flag to determine whether EBS volumes should be attached"
   type        = bool
-  default     = false  # Default is no EBS volumes unless explicitly enabled
+  default     = false # Default is no EBS volumes unless explicitly enabled
 }
 
 variable "ebs_volume_size" {
@@ -95,14 +95,26 @@ variable "ebs_volume_size" {
   default     = 7500
 }
 
+variable "ebs_volumes_per_vm" {
+  description = "Number of EBS volumes attached to each VM"
+  type        = number
+  default     = 2 # Default to 2 volume unless explicitly set
+}
+
 variable "enable_public_ip" {
   description = "Flag to determin whether enalbe public IP"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "infinia_version" {
   description = "The infinia version"
-  type = string
-  default = "1.3.36"
+  type        = string
+  default     = "1.3.36"
+}
+
+variable "bucket_name" {
+  description = "Name of the AWS S3 bucket for Ansible SSM"
+  type        = string
+  default     = "infinia-tf-state-customer"
 }
