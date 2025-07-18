@@ -1,11 +1,11 @@
-variable "infinia_deployment_name" {
+variable "infinia_deployment_realm_name" {
   description = "Deployment name for Infinia resources, must be between 4 and 8 lowercase characters"
   type        = string
 
-  validation {
-    condition     = length(var.infinia_deployment_name) >= 4 && length(var.infinia_deployment_name) <= 8 && var.infinia_deployment_name == lower(var.infinia_deployment_name)
-    error_message = "The deployment name must be between 4 and 8 characters, all lowercase."
-  }
+}
+variable "infinia_deployment_none_realm_name" {
+  description = "Deployment name for Infinia resources, must be between 4 and 8 lowercase characters"
+  type        = string
 }
 
 variable "aws_region" {
