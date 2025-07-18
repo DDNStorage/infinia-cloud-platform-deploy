@@ -1,11 +1,7 @@
-variable "infinia_deployment_realm_name" {
+variable "infinia_deployment_name" {
   description = "Deployment name for Infinia resources, must be between 4 and 8 lowercase characters"
   type        = string
 
-}
-variable "infinia_deployment_none_realm_name" {
-  description = "Deployment name for Infinia resources, must be between 4 and 8 lowercase characters"
-  type        = string
 }
 
 variable "aws_region" {

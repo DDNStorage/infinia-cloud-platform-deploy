@@ -1,7 +1,7 @@
 # Create IAM Role for Session Manager
 # realmn 
-resource "aws_iam_role" "ssm_role_realm" {
-  name = "${var.infinia_deployment_realm_name}-ssm-role"
+resource "aws_iam_role" "ssm_role" {
+  name = "${var.infinia_deployment_name}-ssm-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -18,15 +18,15 @@ resource "aws_iam_role" "ssm_role_realm" {
 }
 
 # Attach AmazonSSMManagedInstanceCore Policy to Role
-resource "aws_iam_role_policy_attachment" "ssm_realm_policy" {
-  role       = aws_iam_role.ssm_role_realm.name
+resource "aws_iam_role_policy_attachment" "ssm_policy" {
+  role       = aws_iam_role.ssm_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
 # Create IAM Instance Profile
-resource "aws_iam_instance_profile" "ssm_instance_realm_profile" {
-  name = "${var.infinia_deployment_realm_name}-ssm-instance-profile"
-  role = aws_iam_role.ssm_role_realm.name
+resource "aws_iam_instance_profile" "ssm_instance_profile" {
+  name = "${var.infinia_deployment_name}-ssm-instance-profile"
+  role = aws_iam_role.ssm_role.name
 }
 
 
@@ -37,7 +37,7 @@ resource "aws_network_interface" "efa_realm" {
   security_groups = [var.security_group_id]
   interface_type  = var.interface_type == "" ? null : var.interface_type
   tags = {
-    Name = "${var.infinia_deployment_realm_name}-efa-realm"
+    Name = "${var.infinia_deployment_name}-efa"
   }
 }
 
@@ -46,7 +46,7 @@ resource "aws_instance" "infinia_realm" {
   ami                  = var.infinia_ami_id
   instance_type        = var.instance_type_infinia
   key_name             = var.key_pair_name
-  iam_instance_profile = aws_iam_instance_profile.ssm_instance_realm_profile.name
+  iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
   user_data            = local.user_startup_script_realm
   dynamic "network_interface" {
     for_each = var.interface_type != "" ? [1] : []
@@ -91,23 +91,9 @@ resource "aws_instance" "infinia_realm" {
   }
 
   tags = {
-    Name       = "${var.infinia_deployment_realm_name}-sn-realm"
-    Deployment = var.infinia_deployment_none_realm_name
+    Name       = "${var.infinia_deployment_name}-sn-realm"
+    Deployment = var.infinia_deployment_name
     Role       = "realm"
-  }
-}
-
-
-# Create EFA Network Interfaces for none-Realm Nodes
-resource "aws_network_interface" "efa_none_realm" {
-  count           = var.interface_type == "" ? 0 : var.num_infinia_instances
-  subnet_id       = element(var.subnet_ids, count.index % length(var.subnet_ids))
-  security_groups = [var.security_group_id]
-  interface_type  = var.interface_type == "" ? null : var.interface_type
-  depends_on      = [aws_instance.infinia_realm]
-  #depends_on = [aws_instance.infinia_realm, aws_network_interface.efa_realm, aws_iam_role.ssm_role_realm]
-  tags = {
-    Name = "${var.infinia_deployment_none_realm_name}-efa-eni-${format("%02d", count.index + 1)}" # Start index from 1 for none-realm
   }
 }
 
@@ -116,9 +102,9 @@ resource "aws_instance" "infinia_none_realm" {
   ami                  = var.infinia_ami_id
   instance_type        = var.instance_type_infinia
   key_name             = var.key_pair_name
-  iam_instance_profile = aws_iam_instance_profile.ssm_instance_realm_profile.name
+  iam_instance_profile = aws_iam_instance_profile.ssm_instance_profile.name
   user_data            = local.user_startup_script_none_realm
-  #depends_on           = [aws_instance.infinia_realm] # Explicit dependency on realm node
+  depends_on           = [aws_instance.infinia_realm] # Explicit dependency on realm node
 
   dynamic "network_interface" {
     for_each = var.interface_type != "" ? [1] : []
@@ -163,8 +149,8 @@ resource "aws_instance" "infinia_none_realm" {
   }
 
   tags = {
-    Name       = "${var.infinia_deployment_none_realm_name}-sn-${format("%02d", count.index + 1)}" # Start index from 1 for none-realm
-    Deployment = var.infinia_deployment_none_realm_name
+    Name       = "${var.infinia_deployment_name}-sn-${format("%02d", count.index + 1)}" # Start index from 1 for none-realm
+    Deployment = var.infinia_deployment_name
     Role       = "nonerealm"
   }
 }

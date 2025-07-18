@@ -28,7 +28,7 @@ _check_inventory(){
             break
         else
             log_info "Waiting for nodes to join.."
-            sleep 1
+            sleep 5
         fi
     done
 }
@@ -51,7 +51,7 @@ else
     redcli inventory show  | tee -a "$LOG_FILE"
     redcli realm config generate  || log_info "Error Generating config file" | tee -a "$LOG_FILE"
     _check_inventory
-    rm realm_config.yaml | log_info "removing old realm config"
+    #rm realm_config.yaml | log_info "removing old realm config"
     redcli realm config generate  || log_info "Error Generating config file" | tee -a "$LOG_FILE"
     redcli realm config update -f realm_config.yaml || log_info "Error updating realm"
     redcli license install -a '1DE94FE1-BE7D-4A4B-8DA2-7761ED7B66EA' -y | tee -a $LOG_FILE
@@ -63,7 +63,7 @@ else
   fi
 EOT
 }
-# [[ $(redcli inventory show  |grep Nodes |awk '{print $2}') != $(grep -i hostname realm_config.yaml) ]]
+
 locals {
   user_startup_script_none_realm = <<EOT
 #!/bin/bash

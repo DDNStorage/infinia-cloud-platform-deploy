@@ -7,13 +7,14 @@ infinia_ami_id = "ami-01eb4635e82858e09" # cloud-init
 #num_ephemeral_device = "0"
 subnet_ids = ["subnet-06c1a6ccde3dec102"] #private
 #subnet_ids                         = ["subnet-0bcc62fd072a08b7e"] #public
-infinia_version                    = "2.2.28"
-enable_public_ip                   = "false"
-root_device_size                   = 256
-num_infinia_instances              = "3"
-instance_type_infinia              = "i3en.2xlarge"
-ebs_volume_size                    = 7500
-infinia_deployment_realm_name      = "rozana"
-infinia_deployment_none_realm_name = "jazmin"
+infinia_version       = "2.2.28"
+enable_public_ip      = "false"
+root_device_size      = 256
+num_infinia_instances = "2"
+#instance_type_infinia              = "i3en.2xlarge"
+instance_type_infinia = "i3en.2xlarge"
+#instance_type_infinia              = "t3.xlarge"
+ebs_volume_size         = 7500
+infinia_deployment_name = "rozana"
 
 
