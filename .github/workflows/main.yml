@@ -45,6 +45,8 @@ jobs:
       aws_region: ${{ inputs.aws_region }}
       deployment_name: ${{ inputs.deployment_name }}
       infinia_version: ${{ inputs.infinia_version }}
+      s3_bucket_name: ${{ inputs.s3_bucket_name }}
+      s3_bucket_region: ${{ inputs.s3_bucket_region }}
     secrets: inherit
 
   infinia-destroy:
