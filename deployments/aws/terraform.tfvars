@@ -15,6 +15,6 @@ num_infinia_instances = "2"
 instance_type_infinia = "i3en.2xlarge"
 #instance_type_infinia              = "t3.xlarge"
 ebs_volume_size         = 7500
-infinia_deployment_name = "rozana"
+infinia_deployment_name = "jazmin"
 
 

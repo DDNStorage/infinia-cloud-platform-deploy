@@ -144,14 +144,12 @@ variable "base_pkg_url" {
 }
 
 variable "release_type" {
+  type    = string
   default = ""
 }
 
 variable "rel_dist_path" {
-  default = "ubuntu/24.04"
-}
+  type = string
 
-variable "force_cluster_config" {
-  type    = bool
-  default = false
+  default = "ubuntu/24.04"
 }
