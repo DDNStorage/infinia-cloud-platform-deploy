@@ -47,7 +47,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ inputs.s3_bucket_region }}
+          aws-region: ${{ inputs.s3_bucket_region }} 
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -63,7 +63,7 @@ jobs:
           terraform init \
             -backend-config="bucket=${{ inputs.s3_bucket_name }}" \
             -backend-config="key=infinia/state.tfstate" \
-            -backend-config="region=us-east-1"
+            -backend-config="region=${{ inputs.s3_bucket_region }}"ß
 
       - name: Terraform Validate
         id: validate
