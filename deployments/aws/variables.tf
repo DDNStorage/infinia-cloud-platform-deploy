@@ -95,6 +95,13 @@ variable "ebs_volume_size" {
   default     = 7500
 }
 
+
+variable "ebs_volumes_per_vm" {
+  description = "Number of EBS volumes attached to each VM"
+  type        = number
+  default     = 2
+}
+
 variable "enable_public_ip" {
   description = "Flag to determin whether enalbe public IP"
   type        = bool
@@ -112,32 +119,6 @@ variable "infinia_license" {
   default = ""
 }
 
-variable "realm_entry_secret" {
-  type    = string
-  default = ""
-
-}
-
-variable "realm_entry_host" {
-  type    = string
-  default = ""
-
-}
-
-variable "realm_secret" {
-  description = "Secret for the Infinia realm"
-  type        = string
-  sensitive   = true # Mark as sensitive to prevent logging
-  default     = "PA-ssW00r^d"
-}
-
-variable "admin_password" {
-  description = "Admin password for Infinia"
-  type        = string
-  sensitive   = true # Mark as sensitive to prevent logging
-  default     = "PA-ssW00r^d"
-}
-
 variable "base_pkg_url" {
   type    = string
   default = "https://storage.googleapis.com/ddn-redsetup-public"
@@ -153,3 +134,10 @@ variable "rel_dist_path" {
 
   default = "ubuntu/24.04"
 }
+
+variable "bucket_name" {
+  description = "Name of the AWS S3 bucket for Ansible SSM"
+  type        = string
+}
+
+
