@@ -63,7 +63,7 @@ jobs:
           terraform init \
             -backend-config="bucket=${{ inputs.s3_bucket_name }}" \
             -backend-config="key=infinia/state.tfstate" \
-            -backend-config="region=${{ inputs.s3_bucket_region }}"ß
+            -backend-config="region=${{ inputs.s3_bucket_region }}"
 
       - name: Terraform Validate
         id: validate
