@@ -19,6 +19,10 @@ on:
         description: "Terraform S3 Backend Bucket Name"
         required: true
         type: string
+      s3_bucket_region:
+        description: "Terraform S3 Backend Bucket Region"
+        required: true
+        type: string
 
 env:
   AWS_REGION: ${{ inputs.aws_region }}
