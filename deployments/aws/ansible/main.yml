@@ -128,6 +128,10 @@
       tags: configure
 
     - block: # Verify Infinia setup
+        - name: Set expected node count from roles
+          set_fact:
+            expected_node_count: "{{ groups['role_realm'] | length + groups['role_nonrealm'] | length }}"
+
         - name: Verify Infinia Cluster Configuration
           shell: |
             bash -c '
@@ -152,8 +156,8 @@
               exit 1
             fi
 
-            if [[ "$total_nodes" -ne {{ expected_node_count | default(groups['all'] | length) }} ]]; then
-              echo "❌ Number of nodes ($total_nodes) does not match expected ({{ expected_node_count | default(groups['all'] | length) }})!"
+            if [[ "$total_nodes" -ne {{ expected_node_count }} ]]; then
+              echo "❌ Number of nodes ($total_nodes) does not match expected ({{ expected_node_count }})!"
               exit 1
             fi
 
