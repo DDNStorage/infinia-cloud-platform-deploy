@@ -13,24 +13,19 @@
 # limitations under the License.
 
 locals {
-  # Get the network interface of the first instance
-  first_network_interface = google_compute_instance.instances[0].network_interface[0]
-
-  # Get the NAT IP or fallback to internal network IP of the first instance
-  first_instance_nat_ip = length(local.first_network_interface.access_config) > 0 ? local.first_network_interface.access_config[0].nat_ip : null
-  first_instance_ip     = coalesce(local.first_instance_nat_ip, local.first_network_interface.network_ip)
-
-  # Get the machine type and zone (assume same for all instances)
-  instance_machine_type = google_compute_instance.instances[0].machine_type
-  instance_zone         = google_compute_instance.instances[0].zone
-
-  client_machine_type = length(google_compute_instance.client_instances) > 0 ? google_compute_instance.client_instances[0].machine_type : null
-  client_zone         = length(google_compute_instance.client_instances) > 0 ? google_compute_instance.client_instances[0].zone : null
+  # Use the realm entry instance for the first network interface
+  first_network_interface = google_compute_instance.realm_entry_instance.network_interface[0]
+  
+  # Combine all instances for machine type and zone references
+  all_instances = concat([google_compute_instance.realm_entry_instance], google_compute_instance.follower_instances)
+  
+  instance_machine_type = google_compute_instance.realm_entry_instance.machine_type
+  instance_zone         = google_compute_instance.realm_entry_instance.zone
 }
 
 output "site_url" {
-  description = "Site URL of the first instance"
-  value       = "https://${local.first_instance_ip}/"
+  description = "Site Url"
+  value       = "https://${local.first_network_interface.access_config[0].nat_ip}"
 }
 
 output "realm_entry_secret" {
@@ -45,24 +40,43 @@ output "admin_password" {
   sensitive   = true
 }
 
-output "first_instance_nat_ip" {
-  description = "External NAT IP of the first compute instance."
-  value       = local.first_instance_nat_ip
-}
-
-output "instance_machine_type" {
-  description = "Machine type for all compute instances."
-  value       = local.instance_machine_type
+output "instance_self_link" {
+  description = "Self-link for the realm entry compute instance."
+  value       = google_compute_instance.realm_entry_instance.self_link
 }
 
 output "instance_zone" {
-  description = "Zone for all compute instances."
+  description = "Zone for the compute instance."
   value       = local.instance_zone
 }
 
+output "instance_nat_ip" {
+  description = "External IP of the realm entry compute instance."
+  value       = local.first_network_interface.access_config[0].nat_ip
+}
+
 output "instance_network" {
-  description = "Network of the first compute instance."
-  value       = var.networks[0]
+  description = "Self-link for the network of the compute instance."
+  value       = local.first_network_interface.network
+}
+
+output "instance_machine_types" {
+  description = "Machine types for all compute instances."
+  value = concat(
+    [google_compute_instance.realm_entry_instance.machine_type],
+    google_compute_instance.follower_instances[*].machine_type
+  )
+}
+
+output "instance_nat_ips" {
+  description = "External IP addresses of all compute instances."
+  value = concat(
+    [google_compute_instance.realm_entry_instance.network_interface[0].access_config[0].nat_ip],
+    [for instance in google_compute_instance.follower_instances : 
+      length(instance.network_interface[0].access_config) > 0 ? 
+      instance.network_interface[0].access_config[0].nat_ip : null
+    ]
+  )
 }
 
 #output "total_capacity" {
@@ -77,6 +91,8 @@ output "instance_network" {
 
 output "vm_count" {
   description = "Total number of VMs provisioned."
-  value       =  var.num_infinia_instances ###!= null ? var.num_infinia_instances : local.vm_count 
+  value       = var.num_infinia_instances
 }
+
+
 
