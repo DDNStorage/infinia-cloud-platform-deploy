@@ -36,7 +36,7 @@ on:
         required: true
         type: string
       bucket_name:
-        description: "S3 Bucket for ansbile ssmß"
+        description: "S3 Bucket for ansbile ssm"
         required: true
         type: string
       num_client_instances:
@@ -67,6 +67,11 @@ jobs:
       infinia_version: ${{ inputs.infinia_version }}
       s3_bucket_name: ${{ inputs.s3_bucket_name }}
       s3_bucket_region: ${{ inputs.s3_bucket_region }}
+      vpc_id: ${{ inputs.vpc_id }}
+      subnet_ids: ${{ inputs.subnet_ids }}
+      security_group_id: ${{ inputs.security_group_id }}
+      bucket_name: ${{ inputs.bucket_name }}
+      num_client_instances: ${{ inputs.num_client_instances }}
     secrets: inherit
 
   infinia-destroy:
