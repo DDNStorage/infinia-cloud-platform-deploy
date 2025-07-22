@@ -73,7 +73,7 @@ jobs:
       - name: Parse Subnet IDs
         id: subnet_json
         run: |
-          echo "SUBNET_IDS_JSON=$(echo '${{ inputs.subnet_ids }}' | jq -R 'split(",")')" >> $GITHUB_ENV
+          echo "SUBNET_IDS_JSON=$(echo '${{ inputs.subnet_ids }}' | jq -Rc 'split(",")')" >> $GITHUB_ENV
 
       - name: Terraform Plan
         working-directory: ${{ env.TERRAFORM_DIR }}
