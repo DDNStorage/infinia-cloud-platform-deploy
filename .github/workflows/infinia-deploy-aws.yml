@@ -27,7 +27,26 @@ on:
         description: "Terraform S3 Backend Bucket Region"
         required: true
         type: string
-
+      vpc_id:
+        description: "VPC ID"
+        required: true
+        type: string
+      subnet_ids:
+        description: "Comma-separated Subnet IDs"
+        required: true
+        type: string
+      security_group_id:
+        description: "Security Group ID"
+        required: true
+        type: string
+      bucket_name:
+        description: "Bucket name for ansible ssm"
+        required: true
+        type: string
+      num_client_instances:
+        description: "Number of client nodes"
+        required: true
+        type: number
 
 env:
   TERRAFORM_DIR: deployments/aws
@@ -47,7 +66,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ inputs.s3_bucket_region }} 
+          aws-region: ${{ inputs.s3_bucket_region }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -67,15 +86,38 @@ jobs:
 
       - name: Terraform Validate
         id: validate
+        working-directory: ${{ env.TERRAFORM_DIR }}
         run: terraform validate -no-color
 
       - name: Terraform Plan
         working-directory: ${{ env.TERRAFORM_DIR }}
-        run: terraform plan -var-file=terraform.tfvars -var="infinia_deployment_name=${{ inputs.deployment_name }}" -var="infinia_ami_id=${{ inputs.ami_id }}" -var="infinia_version=${{ inputs.infinia_version }}" -out=tfplan
+        run: |
+          terraform plan \
+            -var-file=terraform.tfvars \
+            -var="infinia_deployment_name=${{ inputs.deployment_name }}" \
+            -var="infinia_ami_id=${{ inputs.ami_id }}" \
+            -var="infinia_version=${{ inputs.infinia_version }}" \
+            -var="vpc_id=${{ inputs.vpc_id }}" \
+            -var='subnet_ids=[${{ inputs.subnet_ids }}]' \
+            -var="security_group_id=${{ inputs.security_group_id }}" \
+            -var="bucket_name=${{ inputs.bucket_name }}" \
+            -var="num_client_instances=${{ inputs.num_client_instances }}" \
+            -out=tfplan
 
       - name: Terraform Apply
         working-directory: ${{ env.TERRAFORM_DIR }}
-        run: terraform apply -var-file=terraform.tfvars -var="infinia_deployment_name=${{ inputs.deployment_name }}" -var="infinia_ami_id=${{ inputs.ami_id }}" -var="infinia_version=${{ inputs.infinia_version }}" -auto-approve tfplan
+        run: |
+          terraform apply \
+            -var-file=terraform.tfvars \
+            -var="infinia_deployment_name=${{ inputs.deployment_name }}" \
+            -var="infinia_ami_id=${{ inputs.ami_id }}" \
+            -var="infinia_version=${{ inputs.infinia_version }}" \
+            -var="vpc_id=${{ inputs.vpc_id }}" \
+            -var='subnet_ids=[${{ inputs.subnet_ids }}]' \
+            -var="security_group_id=${{ inputs.security_group_id }}" \
+            -var="bucket_name=${{ inputs.bucket_name }}" \
+            -var="num_client_instances=${{ inputs.num_client_instances }}" \
+            -auto-approve tfplan
 
       - name: Setup Ansible
         run: |
@@ -85,7 +127,7 @@ jobs:
           sudo pip3 install --upgrade ansible-core ansible boto3 botocore
           curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
           sudo dpkg -i session-manager-plugin.deb
-      
+
       - name: Run Ansible playbook
         working-directory: ${{ env.ANSIBLE_DIR }}
         run: |
