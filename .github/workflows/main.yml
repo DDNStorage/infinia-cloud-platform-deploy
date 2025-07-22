@@ -23,6 +23,26 @@ on:
         description: "Terraform S3 Backend Bucket Region"
         required: true
         type: string
+      vpc_id:
+        description: "VPC ID"
+        required: true
+        type: string
+      subnet_ids:
+        description: "Comma-separated Subnet IDs"
+        required: true
+        type: string
+      security_group_id:
+        description: "Security Group ID"
+        required: true
+        type: string
+      bucket_name:
+        description: "S3 Bucket for ansbile ssmß"
+        required: true
+        type: string
+      num_client_instances:
+        description: "Number of client instances"
+        required: true
+        type: number
 
 env:
   AWS_REGION: ${{ inputs.aws_region }}
