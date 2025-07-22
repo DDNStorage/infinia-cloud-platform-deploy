@@ -85,20 +85,20 @@ jobs:
             -backend-config="region=${{ inputs.s3_bucket_region }}"
 
       - name: Terraform Validate
-        id: validate
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: terraform validate -no-color
 
       - name: Terraform Plan
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
+          SUBNETS=$(echo "${{ inputs.subnet_ids }}" | awk -F',' '{for (i=1; i<=NF; i++) printf "\"%s\",", $i}' | sed 's/,$//')
           terraform plan \
             -var-file=terraform.tfvars \
             -var="infinia_deployment_name=${{ inputs.deployment_name }}" \
             -var="infinia_ami_id=${{ inputs.ami_id }}" \
             -var="infinia_version=${{ inputs.infinia_version }}" \
             -var="vpc_id=${{ inputs.vpc_id }}" \
-            -var='subnet_ids=${{ toJSON(split(",", inputs.subnet_ids)) }}' \
+            -var="subnet_ids=[${SUBNETS}]" \
             -var="security_group_id=${{ inputs.security_group_id }}" \
             -var="bucket_name=${{ inputs.bucket_name }}" \
             -var="num_client_instances=${{ inputs.num_client_instances }}" \
@@ -107,13 +107,14 @@ jobs:
       - name: Terraform Apply
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
+          SUBNETS=$(echo "${{ inputs.subnet_ids }}" | awk -F',' '{for (i=1; i<=NF; i++) printf "\"%s\",", $i}' | sed 's/,$//')
           terraform apply \
             -var-file=terraform.tfvars \
             -var="infinia_deployment_name=${{ inputs.deployment_name }}" \
             -var="infinia_ami_id=${{ inputs.ami_id }}" \
             -var="infinia_version=${{ inputs.infinia_version }}" \
             -var="vpc_id=${{ inputs.vpc_id }}" \
-            -var='subnet_ids=${{ toJSON(split(",", inputs.subnet_ids)) }}' \
+            -var="subnet_ids=[${SUBNETS}]" \
             -var="security_group_id=${{ inputs.security_group_id }}" \
             -var="bucket_name=${{ inputs.bucket_name }}" \
             -var="num_client_instances=${{ inputs.num_client_instances }}" \
