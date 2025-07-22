@@ -71,7 +71,7 @@ jobs:
       subnet_ids: ${{ inputs.subnet_ids }}
       security_group_id: ${{ inputs.security_group_id }}
       bucket_name: ${{ inputs.bucket_name }}
-      num_client_instances: ${{ inputs.num_client_instances }} 
+      num_client_instances: ${{ inputs.num_client_instances }}
     secrets: inherit
 
   infinia-destroy:
