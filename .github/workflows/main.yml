@@ -39,10 +39,10 @@ on:
         description: "S3 Bucket for Ansible SSM"
         required: true
         type: string
-      num_client_instances:
-        description: "Number of client instances"
-        required: true
-        type: number
+      # num_client_instances:
+      #   description: "Number of client instances"
+      #   required: true
+      #   type: number
 
 env:
   AWS_REGION: ${{ inputs.aws_region }}
@@ -71,7 +71,7 @@ jobs:
       subnet_ids: ${{ inputs.subnet_ids }}
       security_group_id: ${{ inputs.security_group_id }}
       bucket_name: ${{ inputs.bucket_name }}
-      num_client_instances: ${{ inputs.num_client_instances }}
+      # num_client_instances: ${{ inputs.num_client_instances }}
     secrets: inherit
 
   infinia-destroy:

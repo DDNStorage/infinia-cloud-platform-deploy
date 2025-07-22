@@ -33,9 +33,9 @@ on:
       bucket_name:
         required: true
         type: string
-      num_client_instances:
-        required: true
-        type: number
+      # num_client_instances:
+      #   required: true
+      #   type: number
 
 env:
   TERRAFORM_DIR: deployments/aws
@@ -80,7 +80,6 @@ jobs:
             -var="subnet_ids_raw=${{ inputs.subnet_ids }}" \
             -var="security_group_id=${{ inputs.security_group_id }}" \
             -var="bucket_name=${{ inputs.bucket_name }}" \
-            -var="num_client_instances=${{ inputs.num_client_instances }}" \
             -out=tfplan
 
       - name: Terraform Apply
