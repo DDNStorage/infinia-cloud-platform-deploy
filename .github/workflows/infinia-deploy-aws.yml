@@ -98,7 +98,7 @@ jobs:
             -var="infinia_ami_id=${{ inputs.ami_id }}" \
             -var="infinia_version=${{ inputs.infinia_version }}" \
             -var="vpc_id=${{ inputs.vpc_id }}" \
-            -var='subnet_ids=[${{ inputs.subnet_ids }}]' \
+            -var='subnet_ids=${{ toJSON(split(",", inputs.subnet_ids)) }}' \
             -var="security_group_id=${{ inputs.security_group_id }}" \
             -var="bucket_name=${{ inputs.bucket_name }}" \
             -var="num_client_instances=${{ inputs.num_client_instances }}" \
@@ -113,7 +113,7 @@ jobs:
             -var="infinia_ami_id=${{ inputs.ami_id }}" \
             -var="infinia_version=${{ inputs.infinia_version }}" \
             -var="vpc_id=${{ inputs.vpc_id }}" \
-            -var='subnet_ids=[${{ inputs.subnet_ids }}]' \
+            -var='subnet_ids=${{ toJSON(split(",", inputs.subnet_ids)) }}' \
             -var="security_group_id=${{ inputs.security_group_id }}" \
             -var="bucket_name=${{ inputs.bucket_name }}" \
             -var="num_client_instances=${{ inputs.num_client_instances }}" \

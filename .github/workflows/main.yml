@@ -36,7 +36,7 @@ on:
         required: true
         type: string
       bucket_name:
-        description: "S3 Bucket for ansbile ssm"
+        description: "S3 Bucket for Ansible SSM"
         required: true
         type: string
       num_client_instances:
