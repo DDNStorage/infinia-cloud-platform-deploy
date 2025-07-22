@@ -33,9 +33,6 @@ on:
       bucket_name:
         required: true
         type: string
-      # num_client_instances:
-      #   required: true
-      #   type: number
 
 env:
   TERRAFORM_DIR: deployments/aws
@@ -54,7 +51,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -73,6 +70,11 @@ jobs:
             -backend-config="key=infinia/state.tfstate" \
             -backend-config="region=${{ inputs.s3_bucket_region }}"
 
+      - name: Parse Subnet IDs
+        id: subnet_json
+        run: |
+          echo "SUBNET_IDS_JSON=$(echo '${{ inputs.subnet_ids }}' | jq -R 'split(",")')" >> $GITHUB_ENV
+
       - name: Terraform Plan
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
@@ -82,7 +84,7 @@ jobs:
             -var="infinia_ami_id=${{ inputs.ami_id }}" \
             -var="infinia_version=${{ inputs.infinia_version }}" \
             -var="vpc_id=${{ inputs.vpc_id }}" \
-            -var="subnet_ids_raw=${{ inputs.subnet_ids }}" \
+            -var="subnet_ids=$SUBNET_IDS_JSON" \
             -var="security_group_id=${{ inputs.security_group_id }}" \
             -var="bucket_name=${{ inputs.bucket_name }}" \
             -out=tfplan
