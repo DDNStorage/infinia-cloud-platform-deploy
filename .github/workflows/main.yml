@@ -80,4 +80,12 @@ jobs:
     uses: ./.github/workflows/infinia-destroy-aws.yml
     with:
       aws_region: ${{ inputs.aws_region }}
+      s3_bucket_name: ${{ inputs.s3_bucket_name }}
+      s3_bucket_region: ${{ inputs.s3_bucket_region }}
+      deployment_name: ${{ inputs.deployment_name }}
+      infinia_version: ${{ inputs.infinia_version }}
+      vpc_id: ${{ inputs.vpc_id }}
+      subnet_ids: ${{ inputs.subnet_ids }}
+      security_group_id: ${{ inputs.security_group_id }}
+      bucket_name: ${{ inputs.bucket_name }}
     secrets: inherit
