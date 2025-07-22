@@ -69,11 +69,4 @@ jobs:
       - name: Terraform Destroy
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
-          terraform destroy -auto-approve \
-            -var-file=terraform.tfvars \
-            -var="infinia_deployment_name=${{ inputs.deployment_name }}" \
-            -var="infinia_version=${{ inputs.infinia_version }}" \
-            -var="vpc_id=${{ inputs.vpc_id }}" \
-            -var="subnet_ids=${{ inputs.subnet_ids }}" \
-            -var="security_group_id=${{ inputs.security_group_id }}" \
-            -var="bucket_name=${{ inputs.bucket_name }}"
+          terraform destroy -auto-approve 
