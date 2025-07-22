@@ -48,8 +48,8 @@
               --realm-entry \
               --version {{ infinia_version }} \
               --realm-secret "{{ realm_secret }}" \
-              --admin-password "{{ admin_password }}" >> /var/log/infinia/setup.log 2>&1 \
-              --skip-reboot
+              --admin-password "{{ admin_password }}" \
+              --skip-reboot >> /var/log/infinia/setup.log 2>&1
             '
           args:
             chdir: /tmp
@@ -80,8 +80,8 @@
               --ip {{ hostvars[groups["role_realm"][0]].private_ip_address }} \
               --version {{ infinia_version }} \
               --realm-secret "{{ realm_secret }}" \
-              --admin-password "{{ admin_password }}" >> /var/log/infinia/setup.log 2>&1 \
-              --skip-reboot
+              --admin-password "{{ admin_password }}" \
+              --skip-reboot >> /var/log/infinia/setup.log 2>&1
             '
           args:
             chdir: /tmp
@@ -105,13 +105,11 @@
           shell: 'echo "$(date) 🚀 Starting Infinia Cluster Configuration..." >> /var/log/infinia/setup.log'
           become: yes
 
-        - name: Copy Cluster Configuration Scripts 
+        - name: Copy Cluster Configuration Script 
           copy:
-            src: "{{ item.src }}"
-            dest: "{{ item.dest }}"
+            src: "./infinia-cluster-configure.sh"
+            dest: "/tmp/infinia-cluster-configure.sh"
             mode: '0755'
-          loop:
-            - { src: "./infinia-cluster-configure.sh", dest: "/tmp/infinia-cluster-configure.sh" }
           become: yes
           tags: copy
 
@@ -149,13 +147,13 @@
               exit 1
             fi
 
-            if [[ "$total_nodes" -ne {{ groups['all'] | length }} ]]; then
-              echo "❌ Number of nodes ($total_nodes) does not match expected ({{ groups['all'] | length }})!"
+            if [[ "$evicted_cats" -ne 0 ]]; then
+              echo "❌ Some CATs are evicted ($evicted_cats)!"
               exit 1
             fi
 
-            if [[ "$evicted_cats" -ne 0 ]]; then
-              echo "❌ Some CATs are evicted ($evicted_cats)!"
+            if [[ "$total_nodes" -ne {{ expected_node_count | default(groups['all'] | length) }} ]]; then
+              echo "❌ Number of nodes ($total_nodes) does not match expected ({{ expected_node_count | default(groups['all'] | length) }})!"
               exit 1
             fi
 
@@ -163,7 +161,8 @@
             '
           become: yes
           register: cluster_verification
-          failed_when: cluster_verification.rc != 0
+          failed_when: 
+            - cluster_verification.rc != 0
 
         - name: Display Cluster Verification Output
           debug:
