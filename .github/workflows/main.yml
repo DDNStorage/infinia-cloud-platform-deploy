@@ -77,6 +77,7 @@ jobs:
   infinia-destroy:
     name: Destroy Infinia Infrastructure
     needs: infinia-deploy
+    if: always()
     uses: ./.github/workflows/infinia-destroy-aws.yml
     with:
       aws_region: ${{ inputs.aws_region }}
