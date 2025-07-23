@@ -41,14 +41,11 @@ retry_curl() {
     exit 1
 }
 if [ ! -f $LOG_COMPLETE ] ; then 
-   apt-get update -y
-   apt-get install -y lldpd
-   systemctl list-units --type=service | grep -q lldpd.service  && systemctl enable lldpd  --now  | tee -a "$LOG_FILE"
    wget "$BASE_PKG_URL/releases/$RELEASE_TYPE/$REL_DIST_PATH/redsetup_$INFINIA_VERSION_$(dpkg --print-architecture)$RELEASE_TYPE.deb?cache-time=$(date +%s)" -O /tmp/redsetup.deb
    apt install -y /tmp/redsetup.deb | tee  -a $LOG_FILE
    rm  -rf "/etc/red/deploy/config.lock" && redsetup -reset | tee -a $LOG_FILE || echo "Error running redsetup reset" | tee -a $LOG_FILE
    if IS_RELAM; then
-        redsetup -realm-entry -realm-entry-secret 'PA-ssW00r^d' --admin-password 'PA-ssW00r^d' -ctrl-plane-ip $(hostname --ip-address)  -skip-reboot -skip-hardware-check | tee -a $LOG_FILE
+        redsetup -realm-entry -realm-entry-secret 'PA-ssW00r^d' --admin-password 'PA-ssW00r^d' -ctrl-plane-ip $(hostname --ip-address)  -skip-reboot  | tee -a $LOG_FILE
    else 
       retry_curl $REALM_IP
       redsetup --realm-entry-address $REALM_IP --realm-entry-secret 'PA-ssW00r^d' -skip-reboot

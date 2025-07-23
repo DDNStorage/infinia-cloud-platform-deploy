@@ -81,7 +81,7 @@ resource "aws_instance" "infinia_realm" {
   }
 
   dynamic "ebs_block_device" {
-    for_each = var.use_ebs_volumes ? range(var.ebs_volumes_per_vm) : []
+    for_each = var.use_ebs_volumes ? range(var.num_ephemeral_devices) : []
     content {
       device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
       volume_size           = var.ebs_volume_size
@@ -89,7 +89,15 @@ resource "aws_instance" "infinia_realm" {
       delete_on_termination = true
     }
   }
-
+  # dynamic "ebs_block_device" {
+  #   for_each = var.use_ebs_volumes ? range(var.ebs_volumes_per_vm) : []
+  #   content {
+  #     device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
+  #     volume_size           = var.ebs_volume_size
+  #     volume_type           = "gp3"
+  #     delete_on_termination = true
+  #   }
+  # }
 
   tags = {
     Name       = "${var.infinia_deployment_name}-sn-realm"
@@ -97,6 +105,8 @@ resource "aws_instance" "infinia_realm" {
     Role       = "realm"
   }
 }
+
+
 
 resource "aws_instance" "infinia_none_realm" {
   count                = var.num_infinia_instances
@@ -140,7 +150,7 @@ resource "aws_instance" "infinia_none_realm" {
   }
 
   dynamic "ebs_block_device" {
-    for_each = var.use_ebs_volumes ? range(var.ebs_volumes_per_vm) : []
+    for_each = var.use_ebs_volumes ? range(var.num_ephemeral_devices) : []
     content {
       device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
       volume_size           = var.ebs_volume_size
@@ -148,6 +158,15 @@ resource "aws_instance" "infinia_none_realm" {
       delete_on_termination = true
     }
   }
+  # dynamic "ebs_block_device" {
+  #   for_each = var.use_ebs_volumes ? range(var.ebs_volumes_per_vm) : []
+  #   content {
+  #     device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
+  #     volume_size           = var.ebs_volume_size
+  #     volume_type           = "gp3"
+  #     delete_on_termination = true
+  #   }
+  # }
 
   tags = {
     Name       = "${var.infinia_deployment_name}-sn-${format("%02d", count.index + 1)}" # Start index from 1 for none-realm
@@ -155,4 +174,3 @@ resource "aws_instance" "infinia_none_realm" {
     Role       = "nonerealm"
   }
 }
-

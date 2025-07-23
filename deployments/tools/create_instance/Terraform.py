@@ -55,7 +55,8 @@ class TerraformManager(object):
                 "infinia_version": "2.2.28",
                 "enable_public_ip": "false",
                 "num_infinia_instances": "3",
-                "ebs_volumes_per_vm": "2"
+                "ebs_volume_size": "7500",
+                "instance_type_infinia": "i3en.2xlarge"
             }
         elif self.provider == "gcp":
             defaults = {
