@@ -61,10 +61,7 @@ jobs:
       - name: Terraform Init
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
-          terraform init \
-            -backend-config="bucket=${{ inputs.s3_bucket_name }}" \
-            -backend-config="key=infinia/state.tfstate" \
-            -backend-config="region=${{ inputs.s3_bucket_region }}"
+          terraform init 
 
       - name: Terraform Destroy
         working-directory: ${{ env.TERRAFORM_DIR }}

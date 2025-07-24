@@ -3,42 +3,42 @@ name: Infinia Build, Deploy and Cleanup
 on:
   workflow_dispatch:
     inputs:
-      aws_region:
-        description: "AWS Region"
-        required: true
-        type: string
-      deployment_name:
-        description: "Deployment Name"
-        required: true
-        type: string
+      # aws_region:
+      #   description: "AWS Region"
+      #   required: true
+      #   type: string
+      # deployment_name:
+      #   description: "Deployment Name"
+      #   required: true
+      #   type: string
       infinia_version:
         description: "Infinia Version"
         required: true
         type: string
-      s3_bucket_name:
-        description: "Terraform S3 Backend Bucket Name"
-        required: true
-        type: string
-      s3_bucket_region:
-        description: "Terraform S3 Backend Bucket Region"
-        required: true
-        type: string
-      vpc_id:
-        description: "VPC ID"
-        required: true
-        type: string
-      subnet_ids:
-        description: "Comma-separated Subnet IDs"
-        required: true
-        type: string
-      security_group_id:
-        description: "Security Group ID"
-        required: true
-        type: string
-      bucket_name:
-        description: "S3 Bucket for Ansible SSM"
-        required: true
-        type: string
+      # s3_bucket_name:
+      #   description: "Terraform S3 Backend Bucket Name"
+      #   required: true
+      #   type: string
+      # s3_bucket_region:
+      #   description: "Terraform S3 Backend Bucket Region"
+      #   required: true
+      #   type: string
+      # vpc_id:
+      #   description: "VPC ID"
+      #   required: true
+      #   type: string
+      # subnet_ids:
+      #   description: "Comma-separated Subnet IDs"
+      #   required: true
+      #   type: string
+      # security_group_id:
+      #   description: "Security Group ID"
+      #   required: true
+      #   type: string
+      # bucket_name:
+      #   description: "S3 Bucket for Ansible SSM"
+      #   required: true
+      #   type: string
       # num_client_instances:
       #   description: "Number of client instances"
       #   required: true
@@ -62,15 +62,15 @@ jobs:
     uses: ./.github/workflows/infinia-deploy-aws.yml
     with:
       ami_id: ${{ needs.packer-build.outputs.ami_id }}
-      aws_region: ${{ inputs.aws_region }}
-      deployment_name: ${{ inputs.deployment_name }}
+      # aws_region: ${{ inputs.aws_region }}
+      # deployment_name: ${{ inputs.deployment_name }}
       infinia_version: ${{ inputs.infinia_version }}
-      s3_bucket_name: ${{ inputs.s3_bucket_name }}
-      s3_bucket_region: ${{ inputs.s3_bucket_region }}
-      vpc_id: ${{ inputs.vpc_id }}
-      subnet_ids: ${{ inputs.subnet_ids }}
-      security_group_id: ${{ inputs.security_group_id }}
-      bucket_name: ${{ inputs.bucket_name }}
+      # s3_bucket_name: ${{ inputs.s3_bucket_name }}
+      # s3_bucket_region: ${{ inputs.s3_bucket_region }}
+      # vpc_id: ${{ inputs.vpc_id }}
+      # subnet_ids: ${{ inputs.subnet_ids }}
+      # security_group_id: ${{ inputs.security_group_id }}
+      # bucket_name: ${{ inputs.bucket_name }}
       # num_client_instances: ${{ inputs.num_client_instances }}
     secrets: inherit
 
@@ -80,13 +80,13 @@ jobs:
     if: always()
     uses: ./.github/workflows/infinia-destroy-aws.yml
     with:
-      aws_region: ${{ inputs.aws_region }}
-      s3_bucket_name: ${{ inputs.s3_bucket_name }}
-      s3_bucket_region: ${{ inputs.s3_bucket_region }}
-      deployment_name: ${{ inputs.deployment_name }}
+      # aws_region: ${{ inputs.aws_region }}
+      # s3_bucket_name: ${{ inputs.s3_bucket_name }}
+      # s3_bucket_region: ${{ inputs.s3_bucket_region }}
+      # deployment_name: ${{ inputs.deployment_name }}
       infinia_version: ${{ inputs.infinia_version }}
-      vpc_id: ${{ inputs.vpc_id }}
-      subnet_ids: ${{ inputs.subnet_ids }}
-      security_group_id: ${{ inputs.security_group_id }}
-      bucket_name: ${{ inputs.bucket_name }}
+      # vpc_id: ${{ inputs.vpc_id }}
+      # subnet_ids: ${{ inputs.subnet_ids }}
+      # security_group_id: ${{ inputs.security_group_id }}
+      # bucket_name: ${{ inputs.bucket_name }}
     secrets: inherit

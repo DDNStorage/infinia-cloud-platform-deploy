@@ -6,33 +6,33 @@ on:
       ami_id:
         required: true
         type: string
-      aws_region:
-        required: true
-        type: string
-      deployment_name:
-        required: true
-        type: string
+      # aws_region:
+      #   required: true
+      #   type: string
+      # deployment_name:
+      #   required: true
+      #   type: string
       infinia_version:
         required: true
         type: string
-      s3_bucket_name:
-        required: true
-        type: string
-      s3_bucket_region:
-        required: true
-        type: string
-      vpc_id:
-        required: true
-        type: string
-      subnet_ids:
-        required: true
-        type: string  # comma-separated string
-      security_group_id:
-        required: true
-        type: string
-      bucket_name:
-        required: true
-        type: string
+      # s3_bucket_name:
+      #   required: true
+      #   type: string
+      # s3_bucket_region:
+      #   required: true
+      #   type: string
+      # vpc_id:
+      #   required: true
+      #   type: string
+      # subnet_ids:
+      #   required: true
+      #   type: string  # comma-separated string
+      # security_group_id:
+      #   required: true
+      #   type: string
+      # bucket_name:
+      #   required: true
+      #   type: string
 
 env:
   TERRAFORM_DIR: deployments/aws
@@ -65,10 +65,7 @@ jobs:
       - name: Terraform Init
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
-          terraform init \
-            -backend-config="bucket=${{ inputs.s3_bucket_name }}" \
-            -backend-config="key=infinia/state.tfstate" \
-            -backend-config="region=${{ inputs.s3_bucket_region }}"
+          terraform init
 
       - name: Parse Subnet IDs
         id: subnet_json
@@ -80,13 +77,8 @@ jobs:
         run: |
           terraform plan \
             -var-file=terraform.tfvars \
-            -var="infinia_deployment_name=${{ inputs.deployment_name }}" \
             -var="infinia_ami_id=${{ inputs.ami_id }}" \
             -var="infinia_version=${{ inputs.infinia_version }}" \
-            -var="vpc_id=${{ inputs.vpc_id }}" \
-            -var="subnet_ids=$SUBNET_IDS_JSON" \
-            -var="security_group_id=${{ inputs.security_group_id }}" \
-            -var="bucket_name=${{ inputs.bucket_name }}" \
             -out=tfplan
 
       - name: Terraform Apply
