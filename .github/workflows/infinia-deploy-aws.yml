@@ -57,7 +57,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ inputs.s3_bucket_region }}
+          aws-region: "${{ inputs.aws_region }}"
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -77,6 +77,8 @@ jobs:
         run: |
           terraform plan \
             -var-file=terraform.tfvars \
+            -var="infinia_ami_id=${{ inputs.ami_id }}" \
+            -var="infinia_version=${{ inputs.infinia_version }}" \
             -out=tfplan
 
       - name: Terraform Apply

@@ -24,9 +24,9 @@ on:
       # security_group_id:
       #   required: true
         # type: string
-      infinia_version:
-        required: true
-        type: string
+      # infinia_version:
+      #   required: true
+      #   type: string
       # bucket_name:
       #   required: true
       #   type: string
@@ -48,7 +48,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ inputs.aws_region }}
+          aws-region: "${{ inputs.aws_region }}"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

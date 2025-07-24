@@ -61,17 +61,9 @@ jobs:
     needs: packer-build
     uses: ./.github/workflows/infinia-deploy-aws.yml
     with:
+      aws_region: ${{ inputs.aws_region }}
       ami_id: ${{ needs.packer-build.outputs.ami_id }}
-      # aws_region: ${{ inputs.aws_region }}
-      # deployment_name: ${{ inputs.deployment_name }}
       infinia_version: ${{ inputs.infinia_version }}
-      # s3_bucket_name: ${{ inputs.s3_bucket_name }}
-      # s3_bucket_region: ${{ inputs.s3_bucket_region }}
-      # vpc_id: ${{ inputs.vpc_id }}
-      # subnet_ids: ${{ inputs.subnet_ids }}
-      # security_group_id: ${{ inputs.security_group_id }}
-      # bucket_name: ${{ inputs.bucket_name }}
-      # num_client_instances: ${{ inputs.num_client_instances }}
     secrets: inherit
 
   infinia-destroy:
@@ -80,13 +72,6 @@ jobs:
     if: always()
     uses: ./.github/workflows/infinia-destroy-aws.yml
     with:
-      # aws_region: ${{ inputs.aws_region }}
-      # s3_bucket_name: ${{ inputs.s3_bucket_name }}
-      # s3_bucket_region: ${{ inputs.s3_bucket_region }}
-      # deployment_name: ${{ inputs.deployment_name }}
-      infinia_version: ${{ inputs.infinia_version }}
-      # vpc_id: ${{ inputs.vpc_id }}
-      # subnet_ids: ${{ inputs.subnet_ids }}
-      # security_group_id: ${{ inputs.security_group_id }}
-      # bucket_name: ${{ inputs.bucket_name }}
+      aws_region: ${{ inputs.aws_region }}
+    #   infinia_version: ${{ inputs.infinia_version }}
     secrets: inherit
