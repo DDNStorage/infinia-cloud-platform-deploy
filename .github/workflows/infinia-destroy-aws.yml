@@ -6,30 +6,30 @@ on:
       aws_region:
         required: true
         type: string
-      s3_bucket_name:
-        required: true
-        type: string
-      s3_bucket_region:
-        required: true
-        type: string
-      deployment_name:
-        required: true
-        type: string
-      vpc_id:
-        required: true
-        type: string
-      subnet_ids:
-        required: true
-        type: string
-      security_group_id:
-        required: true
-        type: string
+      # s3_bucket_name:
+      #   required: true
+      #   type: string
+      # s3_bucket_region:
+      #   required: true
+      #   type: string
+      # deployment_name:
+      #   required: true
+      #   type: string
+      # vpc_id:
+      #   required: true
+      #   type: string
+      # subnet_ids:
+      #   required: true
+      #   type: string
+      # security_group_id:
+      #   required: true
+        # type: string
       infinia_version:
         required: true
         type: string
-      bucket_name:
-        required: true
-        type: string
+      # bucket_name:
+      #   required: true
+      #   type: string
 
 env:
   TERRAFORM_DIR: deployments/aws

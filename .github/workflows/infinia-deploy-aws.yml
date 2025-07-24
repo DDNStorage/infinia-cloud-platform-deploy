@@ -6,9 +6,9 @@ on:
       ami_id:
         required: true
         type: string
-      # aws_region:
-      #   required: true
-      #   type: string
+      aws_region:
+        required: true
+        type: string
       # deployment_name:
       #   required: true
       #   type: string
@@ -67,18 +67,16 @@ jobs:
         run: |
           terraform init
 
-      - name: Parse Subnet IDs
-        id: subnet_json
-        run: |
-          echo "SUBNET_IDS_JSON=$(echo '${{ inputs.subnet_ids }}' | jq -Rc 'split(",")')" >> $GITHUB_ENV
+      # - name: Parse Subnet IDs
+      #   id: subnet_json
+      #   run: |
+      #     echo "SUBNET_IDS_JSON=$(echo '${{ inputs.subnet_ids }}' | jq -Rc 'split(",")')" >> $GITHUB_ENV
 
       - name: Terraform Plan
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: |
           terraform plan \
             -var-file=terraform.tfvars \
-            -var="infinia_ami_id=${{ inputs.ami_id }}" \
-            -var="infinia_version=${{ inputs.infinia_version }}" \
             -out=tfplan
 
       - name: Terraform Apply
