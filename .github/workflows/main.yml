@@ -3,10 +3,10 @@ name: Infinia Build, Deploy and Cleanup
 on:
   workflow_dispatch:
     inputs:
-      # aws_region:
-      #   description: "AWS Region"
-      #   required: true
-      #   type: string
+      aws_region:
+        description: "AWS Region"
+        required: true
+        type: string
       # deployment_name:
       #   description: "Deployment Name"
       #   required: true
