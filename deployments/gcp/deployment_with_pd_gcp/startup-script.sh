@@ -98,6 +98,40 @@ validate_and_activate_license() {
     fi
 }
 
+# Function to validate disk count
+validate_disk_count() {
+    local expected_count=$1
+    local retry_count=0
+    local max_attempts=$((1200 / 20)) # 1200 seconds with 20-second intervals (15 attempts)
+    
+    log_info "Starting disk count validation. Expected: $expected_count disks"
+    
+    while [ $retry_count -lt $max_attempts ]; do
+        # Get actual disk count excluding root disk and boot disk
+        local actual_count=$(lsblk -d -n -o NAME,TYPE | grep -E '^[a-z]+\s+disk$' | grep -v -E '^(sda|nvme0n1)' | wc -l)
+        
+        log_info "Disk validation attempt $((retry_count + 1)): Found $actual_count disks, expected $expected_count"
+        
+        if [ "$actual_count" -eq "$expected_count" ]; then
+            log_info "Disk count validation passed. All $expected_count persistent disks are attached."
+            return 0
+        fi
+        
+        log_info "Waiting for persistent disks to be attached... (attempt $((retry_count + 1))/$max_attempts)"
+        log_info "Currently available disks:"
+        lsblk -d -n -o NAME,SIZE,TYPE | grep disk | tee -a "$LOG_FILE"
+        
+        retry_count=$((retry_count + 1))
+        sleep 20
+    done
+    
+    log_info "ERROR: Disk count validation failed after $((max_attempts * 20)) seconds"
+    log_info "Expected: $expected_count, Found: $actual_count"
+    log_info "Final disk list:"
+    lsblk -d -n -o NAME,SIZE,TYPE | grep disk | tee -a "$LOG_FILE"
+    exit 1
+}
+
 # Main script
 log_info "Starting Infinia deployment script..."
 
@@ -132,6 +166,7 @@ REALM_ENTRY_HOST=$(fetch_metadata "${ATTRIBUTES_METADATA_URL}/realm_entry_host")
 REALM_ENTRY_SECRET=$(fetch_metadata "${ATTRIBUTES_METADATA_URL}/realm-entry-secret")
 ADMIN_PASSWORD=$(fetch_metadata "${ATTRIBUTES_METADATA_URL}/admin-password")
 INFINIA_VERSION=$(fetch_metadata "${ATTRIBUTES_METADATA_URL}/infinia_version")
+PD_DISK_COUNT=$(fetch_metadata "${ATTRIBUTES_METADATA_URL}/pd_disk_count")
 
 CURRENT_INSTANCE=$(fetch_metadata "${INSTANCE_METADATA_URL}/name")
 log_info "CURRENT_INSTANCE: $CURRENT_INSTANCE"
@@ -161,10 +196,12 @@ if [ "$CURRENT_INSTANCE" == "$REALM_ENTRY_HOST" ]; then
     export REL_DIST_PATH="ubuntu/24.04"
     export RED_VER="$INFINIA_VERSION"
 
-    wget $BASE_PKG_URL/releases/rmd_template.json -O /tmp/rmd_template.json
-    envsubst < /tmp/rmd_template.json > /tmp/rmd.json
-
     IP_ADDRESS=$(hostname -I | awk '{print $1}')
+
+    # Validate disk count before running redsetup on non-realm entry hosts
+    log_info "Validating persistent disk count before redsetup..."
+    validate_disk_count "$PD_DISK_COUNT"
+
     sudo redsetup -realm-entry \
         -realm-entry-secret "$REALM_ENTRY_SECRET" \
         --admin-password "$ADMIN_PASSWORD" \
@@ -177,6 +214,11 @@ else
     retry_curl "$REALM_ENTRY_HOST"
 
     log_info "Configuring Non-Realm Entry Host..."
+
+    # Validate disk count before running redsetup on non-realm entry hosts
+    log_info "Validating persistent disk count before redsetup..."
+    validate_disk_count "$PD_DISK_COUNT"
+
     sudo redsetup --realm-entry-address "$REALM_ENTRY_HOST" --realm-entry-secret "$REALM_ENTRY_SECRET" -skip-reboot
     log_info "Non-Realm Entry Host configuration completed."
 fi

@@ -86,10 +86,11 @@ resource "google_compute_instance" "realm_entry_instance" {
   metadata = merge(local.metadata, {
     infinia_version         = var.infinia_version
     infinia_license         = var.infinia_license
-    startup-script-url      = "https://storage.cloud.google.com/infinia-hp-gcp-mp/startup-script.sh"
+    startup-script-url      = "https://storage.googleapis.com/infinia-hp-gcp-mp/dev-startup-script.sh"
     infinia_instances       = join(",", local.instance_names)
     realm_entry_host        = "${var.goog_cm_deployment_name}-0"
     infinia_instance_count  = tostring(var.num_infinia_instances)
+    pd_disk_count          = tostring(var.pd_disk_count)
     realm-entry-secret      = random_password.realm_entry_secret.result
     admin-password          = random_password.admin_password.result
   })
@@ -176,10 +177,11 @@ resource "google_compute_instance" "follower_instances" {
   metadata = merge(local.metadata, {
     infinia_version         = var.infinia_version
     infinia_license         = var.infinia_license
-    startup-script-url      = "https://storage.cloud.google.com/infinia-hp-gcp-mp/startup-script.sh"
+    startup-script-url      = "https://storage.googleapis.com/infinia-hp-gcp-mp/dev-startup-script.sh"
     infinia_instances       = join(",", local.instance_names)
     realm_entry_host        = "${var.goog_cm_deployment_name}-0"
     infinia_instance_count  = tostring(var.num_infinia_instances)
+    pd_disk_count          = tostring(var.pd_disk_count)
     realm-entry-secret      = random_password.realm_entry_secret.result
     admin-password          = random_password.admin_password.result
   })
@@ -303,11 +305,11 @@ resource "random_password" "admin_password" {
   special = false
 }
 
-# Create persistent disks for the realm entry instance
-resource "google_compute_disk" "realm_entry_data_disks" {
-  count = var.pd_disk_count
+# Create persistent disks for all instances first
+resource "google_compute_disk" "infinia_data_disks" {
+  count = var.num_infinia_instances * var.pd_disk_count
   
-  name  = "${var.goog_cm_deployment_name}-pd-0-${count.index}"
+  name  = "${var.goog_cm_deployment_name}-pd-${floor(count.index / var.pd_disk_count)}-${count.index % var.pd_disk_count}"
   type  = var.pd_disk_type
   zone  = var.zone
   size  = var.pd_disk_size
@@ -316,26 +318,14 @@ resource "google_compute_disk" "realm_entry_data_disks" {
 # Attach disks to the realm entry instance
 resource "google_compute_attached_disk" "realm_entry_attached_disks" {
   count    = var.pd_disk_count
-  disk     = google_compute_disk.realm_entry_data_disks[count.index].id
+  disk     = google_compute_disk.infinia_data_disks[count.index].id
   instance = google_compute_instance.realm_entry_instance.id
-}
-
-# Create persistent disks for the follower instances
-resource "google_compute_disk" "follower_data_disks" {
-  count = (var.num_infinia_instances - 1) * var.pd_disk_count
-  
-  depends_on = [time_sleep.wait_for_realm_entry]
-  
-  name  = "${var.goog_cm_deployment_name}-pd-${floor(count.index / var.pd_disk_count) + 1}-${count.index % var.pd_disk_count}"
-  type  = var.pd_disk_type
-  zone  = var.zone
-  size  = var.pd_disk_size
 }
 
 # Attach disks to the follower instances
 resource "google_compute_attached_disk" "follower_attached_disks" {
   count    = (var.num_infinia_instances - 1) * var.pd_disk_count
-  disk     = google_compute_disk.follower_data_disks[count.index].id
+  disk     = google_compute_disk.infinia_data_disks[count.index + var.pd_disk_count].id
   instance = google_compute_instance.follower_instances[floor(count.index / var.pd_disk_count)].id
 }
 
