@@ -1,7 +1,7 @@
 infinia_deployment_name = "ddn"
 aws_region              = "us-east-1"
 vpc_id                  = "vpc-0dcdd979d726f2beb"
-subnet_ids              = ["subnet-0f6ce2ff1d09ffca5", "subnet-0ab400e209d2ecf58"]
+subnet_ids              = ["subnet-02b1f138ddafa32bc", "subnet-0fcc530b7c7bd327b"]
 security_group_id       = "sg-02532d68b5e48d6d6"
 infinia_ami_id          = "ami-0e2c8caa4b6378d8c"
 client_ami_id           = "ami-0e2c8caa4b6378d8c"
