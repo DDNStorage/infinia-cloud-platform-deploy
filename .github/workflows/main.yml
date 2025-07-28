@@ -66,12 +66,12 @@ jobs:
       infinia_version: ${{ inputs.infinia_version }}
     secrets: inherit
 
-  infinia-destroy:
-    name: Destroy Infinia Infrastructure
-    needs: infinia-deploy
-    if: always()
-    uses: ./.github/workflows/infinia-destroy-aws.yml
-    with:
-      aws_region: ${{ inputs.aws_region }}
-    #   infinia_version: ${{ inputs.infinia_version }}
-    secrets: inherit
+  # infinia-destroy:
+  #   name: Destroy Infinia Infrastructure
+  #   needs: infinia-deploy
+  #   if: always()
+  #   uses: ./.github/workflows/infinia-destroy-aws.yml
+  #   with:
+  #     aws_region: ${{ inputs.aws_region }}
+  #   #   infinia_version: ${{ inputs.infinia_version }}
+  #   secrets: inherit
