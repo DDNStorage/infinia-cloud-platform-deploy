@@ -1,28 +1,10 @@
 name: Deploy Infinia Infrastructure
 
 on:
-  workflow_call:
-    inputs:
-      ami_id:
-        description: "AMI ID from Packer"
-        required: true
-        type: string
-      aws_region:
-        description: "AWS Region"
-        required: true
-        type: string
-      deployment_name:
-        description: "Infinia Deployment Name"
-        required: true
-        type: string
-      infinia_version:
-        description: "Infinia Version"
-        required: true
-        type: string
+  workflow_dispatch:
 
 env:
   TERRAFORM_DIR: deployments/aws
-  ANSIBLE_DIR: deployments/aws/ansible
 
 jobs:
   Infinia-deployment:
@@ -58,9 +40,9 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ${{ env.TERRAFORM_DIR }}
-        run: terraform plan -var-file=terraform.tfvars -var="infinia_deployment_name=${{ inputs.deployment_name }}" -var="infinia_ami_id=${{ inputs.ami_id }}" -var="infinia_version=${{ inputs.infinia_version }}" -out=tfplan
+        run: terraform plan -var-file=terraform.tfvars -out=tfplan
 
       - name: Terraform Apply
         working-directory: ${{ env.TERRAFORM_DIR }}
-        run: terraform apply -var-file=terraform.tfvars -var="infinia_deployment_name=${{ inputs.deployment_name }}" -var="infinia_ami_id=${{ inputs.ami_id }}" -var="infinia_version=${{ inputs.infinia_version }}" -auto-approve tfplan
+        run: terraform apply -var-file=terraform.tfvars -auto-approve tfplan
 
