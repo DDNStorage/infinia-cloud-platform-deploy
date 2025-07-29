@@ -188,6 +188,10 @@
             echo "$OUTPUT" > /tmp/s3_access_output.txt
           args:
             executable: /bin/bash
+          register: create_s3_creds
+          retries: 10
+          delay: 20
+          until: create_s3_creds.rc == 0
           become: true
           delegate_to: "{{ groups['role_realm'][0] }}"
           run_once: true
