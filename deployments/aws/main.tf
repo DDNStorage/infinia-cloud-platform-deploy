@@ -31,15 +31,6 @@ resource "aws_instance" "infinia_realm" {
     delete_on_termination = true
   }
 
-  # dynamic "ebs_block_device" {
-  #   for_each = var.use_ebs_volumes ? range(var.ebs_volumes_per_vm) : []
-  #   content {
-  #     device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
-  #     volume_size           = var.ebs_volume_size
-  #     volume_type           = "gp3"
-  #     delete_on_termination = true
-  #   }
-  # }
 
   dynamic "ebs_block_device" {
     for_each = var.use_ebs_volumes ? toset(range(var.ebs_volumes_per_vm)) : []
@@ -62,7 +53,7 @@ resource "aws_instance" "infinia_realm" {
 
 
 resource "time_sleep" "wait_for_realm_node" {
-  create_duration = "2m"
+  create_duration = "5m"
 }
 
 

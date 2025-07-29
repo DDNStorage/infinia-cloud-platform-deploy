@@ -7,10 +7,10 @@ output "infinia_instance_realm_ids" {
   description = "The instance IDs of the Infinia instances"
   value       = aws_instance.infinia_realm[0].id
 }
-# output "infinia_instance_none_realm_ids" {
-#   description = "The instance IDs of the Infinia instances"
-#   value       = aws_instance.infinia_none_realm[*].id
-# }
+output "infinia_instance_none_realm_ids" {
+  description = "The instance IDs of the Infinia instances"
+  value       = aws_instance.infinia_none_realm[*].id
+}
 
 output "client_instance_private_ips" {
   description = "The private IP addresses of the client instances"

@@ -140,4 +140,14 @@ variable "bucket_name" {
   type        = string
 }
 
+variable "sleep_durations" {
+  description = "Map of instance types to sleep durations"
+  type        = map(string)
+  default = {
+    "m7a.xlarge"   = "5m"
+    "i3en.2xlarge" = "5m"
+
+  }
+}
+
 
