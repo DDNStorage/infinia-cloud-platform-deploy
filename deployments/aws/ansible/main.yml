@@ -181,6 +181,8 @@
             set -e
             echo "🔐 Logging in as realm_admin..."
             redcli user login realm_admin -p "{{ admin_password }}"
+            redcli user add s3_test_user -p Adminpassword -r red -t red
+            redcli user grant s3_test_user red/red -t red
             echo "🪪 Creating S3 access for s3_test_user..."
             OUTPUT=$(redcli s3 access add s3_test_user -t red -r red/red/redobj -e 10y)
             echo "$OUTPUT" > /tmp/s3_access_output.txt
