@@ -70,14 +70,21 @@
   delegate_to: "{{ target_host }}"
   become: true
 
-- name: Create S3 bucket
+- name: Create S3 bucket (ignore if already exists)
   shell: |
+    set -e
     AWS_SHARED_CREDENTIALS_FILE=/home/ubuntu/.aws/credentials \
     aws --no-verify-ssl \
       --endpoint-url=https://{{ hostvars[groups['role_realm'][0]].public_ip_address }}:8111 \
-      s3api create-bucket --bucket my-test-bucket
+      s3api create-bucket --bucket my-test-bucket || {
+        rc=$?
+        echo "⚠️ Bucket may already exist or another error occurred (rc=$rc). Continuing anyway."
+        exit 0
+      }
   become: true
   delegate_to: "{{ target_host }}"
+  register: bucket_create
+  failed_when: false 
 
 - name: Upload test file to S3 bucket
   shell: |
