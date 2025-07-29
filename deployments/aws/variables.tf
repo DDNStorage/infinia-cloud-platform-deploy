@@ -145,7 +145,7 @@ variable "sleep_durations" {
   type        = map(string)
   default = {
     "m7a.xlarge"   = "5m"
-    "i3en.2xlarge" = "5m"
+    "i3en.2xlarge" = "3m"
 
   }
 }
