@@ -21,13 +21,17 @@
   become: true
   delegate_to: "{{ target_host }}"
 
-- name: Install unzip
+- name: Install unzip with retries
   apt:
     name: unzip
     state: present
     update_cache: true
   become: true
   delegate_to: "{{ target_host }}"
+  register: apt_result
+  until: apt_result is succeeded
+  retries: 10
+  delay: 10
 
 - name: Download AWS CLI v2
   shell: |
