@@ -92,7 +92,7 @@ variable "use_ebs_volumes" {
 variable "ebs_volume_size" {
   description = "Size of each EBS volume (in GB)"
   type        = number
-  default     = 7500
+  default     = 128
 }
 
 
