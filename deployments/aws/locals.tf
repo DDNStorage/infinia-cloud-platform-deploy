@@ -1,5 +1,9 @@
 locals {
   instance_count = var.num_infinia_instances + 1
+  secret_data    = jsondecode(data.aws_secretsmanager_secret_version.realm_credentials.secret_string)
+  admin_password = local.secret_data.realm_secret
+  realm_license  = local.secret_data.license
+
 }
 
 locals {
@@ -36,21 +40,25 @@ _check_inventory(){
 if [ ! -f $LOG_COMPLETE ] ; then 
    wget "${var.base_pkg_url}/releases${var.release_type}/${var.rel_dist_path}/redsetup_${var.infinia_version}_$(dpkg --print-architecture)${var.release_type}.deb?cache-time=$(date +%s)" -O /tmp/redsetup.deb
    apt install -y /tmp/redsetup.deb | tee  -a $LOG_FILE
-   rm  -rf "/etc/red/deploy/config.lock" && redsetup -reset | tee -a $LOG_FILE || echo "Error running redsetup reset" | tee -a $LOG_FILE
+   rm  -rf "/etc/red/deploy/config.lock" && redsetup -reset || log_info "Error running redsetup reset"
    log_info "Wait for self inventory " && sleep 60
-   redsetup -realm-entry -realm-entry-secret 'PA-ssW00r^d' --admin-password 'PA-ssW00r^d' -ctrl-plane-ip $(hostname --ip-address)  -skip-reboot  | tee -a $LOG_FILE
+   redsetup -realm-entry -realm-entry-secret ${local.admin_password} --admin-password ${local.admin_password} -ctrl-plane-ip $(hostname --ip-address)  -skip-reboot  | tee -a $LOG_FILE
    log_info "reboot"
    touch $LOG_COMPLETE
    reboot -f 
 else 
   cd /tmp 
-    redcli user login realm_admin -p 'PA-ssW00r^d'  | tee -a $LOG_FILE || echo "Error: redcli login failed" | tee -a "$LOG_FILE"
+    redcli user login realm_admin -p ${local.admin_password}   || log_info "Error: redcli login failed"
     redcli inventory show > inventory.log 
     grep -qi 'cpu' inventory.log || log_info  "Still waiting for self inventory" && sleep 60
+    
+    # First inventory init and compare 
     redcli realm config generate && _check_inventory || log_info "Error: Failed to generate config"
-    redcli realm config generate  || log_info "Error Generating config file" | tee -a "$LOG_FILE"
+    
+    # Regenerate when none realm joined the cluster
+    redcli realm config generate  || log_info "Error Generating config file"
     redcli realm config update -f realm_config.yaml || log_info "Error updating realm"
-    redcli license install -a '1DE94FE1-BE7D-4A4B-8DA2-7761ED7B66EA' -y | tee -a $LOG_FILE
+    redcli license install -a ${local.realm_license} -y | tee -a $LOG_FILE
     redcli cluster create c1 -S=false -z  -f   |  tee -a "$LOG_FILE" || log_info "Error: failed to create cluster" 
     systemctl disable  cloudinit-rerun.service  --now
     rm -rf /var/lib/apt/lists/*
@@ -59,7 +67,7 @@ else
   fi
 EOT
 }
-# [[ $(redcli inventory show  |grep Nodes |awk '{print $2}') != $(grep -i hostname realm_config.yaml) ]]
+
 locals {
   user_startup_script_none_realm = <<EOT
 #!/bin/bash
@@ -112,7 +120,7 @@ if [ ! -f $LOG_COMPLETE ] ; then
    apt install -y /tmp/redsetup.deb 
    rm  -rf "/etc/red/deploy/config.lock" && redsetup -reset  || log_info "Error running redsetup reset" 
    retry_curl $REALM_IP
-   redsetup --realm-entry-address $REALM_IP --realm-entry-secret 'PA-ssW00r^d' -skip-reboot -skip-hardware-check
+   redsetup --realm-entry-address $REALM_IP --realm-entry-secret ${local.admin_password} -skip-reboot -skip-hardware-check
    log_info "reboot"
    touch $LOG_COMPLETE
    reboot -f 
