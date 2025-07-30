@@ -7,14 +7,42 @@ on:
         description: "AWS Region"
         required: true
         type: string
-      deployment_name:
-        description: "Deployment Name"
-        required: true
-        type: string
+      # deployment_name:
+      #   description: "Deployment Name"
+      #   required: true
+      #   type: string
       infinia_version:
         description: "Infinia Version"
         required: true
         type: string
+      # s3_bucket_name:
+      #   description: "Terraform S3 Backend Bucket Name"
+      #   required: true
+      #   type: string
+      # s3_bucket_region:
+      #   description: "Terraform S3 Backend Bucket Region"
+      #   required: true
+      #   type: string
+      # vpc_id:
+      #   description: "VPC ID"
+      #   required: true
+      #   type: string
+      # subnet_ids:
+      #   description: "Comma-separated Subnet IDs"
+      #   required: true
+      #   type: string
+      # security_group_id:
+      #   description: "Security Group ID"
+      #   required: true
+      #   type: string
+      # bucket_name:
+      #   description: "S3 Bucket for Ansible SSM"
+      #   required: true
+      #   type: string
+      # num_client_instances:
+      #   description: "Number of client instances"
+      #   required: true
+      #   type: number
 
 env:
   AWS_REGION: ${{ inputs.aws_region }}
@@ -33,16 +61,17 @@ jobs:
     needs: packer-build
     uses: ./.github/workflows/infinia-deploy-aws.yml
     with:
-      ami_id: ${{ needs.packer-build.outputs.ami_id }}
       aws_region: ${{ inputs.aws_region }}
-      deployment_name: ${{ inputs.deployment_name }}
+      ami_id: ${{ needs.packer-build.outputs.ami_id }}
       infinia_version: ${{ inputs.infinia_version }}
     secrets: inherit
 
   infinia-destroy:
     name: Destroy Infinia Infrastructure
     needs: infinia-deploy
+    if: always()
     uses: ./.github/workflows/infinia-destroy-aws.yml
     with:
       aws_region: ${{ inputs.aws_region }}
+    #   infinia_version: ${{ inputs.infinia_version }}
     secrets: inherit
