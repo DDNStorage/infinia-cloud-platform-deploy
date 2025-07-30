@@ -91,7 +91,8 @@ resource "aws_instance" "infinia_none_realm" {
   }
 
   dynamic "ebs_block_device" {
-    for_each = var.use_ebs_volumes ? range(var.ebs_volumes_per_vm) : []
+    #for_each = var.use_ebs_volumes ? range(var.ebs_volumes_per_vm) : []
+    for_each = var.use_ebs_volumes ? toset(range(var.ebs_volumes_per_vm)) : []
     content {
       device_name           = "/dev/sd${element(["f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u"], ebs_block_device.value)}"
       volume_size           = var.ebs_volume_size
