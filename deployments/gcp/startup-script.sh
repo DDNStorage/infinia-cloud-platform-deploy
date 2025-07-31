@@ -19,7 +19,20 @@ log_info() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
 }
 
-# Function to fetch metadata
+# Check inventory
+check_inventory(){
+    while true; do
+    val1=$(redcli inventory show | grep Nodes | awk '{print $2}')
+    val2=$(echo $NODE_COUNT )
+    if [ "$val1" = "$val2" ]; then
+        break
+    else
+        log_info "Waiting for nodes to join.."
+        sleep 1
+    fi
+done
+}
+
 fetch_metadata() {
     local url=$1
     curl -s -H "${METADATA_FLAVOR_HEADER}" "$url" || { log_info "Error fetching metadata: $url"; exit 1; }
@@ -78,6 +91,7 @@ check_infinia_instance_count() {
     exit 1
 }
 
+
 # Function to validate and activate license
 validate_and_activate_license() {
     local license=$1
@@ -85,9 +99,11 @@ validate_and_activate_license() {
     if [ -n "$license" ]; then
         log_info "License provided. Activating license..."
         redcli user login realm_admin -p "$ADMIN_PASSWORD"
+        check_inventory 
         redcli realm config generate
         redcli realm config update -f realm_config.yaml
         redcli license install -a "$license" -y
+        redcli cluster create c1 -S=false -z  -f
         if [ $? -eq 0 ]; then
             log_info "License activated successfully."
         else
@@ -113,10 +129,12 @@ if is_after_reboot; then
         log_info "Checking Infinia instance count on realm entry node..."
         redcli user login realm_admin -p "$ADMIN_PASSWORD"
         check_infinia_instance_count "$INFINIA_INSTANCE_COUNT"
+        
     fi
 
     if [ "$CURRENT_INSTANCE" == "$REALM_ENTRY_HOST" ]; then
         validate_and_activate_license "$INFINIA_LICENSE"
+
     fi
 
     log_info "Disabling google-startup-scripts.service..."

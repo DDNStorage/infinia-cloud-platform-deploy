@@ -1,4 +1,5 @@
 *terraform*
+*.terraform*"
 vars.yml
 aws_ec2.yml
-.DS_Store
+tfplan
