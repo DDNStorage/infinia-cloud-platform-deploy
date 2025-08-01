@@ -112,7 +112,7 @@ variable "desired_capacity" {
 variable "infinia_license" {
   description = "Optional Infinia license key for validation."
   type        = string
-  default     = ""
+  default     = "1DE94FE1-BE7D-4A4B-8DA2-7761ED7B66EA"
 }
 
 variable "local_disks" {
@@ -122,8 +122,8 @@ variable "local_disks" {
 }
 
 variable "infinia_version" {
-  type        = string
-  default     = "1.3.52"
+  type    = string
+  default = "2.2.28"
 }
 
 variable "num_clients" {
