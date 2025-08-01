@@ -107,7 +107,7 @@ if is_after_reboot; then
         log_info "Checking Infinia instance count on realm entry node..."
         redcli user login realm_admin -p "$ADMIN_PASSWORD"
         cd /tmp
-        redcli user login realm_admin -p "$ADMIN_PASSWORD" |teee -a $LOG_FILE 
+        redcli user login realm_admin -p "$ADMIN_PASSWORD" |tee -a $LOG_FILE 
         redcli inventory show > inventory.log
         grep -qi 'cpu' inventory.log || log_info  "Still waiting for self inventory" && sleep 60
         log_info "${INFINIA_INSTANCE_COUNT}"
