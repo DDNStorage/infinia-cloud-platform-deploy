@@ -122,27 +122,27 @@ variable "local_disks" {
 }
 
 variable "pd_disk_count" {
-  description = "Number of persistent disks per VM (Adding as a part of PD)"  
+  description = "Number of persistent disks per VM (Adding as a part of PD)"
   type        = number
-  default     = 24  # 8 persistent disks per VM
+  default     = 24 # 8 persistent disks per VM
 }
 
 variable "pd_disk_size" {
   description = "Size of each persistent disk in GB (Adding as a part of PD)"
   type        = number
-  default     = 375  # 500 GB per disk
+  default     = 375 # 500 GB per disk
 }
 
 variable "pd_disk_type" {
   description = "Type of persistent disk (Adding as a part of PD) "
   type        = string
-  default     = "pd-ssd"  
+  default     = "pd-ssd"
 }
 
 
 variable "infinia_version" {
-  type        = string
-  default     = "2.0.23"
+  type    = string
+  default = "2.0.23"
 }
 
 variable "num_clients" {
@@ -182,5 +182,15 @@ variable "image_project" {
 variable "num_infinia_instances" {
   description = "The number of Infinia instances to create"
   type        = number
-  default     = 6  # Default to 6 instances
+  default     = 6 # Default to 6 instances
+}
+
+variable "secure_subnet_name" {
+  type    = string
+  default = "secure-subnet"
+}
+
+variable "region" {
+  type    = string
+  default = "us-central1"
 }
