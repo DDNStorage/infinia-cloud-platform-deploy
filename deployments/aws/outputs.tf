@@ -1,15 +1,11 @@
 output "infinia_instance_private_ips" {
   description = "The private IP addresses of the Infinia instances"
-  value       = aws_instance.infinia_realm[0].private_ip
+  value       = aws_instance.infinia[*].private_ip
 }
 
-output "infinia_instance_realm_ids" {
+output "infinia_instance_ids" {
   description = "The instance IDs of the Infinia instances"
-  value       = aws_instance.infinia_realm[0].id
-}
-output "infinia_instance_none_realm_ids" {
-  description = "The instance IDs of the Infinia instances"
-  value       = aws_instance.infinia_none_realm[*].id
+  value       = aws_instance.infinia[*].id
 }
 
 output "client_instance_private_ips" {
@@ -46,7 +42,6 @@ output "client_instance_count" {
   description = "The number of client instances deployed"
   value       = var.num_client_instances
 }
-
 
 # output "load_balancer_private_ip" {
 #   description = "The private IP address of the load balancer instance"
