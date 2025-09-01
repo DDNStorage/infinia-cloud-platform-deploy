@@ -76,7 +76,7 @@ variable "root_device_size" {
 variable "use_ebs_volumes" {
   description = "Flag to determine whether EBS volumes should be attached"
   type        = bool
-  default     = false # Default is no EBS volumes unless explicitly enabled
+  default     = false  # Default is no EBS volumes unless explicitly enabled
 }
 
 variable "ebs_volume_size" {
@@ -93,32 +93,17 @@ variable "ebs_volumes_per_vm" {
 
 variable "enable_public_ip" {
   description = "Flag to determin whether enalbe public IP"
-  type        = bool
-  default     = true
+  type = bool
+  default = true
 }
 
 variable "infinia_version" {
   description = "The infinia version"
-  type        = string
-  default     = "2.2.28"
+  type = string
+  default = "2.2.28"
 }
 
 variable "bucket_name" {
   description = "Name of the AWS S3 bucket for Ansible SSM"
-  type        = string
-}
-
-variable "client_vpc_id" {
-  description = "The VPC ID for the client machines"
-  type        = string
-}
-
-variable "client_subnet_ids" {
-  description = "The subnet ids for the client machines"
-  type        = list(string)
-}
-
-variable "client_security_group_id" {
-  description = "Security group ID for the client instances"
   type        = string
 }
