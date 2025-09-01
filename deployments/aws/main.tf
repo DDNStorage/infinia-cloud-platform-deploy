@@ -82,8 +82,8 @@ resource "aws_instance" "client" {
   count                       = var.num_client_instances
   ami                         = var.client_ami_id
   instance_type               = var.instance_type_client
-  subnet_id                   = element(var.client_subnet_ids, count.index % length(var.subnet_ids))
-  security_groups             = [var.client_security_group_id]
+  subnet_id                   = element(var.subnet_ids, count.index % length(var.subnet_ids))
+  security_groups             = [var.security_group_id]
   key_name                    = var.key_pair_name
   iam_instance_profile        = aws_iam_instance_profile.ssm_instance_profile.name
   associate_public_ip_address = var.enable_public_ip
