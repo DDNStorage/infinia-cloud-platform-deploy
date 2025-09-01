@@ -70,15 +70,6 @@
   delegate_to: "{{ target_host }}"
   become: true
 
-- name: Create S3 bucket
-  shell: |
-    AWS_SHARED_CREDENTIALS_FILE=/home/ubuntu/.aws/credentials \
-    aws --no-verify-ssl \
-      --endpoint-url=https://{{ hostvars[groups['role_realm'][0]].public_ip_address }}:8111 \
-      s3api create-bucket --bucket my-test-bucket
-  become: true
-  delegate_to: "{{ target_host }}"
-
 - name: Upload test file to S3 bucket
   shell: |
     AWS_SHARED_CREDENTIALS_FILE=/home/ubuntu/.aws/credentials \
