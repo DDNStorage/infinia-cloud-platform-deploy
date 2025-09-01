@@ -9,7 +9,7 @@ variable "region" {
 }
 
 variable "infinia_version" {
-  default = "2.2.20"
+  default = "2.2.28"
 }
 
 variable "base_pkg_url" {
@@ -87,32 +87,16 @@ build {
       "if systemctl list-units --type=service | grep -q lldpd.service; then systemctl enable lldpd && systemctl restart lldpd; else echo 'lldpd.service not found, skipping...'; fi",
       "wget ${var.base_pkg_url}/releases${var.release_type}/${var.rel_dist_path}/redsetup_${var.infinia_version}_$(dpkg --print-architecture)${var.release_type}.deb?cache-time=$(date +%s) -O /tmp/redsetup.deb",
       "apt install -y /tmp/redsetup.deb",
-      "wget ${var.base_pkg_url}/releases/rmd_template.json -O /tmp/rmd_template.json",
-      "envsubst < /tmp/rmd_template.json > /tmp/rmd.json",
-      "redsetup -realm-entry -realm-entry-secret PA-ssW00r^d --admin-password PA-ssW00r^d -ctrl-plane-ip $(hostname --ip-address) -release-metadata-file /tmp/rmd.json -skip-reboot -skip-hardware-check",
+      "redsetup -realm-entry -realm-entry-secret PA-ssW00r^d --admin-password PA-ssW00r^d -ctrl-plane-ip $(hostname --ip-address) -skip-reboot -skip-hardware-check",
+      "rm -rf /etc/red/deploy/config.lock",
       "redsetup -reset",
       "rm -rf /var/cache/apt /tmp/*",
       "apt-get autoremove -y && apt-get clean",
       "rm -rf /var/lib/apt/lists/*",
       "journalctl --rotate && journalctl --vacuum-time=1s",
       "rm -rf /var/log/* /tmp/* /var/tmp/*",
-      "cat <<EOF > /etc/systemd/system/cloudinit-rerun.service",
-      "[Unit]",
-      "Description=Re-run cloud-init after reboot",
-      "After=network.target",
-      "",
-      "[Service]",
-      "Type=oneshot",
-      "ExecStart=/bin/bash -c 'cloud-init clean && cloud-init init && cloud-init modules --mode=config && cloud-init modules --mode=final'",
-      "RemainAfterExit=true",
-      "",
-      "[Install]",
-      "WantedBy=multi-user.target",
-      "EOF",
-      "systemctl enable cloudinit-rerun.service"
     ]
   }
-
 
   # Truncate machine-id to ensure uniqueness per instance boot
   provisioner "shell" {

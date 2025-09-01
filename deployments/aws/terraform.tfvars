@@ -1,22 +1,21 @@
-aws_region        = "us-east-1"
-vpc_id            = "vpc-0643ea52b06790437"
-security_group_id = "sg-0514508ec0ae982b9"
-key_pair_name     = "dev-keys"
-#infinia_ami_id   = "ami-020cba7c55df1f615" #clean
-infinia_ami_id = "ami-01eb4635e82858e09"      # cloud-init
-subnet_ids     = ["subnet-06c1a6ccde3dec102"] #private
-#subnet_ids            = ["subnet-0bcc62fd072a08b7e"] #public
-infinia_version       = "2.2.37"
-enable_public_ip      = "false"
-root_device_size      = 256
-num_infinia_instances = "6"
-#instance_type_infinia = "i3en.2xlarge" # 5m wait -> 7 nodes
-instance_type_infinia   = "m7a.2xlarge"
-ebs_volume_size         = 128
-infinia_deployment_name = "raidr"
-bucket_name             = "terraform-dev-raid"
-ebs_volumes_per_vm      = 4
-use_ebs_volumes         = true
-
-
-
+infinia_deployment_name  = "ddn"
+aws_region               = "us-east-1"
+vpc_id                   = "vpc-0dcdd979d726f2beb"
+subnet_ids               = ["subnet-02b1f138ddafa32bc", "subnet-0fcc530b7c7bd327b"]
+security_group_id        = "sg-02532d68b5e48d6d6"
+infinia_ami_id           = "ami-0e2c8caa4b6378d8c"
+client_ami_id            = "ami-0e2c8caa4b6378d8c"
+num_infinia_instances    = 6
+num_client_instances     = 1
+key_pair_name            = "my-key-pair"
+instance_type_infinia    = "m7a.2xlarge" # Override with your desired instance type
+instance_type_client     = "m7a.2xlarge" # Override with your desired instance type
+root_device_size         = 256
+ebs_volume_size          = 128
+use_ebs_volumes          = true
+ebs_volumes_per_vm       = 2
+infinia_version          = "2.2.28"
+bucket_name              = "red-ansible-scripts-102800183015"
+client_subnet_ids        = ["subnet-0fbbdc63943f388f0", "subnet-0f9281b250f565452"]
+client_vpc_id            = "vpc-0ec0d171477ab58ba"
+client_security_group_id = "sg-0742cd79405141f58"
