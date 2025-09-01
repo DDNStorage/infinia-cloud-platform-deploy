@@ -10,16 +10,27 @@ ATTRIBUTES_METADATA_URL="${METADATA_URL}/instance/attributes"
 METADATA_FLAVOR_HEADER="Metadata-Flavor: Google"
 FLAG_FILE="/etc/infinia/deployment_flag"
 
-
-
 sudo mkdir -p /etc/infinia
 sudo touch "$FLAG_FILE"
-sudo touch "$LOG_FILE"
 sudo chmod 666 "$LOG_FILE"
 
 # Logging function
 log_info() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+}
+
+# Check inventory
+check_inventory(){
+    while true; do
+    val1=$(redcli inventory show | grep Nodes | awk '{print $2}')
+    val2=$(echo $NODE_COUNT )
+    if [ "$val1" = "$val2" ]; then
+        break
+    else
+        log_info "Waiting for nodes to join.."
+        sleep 1
+    fi
+done
 }
 
 fetch_metadata() {
@@ -49,7 +60,7 @@ retry_curl() {
         if [ $? -eq 0 ]; then
             log_info "Success! Realm entry host is up."
             log_info "Waiting 120 seconds for stability..."
-            sleep 160
+            sleep 120
             log_info "Rechecking realm entry host after 120 seconds."
             curl -k -s -o /tmp/curl_request.out https://${realm_entry}:443/redsetup/v1/system/status
             if [ $? -eq 0 ]; then
@@ -69,27 +80,38 @@ retry_curl() {
 
 # Function to check Infinia instance count
 check_infinia_instance_count() {
-  local expected_count=$1
-  while true; do
-        val1=$(redcli inventory show | grep Nodes | awk '{print $2}')
-        val2=$(echo $expected_count)
-        if [ "$val1" = "$val2" ]; then
-            break
-        else
-            log_info "Waiting for nodes to join.."
-            sleep 5
-        fi
-  done
-
+    local expected_count=$1
+    for i in {1..20}; do
+        local count=$(redcli inventory show --output-format json | jq '.data.nodes | length')
+        log_info "Current INFINIA_INSTANCE_COUNT: $count (Attempt $i)"
+        [ "$count" -eq "$expected_count" ] && return 0
+        sleep 30
+    done
+    log_info "INFINIA_INSTANCE_COUNT did not match after retries."
+    exit 1
 }
 
 
-deploy_cluster() {
+# Function to validate and activate license
+validate_and_activate_license() {
     local license=$1
-    redcli realm config generate  || log_info "Error Generating config file"
-    redcli realm config update -f realm_config.yaml | tee -a $LOG_FILE
-    redcli license install -a $license -y | tee -a $LOG_FILE
-    redcli cluster create c1 -S=false -z -f |tee -a $LOG_FILE
+
+    if [ -n "$license" ]; then
+        log_info "License provided. Activating license..."
+        redcli user login realm_admin -p "$ADMIN_PASSWORD"
+        check_inventory 
+        redcli realm config generate
+        redcli realm config update -f realm_config.yaml
+        redcli license install -a "$license" -y
+        redcli cluster create c1 -S=false -z  -f
+        if [ $? -eq 0 ]; then
+            log_info "License activated successfully."
+        else
+            log_info "Failed to activate the license. Exiting."
+        fi
+    else
+        log_info "No license provided. Skipping license activation."
+    fi
 }
 
 # Main script
@@ -106,13 +128,13 @@ if is_after_reboot; then
     if [ "$(fetch_metadata "${INSTANCE_METADATA_URL}/name")" == "$REALM_ENTRY_HOST" ]; then
         log_info "Checking Infinia instance count on realm entry node..."
         redcli user login realm_admin -p "$ADMIN_PASSWORD"
-        cd /tmp
-        redcli user login realm_admin -p "$ADMIN_PASSWORD" |teee -a $LOG_FILE 
-        redcli inventory show > inventory.log
-        grep -qi 'cpu' inventory.log || log_info  "Still waiting for self inventory" && sleep 60
-        log_info "${INFINIA_INSTANCE_COUNT}"
-        check_infinia_instance_count "${INFINIA_INSTANCE_COUNT}"
-        deploy_cluster "${INFINIA_LICENSE}"
+        check_infinia_instance_count "$INFINIA_INSTANCE_COUNT"
+        
+    fi
+
+    if [ "$CURRENT_INSTANCE" == "$REALM_ENTRY_HOST" ]; then
+        validate_and_activate_license "$INFINIA_LICENSE"
+
     fi
 
     log_info "Disabling google-startup-scripts.service..."
@@ -128,7 +150,6 @@ REALM_ENTRY_HOST=$(fetch_metadata "${ATTRIBUTES_METADATA_URL}/realm_entry_host")
 REALM_ENTRY_SECRET=$(fetch_metadata "${ATTRIBUTES_METADATA_URL}/realm-entry-secret")
 ADMIN_PASSWORD=$(fetch_metadata "${ATTRIBUTES_METADATA_URL}/admin-password")
 INFINIA_VERSION=$(fetch_metadata "${ATTRIBUTES_METADATA_URL}/infinia_version")
-log_info $INFINIA_VERSION
 
 CURRENT_INSTANCE=$(fetch_metadata "${INSTANCE_METADATA_URL}/name")
 log_info "CURRENT_INSTANCE: $CURRENT_INSTANCE"
@@ -148,30 +169,28 @@ log_info "Initial credentials stored securely. Please change them immediately an
 # Clear and reset machine-id (only before reboot)
 log_info "Resetting machine-id before running redsetup..."
 sudo rm /etc/machine-id && sudo systemd-machine-id-setup
-export BASE_PKG_URL="https://storage.googleapis.com/ddn-redsetup-public"
-export RELEASE_TYPE=""
-export TARGET_ARCH="$(dpkg --print-architecture)"
-export REL_DIST_PATH="ubuntu/24.04"
-export RED_VER="$INFINIA_VERSION"
-wget "${BASE_PKG_URL}/releases${RELEASE_TYPE}/${REL_DIST_PATH}/redsetup_${RED_VER}_$(dpkg --print-architecture)${RELEASE_TYPE}.deb?cache-time=$(date +%s)" -O /tmp/redsetup.deb
-log_info "Deploying $RED_VER"
-[[ -f "/tmp/redsetup.deb" ]] && sudo apt install -y /tmp/redsetup.deb | tee -a $LOG_FILE
 
 if [ "$CURRENT_INSTANCE" == "$REALM_ENTRY_HOST" ]; then
     log_info "Configuring Realm Entry Host..."
+
+    export BASE_PKG_URL="https://storage.googleapis.com/ddn-redsetup-public"
+    export RELEASE_TYPE=""
+    export TARGET_ARCH="$(dpkg --print-architecture)"
+    export REL_DIST_PATH="ubuntu/24.04"
+    export RED_VER="$INFINIA_VERSION"
+
+    wget $BASE_PKG_URL/releases/rmd_template.json -O /tmp/rmd_template.json
+    envsubst < /tmp/rmd_template.json > /tmp/rmd.json
+
     IP_ADDRESS=$(hostname -I | awk '{print $1}')
     sudo redsetup -realm-entry \
         -realm-entry-secret "$REALM_ENTRY_SECRET" \
         --admin-password "$ADMIN_PASSWORD" \
         -ctrl-plane-ip "$IP_ADDRESS" \
-        -skip-reboot | tee -a $LOG_FILE
-    log_info "Wait for self inventory" && sleep 60
+        -release-metadata-file /tmp/rmd.json \
+        -skip-reboot
 
     log_info "Realm Entry Host configuration completed."
-    log_info "Marking for after reboot..."
-    mark_after_reboot
-    log_info "Rebooting the system..."
-    sudo reboot -f 
 else
     log_info "Waiting for Realm Entry Host to be ready..."
     retry_curl "$REALM_ENTRY_HOST"
@@ -179,10 +198,10 @@ else
     log_info "Configuring Non-Realm Entry Host..."
     sudo redsetup --realm-entry-address "$REALM_ENTRY_HOST" --realm-entry-secret "$REALM_ENTRY_SECRET" -skip-reboot
     log_info "Non-Realm Entry Host configuration completed."
-    log_info "Marking for after reboot..."
-    mark_after_reboot
-    log_info "Rebooting the system..."
-    sudo reboot -f 
 fi
 
+log_info "Marking for after reboot..."
+mark_after_reboot
 
+log_info "Rebooting the system..."
+sudo reboot

@@ -22,7 +22,7 @@ spec:
             version: "24.04"
       - software:
           - title: Infinia
-            version: 2.2.37
+            version: 1.3.52
   content: {}
   interfaces:
     variables:
@@ -98,7 +98,7 @@ spec:
         defaultValue: 24
       - name: infinia_version
         varType: string
-        defaultValue: 2.2.37
+        defaultValue: 1.3.52
       - name: infinia_license
         description: License key for Infinia deployment.
         varType: string
