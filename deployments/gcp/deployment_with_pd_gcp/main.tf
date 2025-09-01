@@ -16,20 +16,15 @@ provider "google" {
   project = var.project_id
 }
 
-data "google_compute_subnetwork" "secure_subnet" {
-  name   = var.secure_subnet_name
-  region = var.region
-}
-
 locals {
   client_instance_names = [for i in range(var.num_clients) : "${var.goog_cm_deployment_name}-cn-${format("%03d", i)}"]
 
   # Calculate the required number of VMs based on desired capacity
   vm_capacity_tb = 9 # Each VM provides 9TB of capacity
-  vm_count       = ceil(var.desired_capacity / local.vm_capacity_tb)
+  vm_count = ceil(var.desired_capacity / local.vm_capacity_tb)
 
   # Generate instance names dynamically
-  #  instance_names = [for i in range(local.vm_count) : "${var.goog_cm_deployment_name}-${format("%01d", i)}"]
+#  instance_names = [for i in range(local.vm_count) : "${var.goog_cm_deployment_name}-${format("%01d", i)}"]
   instance_names = [for i in range(var.num_infinia_instances) : "${var.goog_cm_deployment_name}-${format("%01d", i)}"]
 
   # Prepare network interfaces for each VM
@@ -41,16 +36,14 @@ locals {
 
   # Metadata for each VM instance
   metadata = {
-    realm-entry-secret       = random_password.realm_entry_secret.result
-    admin-password           = random_password.admin_password.result
-    infinia-enable-https     = title(var.httpsEnabled)
-    enable-os-login          = "TRUE"
-    google-logging-enable    = var.enable_cloud_logging ? "1" : "0"
+    realm-entry-secret = random_password.realm_entry_secret.result
+    admin-password = random_password.admin_password.result
+    infinia-enable-https = title(var.httpsEnabled)
+    enable-os-login = "TRUE"
+    google-logging-enable = var.enable_cloud_logging ? "1" : "0"
     google-monitoring-enable = var.enable_cloud_monitoring ? "1" : "0"
   }
 }
-
-
 
 # First, create the realm entry node (first instance)
 resource "google_compute_instance" "realm_entry_instance" {
@@ -60,13 +53,13 @@ resource "google_compute_instance" "realm_entry_instance" {
 
   # Enable deletion protection
   deletion_protection = false
-
+  
   # Configure scheduling for instances with local NVMe SSDs
   scheduling {
-    automatic_restart   = true       # Automatically restart if terminated
-    on_host_maintenance = "MIGRATE"  # Support live migration with Local SSDs
-    preemptible         = false      # Ensures instance is not preemptible
-    provisioning_model  = "STANDARD" # Standard VM for Local SSD support
+    automatic_restart   = true         # Automatically restart if terminated
+    on_host_maintenance = "MIGRATE"    # Support live migration with Local SSDs
+    preemptible        = false        # Ensures instance is not preemptible
+    provisioning_model = "STANDARD"    # Standard VM for Local SSD support
   }
 
   tags = ["${var.goog_cm_deployment_name}-deployment"]
@@ -77,7 +70,7 @@ resource "google_compute_instance" "realm_entry_instance" {
 
     initialize_params {
       size  = var.boot_disk_size
-      type  = "pd-ssd" #var.boot_disk_type
+      type  = "pd-ssd"  #var.boot_disk_type
       image = var.source_image
     }
   }
@@ -91,15 +84,15 @@ resource "google_compute_instance" "realm_entry_instance" {
   }
 
   metadata = merge(local.metadata, {
-    infinia_version        = var.infinia_version
-    infinia_license        = var.infinia_license
-    startup-script-url     = "https://storage.googleapis.com/infinia-hp-gcp-mp/dev-startup-script.sh"
-    infinia_instances      = join(",", local.instance_names)
-    realm_entry_host       = "${var.goog_cm_deployment_name}-0"
-    infinia_instance_count = tostring(var.num_infinia_instances)
+    infinia_version         = var.infinia_version
+    infinia_license         = var.infinia_license
+    startup-script-url      = "https://storage.googleapis.com/infinia-hp-gcp-mp/dev-startup-script.sh"
+    infinia_instances       = join(",", local.instance_names)
+    realm_entry_host        = "${var.goog_cm_deployment_name}-0"
+    infinia_instance_count  = tostring(var.num_infinia_instances)
     pd_disk_count          = tostring(var.pd_disk_count)
-    realm-entry-secret     = random_password.realm_entry_secret.result
-    admin-password         = random_password.admin_password.result
+    realm-entry-secret      = random_password.realm_entry_secret.result
+    admin-password          = random_password.admin_password.result
   })
 
   # Configure network interfaces
@@ -118,10 +111,6 @@ resource "google_compute_instance" "realm_entry_instance" {
     }
   }
 
-  network_interface {
-    subnetwork = data.google_compute_subnetwork.secure_subnet.self_link
-  }
-
   # Service account
   service_account {
     email = "default"
@@ -137,31 +126,31 @@ resource "google_compute_instance" "realm_entry_instance" {
 # Add a time delay to ensure the first instance is fully initialized
 resource "time_sleep" "wait_for_realm_entry" {
   depends_on = [google_compute_instance.realm_entry_instance]
-
+  
   # Wait for 10 minutes to ensure the realm entry node is fully set up
   create_duration = "10m"
 }
 
 # Create the remaining instances after the wait period
 resource "google_compute_instance" "follower_instances" {
-  count = var.num_infinia_instances - 1 # Subtract 1 for the realm entry instance
-
+  count = var.num_infinia_instances - 1  # Subtract 1 for the realm entry instance
+  
   # Ensure these instances are created only after the wait period
   depends_on = [time_sleep.wait_for_realm_entry]
-
+  
   name         = "${var.goog_cm_deployment_name}-${count.index + 1}"
   machine_type = var.machine_type
   zone         = var.zone
 
   # Enable deletion protection
   deletion_protection = false
-
+  
   # Configure scheduling for instances with local NVMe SSDs
   scheduling {
     automatic_restart   = true
     on_host_maintenance = "MIGRATE"
-    preemptible         = false
-    provisioning_model  = "STANDARD"
+    preemptible        = false
+    provisioning_model = "STANDARD"
   }
 
   tags = ["${var.goog_cm_deployment_name}-deployment"]
@@ -186,15 +175,15 @@ resource "google_compute_instance" "follower_instances" {
   }
 
   metadata = merge(local.metadata, {
-    infinia_version        = var.infinia_version
-    infinia_license        = var.infinia_license
-    startup-script-url     = "https://storage.googleapis.com/infinia-hp-gcp-mp/dev-startup-script.sh"
-    infinia_instances      = join(",", local.instance_names)
-    realm_entry_host       = "${var.goog_cm_deployment_name}-0"
-    infinia_instance_count = tostring(var.num_infinia_instances)
+    infinia_version         = var.infinia_version
+    infinia_license         = var.infinia_license
+    startup-script-url      = "https://storage.googleapis.com/infinia-hp-gcp-mp/dev-startup-script.sh"
+    infinia_instances       = join(",", local.instance_names)
+    realm_entry_host        = "${var.goog_cm_deployment_name}-0"
+    infinia_instance_count  = tostring(var.num_infinia_instances)
     pd_disk_count          = tostring(var.pd_disk_count)
-    realm-entry-secret     = random_password.realm_entry_secret.result
-    admin-password         = random_password.admin_password.result
+    realm-entry-secret      = random_password.realm_entry_secret.result
+    admin-password          = random_password.admin_password.result
   })
 
   # Configure network interfaces
@@ -211,10 +200,6 @@ resource "google_compute_instance" "follower_instances" {
         }
       }
     }
-  }
-
-  network_interface {
-    subnetwork = data.google_compute_subnetwork.secure_subnet.self_link
   }
 
   # Service account
@@ -256,11 +241,11 @@ resource "google_compute_instance" "client_instances" {
   }
 
   metadata = {
-    infinia_version       = var.infinia_version
-    infinia_instance_type = "client"
-    realm_entry_host      = "${var.goog_cm_deployment_name}-0"
-    realm-entry-secret    = random_password.realm_entry_secret.result
-    admin-password        = random_password.admin_password.result
+    infinia_version        = var.infinia_version
+    infinia_instance_type  = "client"
+    realm_entry_host       = "${var.goog_cm_deployment_name}-0"
+    realm-entry-secret     = random_password.realm_entry_secret.result
+    admin-password         = random_password.admin_password.result
   }
 
   # Configure network interfaces
@@ -323,11 +308,11 @@ resource "random_password" "admin_password" {
 # Create persistent disks for all instances first
 resource "google_compute_disk" "infinia_data_disks" {
   count = var.num_infinia_instances * var.pd_disk_count
-
-  name = "${var.goog_cm_deployment_name}-pd-${floor(count.index / var.pd_disk_count)}-${count.index % var.pd_disk_count}"
-  type = var.pd_disk_type
-  zone = var.zone
-  size = var.pd_disk_size
+  
+  name  = "${var.goog_cm_deployment_name}-pd-${floor(count.index / var.pd_disk_count)}-${count.index % var.pd_disk_count}"
+  type  = var.pd_disk_type
+  zone  = var.zone
+  size  = var.pd_disk_size
 }
 
 # Attach disks to the realm entry instance
