@@ -1,20 +1,23 @@
 name: Infinia Build, Deploy and Cleanup
 
 on:
-  workflow_dispatch:
-    inputs:
-      aws_region:
-        description: "AWS Region"
-        required: true
-        type: string
-      # deployment_name:
-      #   description: "Deployment Name"
-      #   required: true
-      #   type: string
-      infinia_version:
-        description: "Infinia Version"
-        required: true
-        type: string
+  push:
+    branches:
+      - one-click-aws
+  # workflow_dispatch:
+  #   inputs:
+  #     aws_region:
+  #       description: "AWS Region"
+  #       required: true
+  #       type: string
+  #     # deployment_name:
+  #     #   description: "Deployment Name"
+  #     #   required: true
+  #     #   type: string
+  #     infinia_version:
+  #       description: "Infinia Version"
+  #       required: true
+  #       type: string
       # s3_bucket_name:
       #   description: "Terraform S3 Backend Bucket Name"
       #   required: true
@@ -45,15 +48,16 @@ on:
       #   type: number
 
 env:
-  AWS_REGION: ${{ inputs.aws_region }}
+  aws_region: us-east-1
+  infinia_version: 2.2.60
 
 jobs:
   packer-build:
     name: Build Packer AMI
     uses: ./.github/workflows/packer-build-aws.yml
     with:
-      aws_region: ${{ inputs.aws_region }}
-      infinia_version: ${{ inputs.infinia_version }}
+      aws_region: ${{ env.aws_region }}
+      infinia_version: ${{ env.infinia_version }}
     secrets: inherit
 
   infinia-deploy:
@@ -61,9 +65,9 @@ jobs:
     needs: packer-build
     uses: ./.github/workflows/infinia-deploy-aws.yml
     with:
-      aws_region: ${{ inputs.aws_region }}
+      aws_region: ${{ env.aws_region }}
       ami_id: ${{ needs.packer-build.outputs.ami_id }}
-      infinia_version: ${{ inputs.infinia_version }}
+      infinia_version: ${{ env.infinia_version }}
     secrets: inherit
 
   infinia-destroy:
@@ -72,6 +76,6 @@ jobs:
     if: always()
     uses: ./.github/workflows/infinia-destroy-aws.yml
     with:
-      aws_region: ${{ inputs.aws_region }}
+      aws_region: ${{ env.aws_region }}
     #   infinia_version: ${{ inputs.infinia_version }}
     secrets: inherit
