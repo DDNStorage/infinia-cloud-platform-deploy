@@ -3,3 +3,4 @@
 vars.yml
 aws_ec2.yml
 tfplan
+.DS_Store
