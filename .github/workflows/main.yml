@@ -56,8 +56,8 @@ jobs:
     name: Build Packer AMI
     uses: ./.github/workflows/packer-build-aws.yml
     with:
-      aws_region: ${{ env.aws_region }}
-      infinia_version: ${{ env.infinia_version }}
+      aws_region: us-east-1
+      infinia_version: 2.2.60
     secrets: inherit
 
   infinia-deploy:
@@ -65,9 +65,9 @@ jobs:
     needs: packer-build
     uses: ./.github/workflows/infinia-deploy-aws.yml
     with:
-      aws_region: ${{ env.aws_region }}
+      aws_region: us-east-1
       ami_id: ${{ needs.packer-build.outputs.ami_id }}
-      infinia_version: ${{ env.infinia_version }}
+      infinia_version: 2.2.60
     secrets: inherit
 
   infinia-destroy:
@@ -76,6 +76,6 @@ jobs:
     if: always()
     uses: ./.github/workflows/infinia-destroy-aws.yml
     with:
-      aws_region: ${{ env.aws_region }}
+      aws_region: us-east-1
     #   infinia_version: ${{ inputs.infinia_version }}
     secrets: inherit
