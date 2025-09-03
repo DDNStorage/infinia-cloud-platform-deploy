@@ -298,11 +298,11 @@ jobs:
           cat marketplace_deployment.tfvars
       
       - name: Initialize Terraform
-        working-directory: ./deployments/gcp
+        working-directory: ./deployments/gcp/deployment_with_pd_gcp/
         run: terraform init
       
       - name: Plan Terraform
-        working-directory: ./deployments/gcp
+        working-directory: ./deployments/gcp/deployment_with_pd_gcp/
         run: terraform plan -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}" -out=tfplan
       
       - name: Apply Terraform
