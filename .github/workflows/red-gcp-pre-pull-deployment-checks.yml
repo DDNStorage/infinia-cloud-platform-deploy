@@ -245,7 +245,7 @@ jobs:
       
      
       - name: Create deployment tfvars file
-        working-directory: deployments/gcp/
+        working-directory: .deployments/gcp/
         run: |
           # Generate a unique timestamp for this deployment
           TIMESTAMP=${{ env.TIMESTAMP }}
