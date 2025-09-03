@@ -346,7 +346,7 @@ jobs:
         id: validation
         run: |
           DEPLOYMENT_NAME="test-deploy-${{ env.TIMESTAMP }}"
-          FIRST_NODE="${DEPLOYMENT_NAME}-000"  # Fix: Use correct naming convention
+          FIRST_NODE="${DEPLOYMENT_NAME}-0"  #Use correct naming convention
           ZONE="us-central1-f"
           
           echo "🔍 Debug Information:"
