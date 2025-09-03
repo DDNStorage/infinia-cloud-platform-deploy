@@ -9,34 +9,15 @@ on:
       aws_region:
         required: true
         type: string
-      # deployment_name:
-      #   required: true
-      #   type: string
       infinia_version:
         required: true
         type: string
-      # s3_bucket_name:
-      #   required: true
-      #   type: string
-      # s3_bucket_region:
-      #   required: true
-      #   type: string
-      # vpc_id:
-      #   required: true
-      #   type: string
-      # subnet_ids:
-      #   required: true
-      #   type: string  # comma-separated string
-      # security_group_id:
-      #   required: true
-      #   type: string
-      # bucket_name:
-      #   required: true
-      #   type: string
+    secrets:
+      INFINIA_ADMIN_PASSWORD:
+        required: true
 
 env:
   TERRAFORM_DIR: deployments/aws
-  ANSIBLE_DIR: deployments/aws/ansible
 
 jobs:
   Infinia-deployment:
@@ -47,30 +28,40 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "${{ inputs.aws_region }}"
+          aws-region: ${{ inputs.aws_region }}
 
+      - name: Install AWS CLI v2 (if missing)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v aws >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y unzip
+            curl -sS "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
+            unzip -q awscliv2.zip
+            sudo ./aws/install --update
+          fi
+          aws --version
+
+      - name: Install jq (if missing)
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v jq >/dev/null 2>&1 || { sudo apt-get update -y && sudo apt-get install -y jq; }
+          jq --version
+
+      # -------- DEPLOY (Terraform) --------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
         working-directory: ${{ env.TERRAFORM_DIR }}
-        run: |
-          terraform init
-
-      # - name: Parse Subnet IDs
-      #   id: subnet_json
-      #   run: |
-      #     echo "SUBNET_IDS_JSON=$(echo '${{ inputs.subnet_ids }}' | jq -Rc 'split(",")')" >> $GITHUB_ENV
+        run: terraform init
 
       - name: Terraform Plan
         working-directory: ${{ env.TERRAFORM_DIR }}
@@ -85,17 +76,13 @@ jobs:
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: terraform apply -auto-approve tfplan
 
-      - name: Setup Ansible
+      # -------- VERIFY (SSM + redcli via script) --------
+      - name: Verify Infinia cluster (script)
+        shell: bash
+        env:
+          AWS_REGION: ${{ inputs.aws_region }}
+          TERRAFORM_DIR: ${{ env.TERRAFORM_DIR }}
+          REALM_ADMIN_PASSWORD: ${{ secrets.INFINIA_ADMIN_PASSWORD }}
         run: |
-          sudo apt update && sudo apt install software-properties-common -y
-          sudo add-apt-repository --yes --update ppa:ansible/ansible
-          sudo apt install ansible -y
-          sudo pip3 install --upgrade ansible-core ansible boto3 botocore
-          curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
-          sudo dpkg -i session-manager-plugin.deb
-
-      - name: Run Ansible playbook
-        working-directory: ${{ env.ANSIBLE_DIR }}
-        run: |
-          echo "${{ secrets.ANSIBLE_VAULT }}" > vault_pass
-          ansible-playbook main.yml -i aws_ec2.yml --vault-password-file vault_pass --tags verify -vv
+          chmod +x scripts/verify_infinia.sh
+          ./scripts/verify_infinia.sh
