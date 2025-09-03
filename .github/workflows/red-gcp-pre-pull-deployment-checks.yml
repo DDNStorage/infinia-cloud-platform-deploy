@@ -197,7 +197,7 @@ jobs:
           echo "gcp_project=${{ env.GCP_PROJECT }}" >> $GITHUB_OUTPUT
           
           # Set number of clients
-          NUM_CLIENTS="${{ github.event.inputs.num_clients || '4' }}"
+          NUM_CLIENTS="${{ github.event.inputs.num_clients || '1' }}"
           echo "num_clients=$NUM_CLIENTS" >> $GITHUB_OUTPUT
           
           # Set desired capacity
@@ -284,7 +284,10 @@ jobs:
           machine_type = "n2-standard-16"
           desired_capacity = ${{ env.DESIRED_CAPACITY }}
           num_clients = ${{ env.NUM_CLIENTS }}
-          local_disks = 4
+          #local_disks = 4
+          pd_disk_size = 64
+          pd_disk_count = 4
+          pd_disk_type = "pd-ssd"
           infinia_version = "${INFINIA_VERSION}"
           source_image = "${{ env.IMAGE_NAME }}"
           EOF
