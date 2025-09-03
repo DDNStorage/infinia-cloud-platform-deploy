@@ -6,7 +6,7 @@ set -euo pipefail
 AWS_REGION="${AWS_REGION:-${REGION:-${AWS_DEFAULT_REGION:-}}}"
 TERRAFORM_DIR="${TERRAFORM_DIR:-deployments/aws}"
 REALM_ADMIN_PASSWORD="${REALM_ADMIN_PASSWORD:-${INFINIA_ADMIN_PASSWORD:-}}"
-AMI_ID="${AMI_ID:-}"   # optional, strengthens AWS fallback filters
+AMI_ID="${AMI_ID:-}"   # optional: pass from workflow to strengthen AWS fallback
 
 # ===== Helpers =====
 need() { command -v "$1" >/dev/null 2>&1 || { echo "ERROR: missing dependency: $1" >&2; exit 1; }; }
@@ -49,7 +49,7 @@ fi
 
 popd >/dev/null
 
-# ===== AWS fallback(s) if TF state didn't give us IDs =====
+# ===== AWS fallbacks if TF state lacked IDs =====
 AMI_FILTER="${AMI_ID:-$AMI_FROM_STATE}"
 
 if [[ -z "$REALM_ID" ]]; then
@@ -118,24 +118,42 @@ for ID in $IDS; do
   done
 done
 
-# ===== Run redcli on the realm via SSM (chunked payload to avoid 'Argument list too long') =====
+# ===== Run redcli on the realm via SSM (chunked; JSON base64 with canonicalization) =====
 PASS_B64="$(printf '%s' "$REALM_ADMIN_PASSWORD" | b64_no_wrap)"
 
 run_ssm() {
   local iid="$1" cmd_id status
 
-  # -- Remote script that runs ON the realm instance --
   read -r -d '' REMOTE <<'EOS'
 #!/usr/bin/env bash
 set -euo pipefail
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+b64_no_wrap() { if base64 --help 2>&1 | grep -q -- '-w'; then base64 -w0; else base64 | tr -d '\n'; fi; }
+
 PASS=$(printf '%s' '__PASS_B64__' | base64 -d)
 redcli user login realm_admin -p "$PASS"
+
+# Prefer cluster, fallback to inventory
 JSON="$( (redcli cluster show -o json || redcli cluster show --json) 2>/dev/null || true )"
-if [ -z "$JSON" ]; then
+if [ -z "$JSON" ] || ! printf '%s' "$JSON" | grep -q '{'; then
   JSON="$( (redcli inventory show --json || redcli inventory show -o json) 2>/dev/null || true )"
 fi
-printf "__JSON_START__\n%s\n__JSON_END__\n" "$JSON"
+
+# Canonicalize JSON if python3 available (fixes NaN/Infinity)
+if command -v python3 >/dev/null 2>&1; then
+  JSON_CANON="$(python3 - <<'PY'
+import json, sys
+data = json.loads(sys.stdin.read())  # Python accepts NaN/Infinity by default
+print(json.dumps(data, separators=(",", ":"), ensure_ascii=False))
+PY
+<<< "$JSON")" || JSON_CANON=""
+else
+  JSON_CANON=""
+fi
+
+OUT="${JSON_CANON:-$JSON}"
+# Emit as base64 between markers to avoid any extra output mixing
+printf "__JSON_B64_START__\n%s\n__JSON_B64_END__\n" "$(printf '%s' "$OUT" | b64_no_wrap)"
 EOS
 
   # inject password token
@@ -143,10 +161,9 @@ EOS
   local SCRIPT_B64
   SCRIPT_B64=$(printf '%s' "$SCRIPT" | b64_no_wrap)
 
-  # Build StringList commands as small lines
+  # Build StringList commands in small chunks (avoid arg too long)
   local -a CMDS
   CMDS+=("rm -f /tmp/remote.b64 /tmp/remote.sh")
-  # chunk base64 into ~3000 chars per command
   local chunk_size=3000 i part
   for (( i=0; i<${#SCRIPT_B64}; i+=chunk_size )); do
     part=${SCRIPT_B64:i:chunk_size}
@@ -156,11 +173,9 @@ EOS
   CMDS+=("chmod +x /tmp/remote.sh")
   CMDS+=("/tmp/remote.sh")
 
-  # Turn array into JSON StringList
   local CMD_JSON
   CMD_JSON=$(printf '%s\n' "${CMDS[@]}" | jq -Rs 'split("\n")[:-1]')
 
-  # Send command
   cmd_id=$(aws ssm send-command \
     --region "$AWS_REGION" \
     --instance-ids "$iid" \
@@ -168,7 +183,6 @@ EOS
     --parameters "commands=${CMD_JSON}" \
     --query 'Command.CommandId' --output text)
 
-  # Poll
   while :; do
     status=$(aws ssm get-command-invocation \
       --region "$AWS_REGION" \
@@ -179,7 +193,6 @@ EOS
     sleep 3
   done
 
-  # Return full invocation JSON
   aws ssm get-command-invocation \
     --region "$AWS_REGION" \
     --command-id "$cmd_id" \
@@ -199,13 +212,27 @@ if [[ "$STATUS" != "Success" ]]; then
   exit 1
 fi
 
-JSON="$(awk '/__JSON_START__/{f=1;next}/__JSON_END__/{f=0}f' <<< "$STDOUT")"
-[[ -n "$JSON" && "$JSON" != "null" ]] || { echo "ERROR: no JSON from redcli" >&2; exit 1; }
+# ===== Extract and decode base64 JSON safely =====
+JSON_B64="$(awk '/__JSON_B64_START__/{f=1;next}/__JSON_B64_END__/{f=0}f' <<< "$STDOUT" | tr -d '\r\n ')"
+[[ -n "$JSON_B64" ]] || { echo "ERROR: no JSON payload in SSM output" >&2; exit 1; }
 
-STATE="$(jq -r '.cluster_state // .state // "unknown"' <<< "$JSON")"
-COUNT="$(jq '(.instances|length) // (.nodes|length) // 0' <<< "$JSON")"
-EVICTED="$(jq '([.cats[]? | select(.evicted==true)] | length) // 0' <<< "$JSON")"
-NAMES="$(jq -r '(.instances // .nodes // []) | map(.name // .id // .instance_id // .hostname // .node // .Name) | join(", ")' <<< "$JSON")"
+JSON_RAW="$(printf '%s' "$JSON_B64" | base64 -d 2>/dev/null || true)"
+if [[ -z "$JSON_RAW" ]]; then
+  echo "ERROR: failed to base64-decode JSON payload" >&2
+  exit 1
+fi
+
+# If jq rejects the JSON (NaN/Infinity, etc.), try a sanitizer that replaces non-finite with null.
+if ! echo "$JSON_RAW" | jq -e . >/dev/null 2>&1; then
+  JSON_RAW="$(printf '%s' "$JSON_RAW" \
+    | sed -E 's/: *-?Infinity([,}])/ : null\1/g; s/: *NaN([,}])/ : null\1/g')"
+fi
+
+# Now parse
+STATE="$(jq -r '.cluster_state // .state // "unknown"' <<< "$JSON_RAW" 2>/dev/null || echo unknown)"
+COUNT="$(jq '(.instances|length) // (.nodes|length) // 0' <<< "$JSON_RAW" 2>/dev/null || echo 0)"
+EVICTED="$(jq '([.cats[]? | select(.evicted==true)] | length) // 0' <<< "$JSON_RAW" 2>/dev/null || echo 0)"
+NAMES="$(jq -r '(.instances // .nodes // []) | map(.name // .id // .instance_id // .hostname // .node // .Name) | join(", ")' <<< "$JSON_RAW" 2>/dev/null || echo "")"
 
 # ===== Summary =====
 {
@@ -218,10 +245,10 @@ NAMES="$(jq -r '(.instances // .nodes // []) | map(.name // .id // .instance_id 
   echo "- Evicted CATs: \`$EVICTED\`"
   [[ -n "$NAMES" ]] && echo "- Nodes: $NAMES"
   echo
-  echo "<details><summary>Raw redcli JSON</summary>"
+  echo "<details><summary>Raw redcli JSON (sanitized if needed)</summary>"
   echo
   echo '```json'
-  echo "$JSON"
+  echo "$JSON_RAW"
   echo '```'
   echo "</details>"
 } | tee /dev/fd/3 3>/dev/null >> "${GITHUB_STEP_SUMMARY:-/dev/null}" || true
