@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -81,76 +81,13 @@ jobs:
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: terraform apply -auto-approve tfplan
 
-      # -------- VERIFY (SSM + redcli) --------
-      - name: Preflight — tools & secret present
+      # -------- VERIFY (SSM + redcli via script) --------
+      - name: Verify Infinia cluster (script)
         shell: bash
         env:
+          AWS_REGION: ${{ inputs.aws_region }}
+          TERRAFORM_DIR: ${{ env.TERRAFORM_DIR }}
           REALM_ADMIN_PASSWORD: ${{ secrets.INFINIA_ADMIN_PASSWORD }}
         run: |
-          set -euo pipefail
-          [[ -n "${REALM_ADMIN_PASSWORD:-}" ]] || { echo "::error::Missing secret INFINIA_ADMIN_PASSWORD"; exit 1; }
-          for b in aws jq bash sed awk; do
-            command -v "$b" >/dev/null || { echo "::error::$b not found"; exit 1; }
-          done
-          aws sts get-caller-identity >/dev/null
-          echo "Preflight OK"
-
-      - name: Collect instance IDs from Terraform state
-        id: ids
-        working-directory: ${{ env.TERRAFORM_DIR }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          REALM_ID=$(terraform state show -no-color aws_instance.infinia_realm[0] | awk '/^id = /{print $3}')
-          NONREALM_IDS=$(terraform state list | grep '^aws_instance\.infinia_none_realm' | \
-            while read -r RES; do terraform state show -no-color "$RES" | awk '/^id = /{print $3}'; done | xargs)
-          echo "realm_id=$REALM_ID" >> "$GITHUB_OUTPUT"
-          echo "nonrealm_ids=$NONREALM_IDS" >> "$GITHUB_OUTPUT"
-          echo "Collected realm:  $REALM_ID"
-          echo "Collected clients: $NONREALM_IDS"
-
-      - name: Wait for EC2 checks and SSM Online
-        shell: bash
-        env:
-          REGION: ${{ inputs.aws_region }}
-        run: |
-          set -euo pipefail
-          IDS="${{ steps.ids.outputs.realm_id }} ${{ steps.ids.outputs.nonrealm_ids }}"
-          IDS=$(echo $IDS)
-          [[ -n "$IDS" ]] || { echo "No instances found"; exit 1; }
-          NUM=$(wc -w <<< "$IDS")
-
-          deadline=$((SECONDS + 1800))
-          while :; do
-            OK=$(aws ec2 describe-instance-status --region "$REGION" \
-                  --include-all-instances --instance-ids $IDS \
-                  --query "length(InstanceStatuses[?InstanceStatus.Status=='ok' && SystemStatus.Status=='ok'])" \
-                  --output text)
-            echo "EC2 checks OK: $OK / $NUM"
-            [[ "$OK" == "$NUM" ]] && break
-            (( SECONDS > deadline )) && { echo "Timeout waiting for EC2 checks."; exit 1; }
-            sleep 15
-          done
-
-          for ID in $IDS; do
-            echo "Waiting SSM Online: $ID"
-            for i in {1..80}; do
-              STATUS=$(aws ssm describe-instance-information --region "$REGION" \
-                --query "InstanceInformationList[?InstanceId=='${ID}'].PingStatus" --output text 2>/dev/null || true)
-              [[ "$STATUS" == *Online* ]] && { echo "SSM Online for $ID"; break; }
-              sleep 5
-              [[ $i -eq 80 ]] && { echo "Timeout waiting SSM for $ID"; exit 1; }
-            done
-          done
-
-    # -------- VERIFY (SSM + redcli via script) --------
-    - name: Verify Infinia cluster (script)
-      shell: bash
-      env:
-        AWS_REGION: ${{ inputs.aws_region }}
-        TERRAFORM_DIR: ${{ env.TERRAFORM_DIR }}
-        REALM_ADMIN_PASSWORD: ${{ secrets.INFINIA_ADMIN_PASSWORD }}
-      run: |
-        chmod +x scripts/verify_infinia.sh
-        ./scripts/verify_infinia.sh
-
+          chmod +x scripts/verify_infinia.sh
+          ./scripts/verify_infinia.sh
