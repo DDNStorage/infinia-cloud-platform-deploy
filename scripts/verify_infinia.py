@@ -1,4 +1,32 @@
 #!/usr/bin/env python3
+"""
+Verify Infinia cluster via EC2 tags + SSM.
+
+- Discovers realm (Role=realm) and clients (Role=nonrealm) by EC2 tags,
+  optionally scoped by AMI_ID and a deployment tag.
+- Waits for EC2 instance+system checks == ok, and SSM Online for all nodes.
+- SSMs into the realm, logs in with redcli, captures:
+    * redcli inventory show   (text table)
+    * redcli cluster show -o json (if available)
+- Prints the full inventory table.
+- Checks:
+    * inventory "Nodes: N" == (client count + 1)
+    * if cluster JSON exists and VERIFY_STRICT == "1":
+        - cluster_state == running
+        - evicted CATs == 0
+- Appends inventory table to GitHub Step Summary if available.
+
+Required env:
+  AWS_REGION (or REGION/AWS_DEFAULT_REGION)
+  REALM_ADMIN_PASSWORD (or INFINIA_ADMIN_PASSWORD)
+
+Optional env:
+  AMI_ID
+  DEPLOYMENT_TAG_KEY
+  DEPLOYMENT_TAG_VALUE
+  VERIFY_STRICT (default "1")
+"""
+
 import os
 import sys
 import time
@@ -8,12 +36,14 @@ import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 import re
 
+
 def env(name, default=None, required=False):
     v = os.environ.get(name, default)
     if required and not v:
         print(f"ERROR: missing env {name}", file=sys.stderr)
         sys.exit(1)
     return v
+
 
 AWS_REGION = env("AWS_REGION", os.environ.get("REGION", os.environ.get("AWS_DEFAULT_REGION")), required=True)
 REALM_ADMIN_PASSWORD = env("REALM_ADMIN_PASSWORD", os.environ.get("INFINIA_ADMIN_PASSWORD"), required=True)
@@ -33,30 +63,37 @@ except Exception as e:
     print(f"ERROR: bad AWS credentials: {e}", file=sys.stderr)
     sys.exit(1)
 
+
 def find_instances(role):
-    filters = [{'Name': 'instance-state-name', 'Values': ['running', 'pending']},
-               {'Name': 'tag:Role', 'Values': [role]}]
+    filters = [
+        {"Name": "instance-state-name", "Values": ["running", "pending"]},
+        {"Name": "tag:Role", "Values": [role]},
+    ]
     if DEPLOYMENT_TAG_KEY and DEPLOYMENT_TAG_VALUE:
-        filters.append({'Name': f'tag:{DEPLOYMENT_TAG_KEY}', 'Values': [DEPLOYMENT_TAG_VALUE]})
+        filters.append({"Name": f"tag:{DEPLOYMENT_TAG_KEY}", "Values": [DEPLOYMENT_TAG_VALUE]})
     if AMI_ID:
-        filters.append({'Name': 'image-id', 'Values': [AMI_ID]})
+        filters.append({"Name": "image-id", "Values": [AMI_ID]})
     resp = ec2.describe_instances(Filters=filters)
-    ids = [i['InstanceId'] for r in resp.get('Reservations', []) for i in r.get('Instances', [])]
+    ids = [i["InstanceId"] for r in resp.get("Reservations", []) for i in r.get("Instances", [])]
     return ids
 
-realm_ids = find_instances('realm')
+
+realm_ids = find_instances("realm")
 if not realm_ids:
     print("ERROR: no realm instance found (tag Role=realm).", file=sys.stderr)
     sys.exit(1)
+if len(realm_ids) > 1:
+    print(f"WARN: multiple realms found; using first: {realm_ids}", file=sys.stderr)
 realm_id = realm_ids[0]
 
-nonrealm_ids = find_instances('nonrealm')
+nonrealm_ids = find_instances("nonrealm")
 clients_str = " ".join(nonrealm_ids) if nonrealm_ids else "<none>"
 expected_nodes = (len(nonrealm_ids) + 1)
 
 print(f"Realm:   {realm_id}")
 print(f"Clients: {clients_str}")
 print(f"Expected node count: {expected_nodes}")
+
 
 # ---- wait for EC2 checks OK ----
 def wait_ec2_checks_ok(instance_ids, timeout=1800, poll=15):
@@ -65,8 +102,8 @@ def wait_ec2_checks_ok(instance_ids, timeout=1800, poll=15):
     while True:
         resp = ec2.describe_instance_status(InstanceIds=instance_ids, IncludeAllInstances=True)
         ok = 0
-        for st in resp.get('InstanceStatuses', []):
-            if st.get('InstanceStatus', {}).get('Status') == 'ok' and st.get('SystemStatus', {}).get('Status') == 'ok':
+        for st in resp.get("InstanceStatuses", []):
+            if st.get("InstanceStatus", {}).get("Status") == "ok" and st.get("SystemStatus", {}).get("Status") == "ok":
                 ok += 1
         print(f"EC2 checks OK: {ok} / {num}")
         if ok == num:
@@ -76,21 +113,21 @@ def wait_ec2_checks_ok(instance_ids, timeout=1800, poll=15):
             return False
         time.sleep(poll)
 
+
 ids_all = [realm_id] + nonrealm_ids
 if not wait_ec2_checks_ok(ids_all):
     sys.exit(1)
 
+
 # ---- wait for SSM Online ----
 def is_ssm_online(instance_id):
-    # DescribeInstanceInformation supports a filter by InstanceIds
     try:
-        resp = ssm.describe_instance_information(
-            Filters=[{'Key': 'InstanceIds', 'Values': [instance_id]}]
-        )
+        resp = ssm.describe_instance_information(Filters=[{"Key": "InstanceIds", "Values": [instance_id]}])
     except (BotoCoreError, ClientError):
         return False
-    infos = resp.get('InstanceInformationList', [])
-    return any(info.get('InstanceId') == instance_id and info.get('PingStatus') == 'Online' for info in infos)
+    infos = resp.get("InstanceInformationList", [])
+    return any(info.get("InstanceId") == instance_id and info.get("PingStatus") == "Online" for info in infos)
+
 
 def wait_ssm_online(instance_id, timeout=600, poll=5):
     print(f"Waiting SSM Online: {instance_id}")
@@ -103,9 +140,11 @@ def wait_ssm_online(instance_id, timeout=600, poll=5):
     print(f"ERROR: timeout waiting SSM for {instance_id}", file=sys.stderr)
     return False
 
+
 for iid in ids_all:
     if not wait_ssm_online(iid):
         sys.exit(1)
+
 
 # ---- build remote script (safe quoting) ----
 pass_b64 = base64.b64encode(REALM_ADMIN_PASSWORD.encode("utf-8")).decode("ascii")
@@ -114,68 +153,83 @@ remote_lines = [
     "set -euo pipefail",
     "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
     f"PASS=$(printf '%s' '{pass_b64}' | base64 -d)",
-    "redcli user login realm_admin -p \"$PASS\" >/dev/null 2>&1 || true",
-    "INV=$(redcli inventory show 2>/dev/null || true)",
-    "CLJSON=$( (redcli cluster show -o json || redcli cluster show --json) 2>/dev/null || true )",
+    'redcli user login realm_admin -p "$PASS" >/dev/null 2>&1 || true',
+    'INV=$(redcli inventory show 2>/dev/null || true)',
+    'CLJSON=$( (redcli cluster show -o json || redcli cluster show --json) 2>/dev/null || true )',
     "echo '__INV_START__'",
-    "echo \"$INV\"",
+    'echo "$INV"',
     "echo '__INV_END__'",
     "echo '__CLJSON_START__'",
-    "echo \"$CLJSON\"",
+    'echo "$CLJSON"',
     "echo '__CLJSON_END__'",
 ]
 
-# Turn into AWS-RunShellScript commands: write a heredoc, then run it
-commands = [
-    "cat > /tmp/verify_infinia.sh <<'EOS'"
-] + remote_lines + [
-    "EOS",
-    "bash /tmp/verify_infinia.sh"
-]
+# Commands for AWS-RunShellScript: write heredoc, then run it
+commands = ["cat > /tmp/verify_infinia.sh <<'EOS'"] + remote_lines + ["EOS", "bash /tmp/verify_infinia.sh"]
 
 print("Sending SSM command to realm…")
 try:
     send = ssm.send_command(
         InstanceIds=[realm_id],
-        DocumentName='AWS-RunShellScript',
-        Parameters={'commands': commands}
+        DocumentName="AWS-RunShellScript",
+        Parameters={"commands": commands},
     )
 except (BotoCoreError, ClientError) as e:
     print(f"ERROR: send_command failed: {e}", file=sys.stderr)
     sys.exit(1)
 
-cmd_id = send['Command']['CommandId']
+cmd_id = send["Command"]["CommandId"]
 print(f"CommandId: {cmd_id}")
 
-# ---- poll for completion ----
-status = "Pending"
-while status in ("Pending", "InProgress", "Delayed"):
+
+# ---- robust poll for completion (handles InvocationDoesNotExist) ----
+time.sleep(1)  # small grace period for consistency
+final = None
+deadline = time.time() + 900  # 15 minutes max
+while time.time() < deadline:
     try:
         inv = ssm.get_command_invocation(CommandId=cmd_id, InstanceId=realm_id)
-        status = inv.get('Status', 'Unknown')
-    except (BotoCoreError, ClientError):
-        status = "Unknown"
+        status = inv.get("Status", "Unknown")
+    except ClientError as e:
+        code = e.response.get("Error", {}).get("Code")
+        if code == "InvocationDoesNotExist":
+            time.sleep(2)
+            continue
+        print(f"ERROR: get_command_invocation failed: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"ERROR: get_command_invocation error: {e}", file=sys.stderr)
+        sys.exit(1)
+
     if status in ("Pending", "InProgress", "Delayed"):
         time.sleep(3)
-    else:
-        break
+        continue
 
-try:
-    inv = ssm.get_command_invocation(CommandId=cmd_id, InstanceId=realm_id)
-except (BotoCoreError, ClientError) as e:
-    print(f"ERROR: get_command_invocation failed: {e}", file=sys.stderr)
+    final = inv
+    break
+
+if not final:
+    # last attempt before giving up
+    try:
+        final = ssm.get_command_invocation(CommandId=cmd_id, InstanceId=realm_id)
+        status = final.get("Status", "Unknown")
+    except Exception as e:
+        print(f"ERROR: get_command_invocation still not available: {e}", file=sys.stderr)
+        sys.exit(1)
+else:
+    status = final.get("Status", "Unknown")
+
+print(f"SSM status: {status}")
+if status != "Success":
+    print(final.get("StandardErrorContent", ""), file=sys.stderr)
     sys.exit(1)
 
-print(f"SSM status: {inv.get('Status')}")
-if inv.get('Status') != "Success":
-    print(inv.get('StandardErrorContent', ''), file=sys.stderr)
-    sys.exit(1)
+stdout = final.get("StandardOutputContent") or ""
 
-stdout = inv.get('StandardOutputContent') or ""
+
 # ---- parse outputs ----
 inv_table = []
 cljson_raw = []
-
 in_inv = in_json = False
 for line in stdout.splitlines():
     if line.strip() == "__INV_START__":
