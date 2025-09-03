@@ -306,7 +306,7 @@ jobs:
         run: terraform plan -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}" -out=tfplan
       
       - name: Apply Terraform
-        working-directory: ./deployments/gcp
+        working-directory: ./deployments/gcp/deployment_with_pd_gcp/
         run: terraform apply -auto-approve tfplan
 
       - name: Save Terraform state
