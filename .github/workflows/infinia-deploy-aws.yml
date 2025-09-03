@@ -1,270 +1,94 @@
-#!/usr/bin/env bash
-# scripts/verify_infinia.sh
-set -euo pipefail
+name: Deploy Infinia Infrastructure
 
-# ===== Inputs (environment) =====
-AWS_REGION="${AWS_REGION:-${REGION:-${AWS_DEFAULT_REGION:-}}}"
-TERRAFORM_DIR="${TERRAFORM_DIR:-deployments/aws}"
-REALM_ADMIN_PASSWORD="${REALM_ADMIN_PASSWORD:-${INFINIA_ADMIN_PASSWORD:-}}"
-AMI_ID="${AMI_ID:-}"   # optional: pass from workflow to strengthen AWS fallback
+on:
+  workflow_call:
+    inputs:
+      ami_id:
+        required: true
+        type: string
+      aws_region:
+        required: true
+        type: string
+      infinia_version:
+        required: true
+        type: string
+    secrets:
+      INFINIA_ADMIN_PASSWORD:
+        required: true
 
-# ===== Helpers =====
-need() { command -v "$1" >/dev/null 2>&1 || { echo "ERROR: missing dependency: $1" >&2; exit 1; }; }
-b64_no_wrap() { if base64 --help 2>&1 | grep -q -- '-w'; then base64 -w0; else base64 | tr -d '\n'; fi; }
+env:
+  TERRAFORM_DIR: deployments/aws
 
-# ===== Preflight =====
-for bin in aws jq terraform awk sed; do need "$bin"; done
-[[ -n "$AWS_REGION" ]] || { echo "ERROR: AWS_REGION not set" >&2; exit 1; }
-[[ -n "$REALM_ADMIN_PASSWORD" ]] || { echo "ERROR: REALM_ADMIN_PASSWORD not set" >&2; exit 1; }
-aws sts get-caller-identity >/dev/null || { echo "ERROR: AWS credentials not usable" >&2; exit 1; }
+jobs:
+  Infinia-deployment:
+    name: Deploy Infinia on AWS
+    runs-on: small-dynamic-amd64-u24
 
-# ===== Discover instance IDs from Terraform state (robust) =====
-pushd "$TERRAFORM_DIR" >/dev/null
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-# Match with/without module prefix and with/without [index]
-REALM_ADDR="$(terraform state list | awk '/(^|.*\.)aws_instance\.infinia_realm(\[[0-9]+\])?$/ {print; exit}')"
-mapfile -t NONREALM_ADDRS < <(terraform state list | awk '/(^|.*\.)aws_instance\.infinia_none_realm(\[[0-9]+\])?$/ {print}')
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
 
-REALM_ID=""
-AMI_FROM_STATE=""
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.aws_region }}
 
-if [[ -n "${REALM_ADDR:-}" ]]; then
-  REALM_ID="$(terraform state show -no-color "$REALM_ADDR" | awk -F ' = ' '/^id = /{gsub(/"/,"",$2); print $2; exit}')"
-  AMI_FROM_STATE="$(terraform state show -no-color "$REALM_ADDR" | awk -F ' = ' '/^ami = /{gsub(/"/,"",$2); print $2; exit}')"
-fi
+      - name: Install AWS CLI v2 (if missing)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v aws >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y unzip
+            curl -sS "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
+            unzip -q awscliv2.zip
+            sudo ./aws/install --update
+          fi
+          aws --version
 
-NONREALM_IDS=""
-if [[ ${#NONREALM_ADDRS[@]} -gt 0 ]]; then
-  for RES in "${NONREALM_ADDRS[@]}"; do
-    _id="$(terraform state show -no-color "$RES" | awk -F ' = ' '/^id = /{gsub(/"/,"",$2); print $2; exit}')"
-    [[ -n "$_id" ]] && NONREALM_IDS+="${_id} "
-  done
-  NONREALM_IDS="$(echo "$NONREALM_IDS" | xargs || true)"
-fi
+      - name: Install jq (if missing)
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v jq >/dev/null 2>&1 || { sudo apt-get update -y && sudo apt-get install -y jq; }
+          jq --version
 
-popd >/dev/null
+      # -------- DEPLOY (Terraform) --------
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-# ===== AWS fallbacks if TF state lacked IDs =====
-AMI_FILTER="${AMI_ID:-$AMI_FROM_STATE}"
+      - name: Terraform Init
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: terraform init
 
-if [[ -z "$REALM_ID" ]]; then
-  echo "WARN: Realm ID not found in TF state. Falling back to AWS describe-instances..."
-  if [[ -n "$AMI_FILTER" ]]; then
-    REALM_ID="$(aws ec2 describe-instances --region "$AWS_REGION" \
-      --filters Name=instance-state-name,Values=running,pending \
-                Name=tag:Role,Values=realm \
-                Name=image-id,Values="$AMI_FILTER" \
-      --query 'Reservations[].Instances[].InstanceId' --output text 2>/dev/null | awk '{print $1}')"
-  else
-    REALM_ID="$(aws ec2 describe-instances --region "$AWS_REGION" \
-      --filters Name=instance-state-name,Values=running,pending \
-                Name=tag:Role,Values=realm \
-      --query 'Reservations[].Instances[].InstanceId' --output text 2>/dev/null | awk '{print $1}')"
-  fi
-fi
+      - name: Terraform Plan
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: |
+          terraform plan \
+            -var-file=terraform.tfvars \
+            -var="infinia_ami_id=${{ inputs.ami_id }}" \
+            -var="infinia_version=${{ inputs.infinia_version }}" \
+            -out=tfplan
 
-if [[ -z "$NONREALM_IDS" ]]; then
-  echo "INFO: Non-realm IDs not found in TF state. Falling back to AWS describe-instances..."
-  if [[ -n "$AMI_FILTER" ]]; then
-    NONREALM_IDS="$(aws ec2 describe-instances --region "$AWS_REGION" \
-      --filters Name=instance-state-name,Values=running,pending \
-                Name=tag:Role,Values=nonrealm \
-                Name=image-id,Values="$AMI_FILTER" \
-      --query 'Reservations[].Instances[].InstanceId' --output text 2>/dev/null | xargs || true)"
-  else
-    NONREALM_IDS="$(aws ec2 describe-instances --region "$AWS_REGION" \
-      --filters Name=instance-state-name,Values=running,pending \
-                Name=tag:Role,Values=nonrealm \
-      --query 'Reservations[].Instances[].InstanceId' --output text 2=/dev/null | xargs || true)"
-  fi
-fi
+      - name: Terraform Apply
+        working-directory: ${{ env.TERRAFORM_DIR }}
+        run: terraform apply -auto-approve tfplan
 
-IDS="$(echo "$REALM_ID $NONREALM_IDS" | xargs)"
-[[ -n "$REALM_ID" ]] || { echo "ERROR: could not find realm instance id (TF state or AWS fallback)" >&2; exit 1; }
-[[ -n "$IDS" ]] || { echo "ERROR: no instances found (realm + nonrealm)" >&2; exit 1; }
-
-EXPECTED=$(( $(wc -w <<<"${NONREALM_IDS:-}" | xargs) + 1 ))
-echo "Realm:   $REALM_ID"
-echo "Clients: ${NONREALM_IDS:-<none>}"
-echo "Expected node count: $EXPECTED"
-
-# ===== Wait for EC2 checks and SSM Online =====
-deadline=$((SECONDS + 1800)) # 30 min
-NUM=$(wc -w <<<"$IDS" | xargs)
-while :; do
-  OK=$(aws ec2 describe-instance-status --region "$AWS_REGION" \
-        --include-all-instances --instance-ids $IDS \
-        --query "length(InstanceStatuses[?InstanceStatus.Status=='ok' && SystemStatus.Status=='ok'])" \
-        --output text)
-  echo "EC2 checks OK: $OK / $NUM"
-  [[ "$OK" == "$NUM" ]] && break
-  (( SECONDS > deadline )) && { echo "ERROR: timeout waiting for EC2 checks" >&2; exit 1; }
-  sleep 15
-done
-
-for ID in $IDS; do
-  echo "Waiting SSM Online: $ID"
-  for i in {1..80}; do
-    STATUS=$(aws ssm describe-instance-information --region "$AWS_REGION" \
-      --query "InstanceInformationList[?InstanceId=='${ID}'].PingStatus" --output text 2>/dev/null || true)
-    [[ "$STATUS" == *Online* ]] && { echo "SSM Online for $ID"; break; }
-    sleep 5
-    [[ $i -eq 80 ]] && { echo "ERROR: timeout waiting SSM for $ID" >&2; exit 1; }
-  done
-done
-
-# ===== Run redcli on the realm via SSM (chunked; emit JSON if present, plus inventory count) =====
-PASS_B64="$(printf '%s' "$REALM_ADMIN_PASSWORD" | b64_no_wrap)"
-
-run_ssm() {
-  local iid="$1" cmd_id status
-
-  read -r -d '' REMOTE <<'EOS'
-#!/usr/bin/env bash
-set -euo pipefail
-export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-b64_no_wrap() { if base64 --help 2>&1 | grep -q -- '-w'; then base64 -w0; else base64 | tr -d '\n'; fi; }
-
-PASS=$(printf '%s' '__PASS_B64__' | base64 -d)
-redcli user login realm_admin -p "$PASS" >/dev/null 2>&1 || true
-
-# Try cluster JSON
-JSON="$( (redcli cluster show -o json || redcli cluster show --json) 2>/dev/null || true )"
-if [ -n "$JSON" ] && printf '%s' "$JSON" | grep -q '{'; then
-  if command -v python3 >/dev/null 2>&1; then
-    JSON_CANON="$(python3 - <<'PY' <<< "$JSON" 2>/dev/null || true)
-import json, sys
-data = json.loads(sys.stdin.read())
-print(json.dumps(data, separators=(',',':'), ensure_ascii=False))
-PY"
-  else
-    JSON_CANON="$JSON"
-  fi
-  printf "__JSON_B64_START__\n%s\n__JSON_B64_END__\n" "$(printf '%s' "$JSON_CANON" | b64_no_wrap)"
-fi
-
-# Always emit inventory node count (parse plain text)
-INV_NODES="$(redcli inventory show 2>/dev/null | awk '/^[[:space:]]*Nodes:/ {print $2}' | tail -n1)"
-printf "__INV_NODES_START__\n%s\n__INV_NODES_END__\n" "${INV_NODES:-}"
-EOS
-
-  # inject password token
-  local SCRIPT=${REMOTE//'__PASS_B64__'/$PASS_B64}
-  local SCRIPT_B64
-  SCRIPT_B64=$(printf '%s' "$SCRIPT" | b64_no_wrap)
-
-  # chunked transmission
-  local -a CMDS; CMDS+=("rm -f /tmp/remote.b64 /tmp/remote.sh")
-  local chunk_size=3000 i part
-  for (( i=0; i<${#SCRIPT_B64}; i+=chunk_size )); do
-    part=${SCRIPT_B64:i:chunk_size}
-    CMDS+=("printf '${part}' >> /tmp/remote.b64")
-  done
-  CMDS+=("base64 -d /tmp/remote.b64 > /tmp/remote.sh")
-  CMDS+=("chmod +x /tmp/remote.sh")
-  CMDS+=("/tmp/remote.sh")
-
-  local CMD_JSON
-  CMD_JSON=$(printf '%s\n' "${CMDS[@]}" | jq -Rs 'split("\n")[:-1]')
-
-  cmd_id=$(aws ssm send-command \
-    --region "$AWS_REGION" \
-    --instance-ids "$iid" \
-    --document-name "AWS-RunShellScript" \
-    --parameters "commands=${CMD_JSON}" \
-    --query 'Command.CommandId' --output text)
-
-  while :; do
-    status=$(aws ssm get-command-invocation \
-      --region "$AWS_REGION" \
-      --command-id "$cmd_id" \
-      --instance-id "$iid" \
-      --query 'Status' --output text 2>/dev/null || echo Unknown)
-    [[ "$status" =~ ^(Pending|InProgress|Delayed)$ ]] || break
-    sleep 3
-  done
-
-  aws ssm get-command-invocation \
-    --region "$AWS_REGION" \
-    --command-id "$cmd_id" \
-    --instance-id "$iid" \
-    --output json
-}
-
-RESP="$(run_ssm "$REALM_ID")"
-STATUS="$(echo "$RESP" | jq -r '.Status')"
-STDOUT="$(echo "$RESP" | jq -r '.StandardOutputContent')"
-STDERR="$(echo "$RESP" | jq -r '.StandardErrorContent')"
-
-echo "SSM status: $STATUS"
-if [[ "$STATUS" != "Success" ]]; then
-  echo "ERROR: SSM command failed"
-  echo "$STDERR"
-  exit 1
-fi
-
-# ===== Pull data back out =====
-JSON_B64="$(awk '/__JSON_B64_START__/{f=1;next}/__JSON_B64_END__/{f=0}f' <<< "$STDOUT" | tr -d '\r\n ')"
-INV_NODES_RAW="$(awk '/__INV_NODES_START__/{f=1;next}/__INV_NODES_END__/{f=0}f' <<< "$STDOUT" | tr -d '\r\n ')"
-
-JSON_RAW=""
-if [[ -n "$JSON_B64" ]]; then
-  JSON_RAW="$(printf '%s' "$JSON_B64" | base64 -d 2>/dev/null || true)"
-  # If jq rejects (NaN/Infinity), coerce to null
-  if ! echo "$JSON_RAW" | jq -e . >/dev/null 2>&1; then
-    JSON_RAW="$(printf '%s' "$JSON_RAW" | sed -E 's/: *-?Infinity([,}])/ : null\1/g; s/: *NaN([,}])/ : null\1/g')"
-  fi
-fi
-
-# Extract fields from JSON if present
-STATE="unknown"
-COUNT_JSON=""
-EVICTED="n/a"
-NAMES=""
-
-if [[ -n "$JSON_RAW" ]]; then
-  STATE="$(jq -r '.cluster_state // .state // "unknown"' <<< "$JSON_RAW" 2>/dev/null || echo unknown)"
-  COUNT_JSON="$(jq '(.instances|length) // (.nodes|length) // empty' <<< "$JSON_RAW" 2>/dev/null || true)"
-  EVICTED="$(jq '([.cats[]? | select(.evicted==true)] | length) // 0' <<< "$JSON_RAW" 2>/dev/null || echo 0)"
-  NAMES="$(jq -r '(.instances // .nodes // []) | map(.name // .id // .instance_id // .hostname // .node // .Name) | join(", ")' <<< "$JSON_RAW" 2>/dev/null || echo "")"
-fi
-
-# Final count decision: prefer JSON count, else inventory count
-COUNT_INV="${INV_NODES_RAW:-}"
-if [[ -n "$COUNT_JSON" ]]; then
-  COUNT="$COUNT_JSON"
-else
-  COUNT="$COUNT_INV"
-fi
-
-# ===== Summary =====
-{
-  echo "### Infinia functional verification"
-  echo
-  echo "- Realm instance: \`$REALM_ID\`"
-  echo "- Expected nodes (TF/AWS): \`$EXPECTED\`"
-  [[ -n "$COUNT_JSON" ]] && echo "- redcli cluster nodes: \`$COUNT_JSON\`"
-  [[ -n "$COUNT_INV"  ]] && echo "- redcli inventory nodes: \`$COUNT_INV\`"
-  echo "- Using node count: \`$COUNT\`"
-  echo "- redcli cluster state: \`$STATE\`"
-  echo "- Evicted CATs: \`$EVICTED\`"
-  [[ -n "$NAMES" ]] && echo "- Nodes: $NAMES"
-  if [[ -n "$JSON_RAW" ]]; then
-    echo
-    echo "<details><summary>Raw redcli cluster JSON</summary>"
-    echo
-    echo '```json'
-    echo "$JSON_RAW"
-    echo '```'
-    echo "</details>"
-  fi
-} | tee /dev/fd/3 3>/dev/null >> "${GITHUB_STEP_SUMMARY:-/dev/null}" || true
-
-# ===== Health gates =====
-# Pass purely on node count matching expected. Only enforce evicted==0 if we had cluster JSON.
-[[ "${COUNT:-0}" -eq "$EXPECTED" ]] || { echo "ERROR: node count mismatch: expected $EXPECTED, got ${COUNT:-0}" >&2; exit 1; }
-if [[ -n "$JSON_RAW" ]]; then
-  [[ "${EVICTED:-0}" -eq 0 ]] || { echo "ERROR: evicted CATs: $EVICTED" >&2; exit 1; }
-fi
-
-echo "Cluster verification OK ✅"
+      # -------- VERIFY (SSM + redcli via script) --------
+      - name: Verify Infinia cluster (script)
+        shell: bash
+        env:
+          AWS_REGION: ${{ inputs.aws_region }}
+          TERRAFORM_DIR: ${{ env.TERRAFORM_DIR }}
+          REALM_ADMIN_PASSWORD: ${{ secrets.INFINIA_ADMIN_PASSWORD }}
+          AMI_ID: ${{ inputs.ami_id }}
+        run: |
+          python3 -m pip install --user boto3
+          python3 scripts/verify_infinia.py
