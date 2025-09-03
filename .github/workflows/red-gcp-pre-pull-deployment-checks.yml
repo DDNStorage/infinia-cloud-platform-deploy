@@ -219,13 +219,13 @@ jobs:
 
       - name: Checkout Code (Same Repository)
         uses: actions/checkout@v3
-        if: ${{ github.repository == 'red/infinia-hp-gcp-mp' }}
+        if: ${{ github.repository == 'red/red-cloud-platform-deploy' }}
 
       - name: Checkout Code (Different Repository)
         uses: actions/checkout@v3
-        if: ${{ github.repository != 'red/infinia-hp-gcp-mp' }}
+        if: ${{ github.repository != 'red/red-cloud-platform-deploy' }}
         with:
-          repository: red/infinia-hp-gcp-mp
+          repository: red/red-cloud-platform-deploy
           ref: main
           token: '${{ secrets.DEVOPS_BOT_TOKEN }}'
 
@@ -245,7 +245,7 @@ jobs:
       
      
       - name: Create deployment tfvars file
-        working-directory: .deployments/gcp/
+        working-directory: ./deployments/gcp/
         run: |
           # Generate a unique timestamp for this deployment
           TIMESTAMP=${{ env.TIMESTAMP }}
@@ -298,29 +298,29 @@ jobs:
           cat marketplace_deployment.tfvars
       
       - name: Initialize Terraform
-        working-directory: .deployments/gcp
+        working-directory: ./deployments/gcp
         run: terraform init
       
       - name: Plan Terraform
-        working-directory: .deployments/gcp
+        working-directory: ./deployments/gcp
         run: terraform plan -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}" -out=tfplan
       
       - name: Apply Terraform
-        working-directory: .deployments/gcp
+        working-directory: ./deployments/gcp
         run: terraform apply -auto-approve tfplan
 
       - name: Save Terraform state
         uses: actions/upload-artifact@v3
         with:
           name: terraform-state-${{ env.TIMESTAMP }}
-          path: .deployments/gcp/terraform.tfstate*
+          path: ./deployments/gcp/terraform.tfstate*
           retention-days: 1
 
       - name: Save tfvars for cleanup
         uses: actions/upload-artifact@v3
         with:
           name: terraform-tfvars-${{ env.TIMESTAMP }}
-          path: .deployments/gcp/marketplace_deployment.tfvars
+          path: ./deployments/gcp/marketplace_deployment.tfvars
           retention-days: 1        
 
 
@@ -461,16 +461,16 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: terraform-tfvars-${{ env.TIMESTAMP }}
-          path: .deployments/gcp/
+          path: ./deployments/gcp/
       
       - name: Download Terraform state
         uses: actions/download-artifact@v3
         with:
           name: terraform-state-${{ env.TIMESTAMP }}
-          path: .deployments/gcp/
+          path: ./deployments/gcp/
       
       - name: Cleanup Test Resources
-        working-directory: .deployments/gcp/
+        working-directory: ./deployments/gcp/
         run: |
           echo "🧹 Starting cleanup process..."
 
