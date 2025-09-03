@@ -11,7 +11,7 @@ on:
       - converted_to_draft
       - ready_for_review
     paths:
-      - deployments/gcp/**
+      - deployments/gcp/deployment_with_pd_gcp**
       - .github/workflows/**
       - vm-images/gcp**
 
@@ -245,7 +245,7 @@ jobs:
       
      
       - name: Create deployment tfvars file
-        working-directory: ./deployments/gcp/
+        working-directory: ./deployments/gcp/deployment_with_pd_gcp/
         run: |
           # Generate a unique timestamp for this deployment
           TIMESTAMP=${{ env.TIMESTAMP }}
@@ -313,14 +313,14 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-state-${{ env.TIMESTAMP }}
-          path: ./deployments/gcp/terraform.tfstate*
+          path: ./deployments/gcp/deployment_with_pd_gcp/terraform.tfstate*
           retention-days: 1
 
       - name: Save tfvars for cleanup
         uses: actions/upload-artifact@v3
         with:
           name: terraform-tfvars-${{ env.TIMESTAMP }}
-          path: ./deployments/gcp/marketplace_deployment.tfvars
+          path: ./deployments/gcp/deployment_with_pd_gcp/marketplace_deployment.tfvars
           retention-days: 1        
 
 
@@ -461,16 +461,16 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: terraform-tfvars-${{ env.TIMESTAMP }}
-          path: ./deployments/gcp/
+          path: ./deployments/gcp/deployment_with_pd_gcp/
       
       - name: Download Terraform state
         uses: actions/download-artifact@v3
         with:
           name: terraform-state-${{ env.TIMESTAMP }}
-          path: ./deployments/gcp/
+          path: ./deployments/gcp/deployment_with_pd_gcp/
       
       - name: Cleanup Test Resources
-        working-directory: ./deployments/gcp/
+        working-directory: ./deployments/gcp/deployment_with_pd_gcp/
         run: |
           echo "🧹 Starting cleanup process..."
 
