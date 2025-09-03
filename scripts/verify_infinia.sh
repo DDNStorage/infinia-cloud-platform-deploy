@@ -54,7 +54,6 @@ AMI_FILTER="${AMI_ID:-$AMI_FROM_STATE}"
 
 if [[ -z "$REALM_ID" ]]; then
   echo "WARN: Realm ID not found in TF state. Falling back to AWS describe-instances..."
-  # Filter by Role=realm; optionally constrain by AMI if available
   if [[ -n "$AMI_FILTER" ]]; then
     REALM_ID="$(aws ec2 describe-instances --region "$AWS_REGION" \
       --filters Name=instance-state-name,Values=running,pending \
@@ -119,12 +118,13 @@ for ID in $IDS; do
   done
 done
 
-# ===== Run redcli on the realm via SSM =====
+# ===== Run redcli on the realm via SSM (chunked payload to avoid 'Argument list too long') =====
 PASS_B64="$(printf '%s' "$REALM_ADMIN_PASSWORD" | b64_no_wrap)"
 
 run_ssm() {
   local iid="$1" cmd_id status
 
+  # -- Remote script that runs ON the realm instance --
   read -r -d '' REMOTE <<'EOS'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -138,11 +138,29 @@ fi
 printf "__JSON_START__\n%s\n__JSON_END__\n" "$JSON"
 EOS
 
+  # inject password token
   local SCRIPT=${REMOTE//'__PASS_B64__'/$PASS_B64}
-  local CMD_JSON
-  CMD_JSON=$(printf '%s' "$SCRIPT" \
-    | jq -Rs '["bash -lc \"" + (gsub("\\\\";"\\\\")|gsub("\"";"\\\"")|gsub("\n";"\\n")) + "\""]')
+  local SCRIPT_B64
+  SCRIPT_B64=$(printf '%s' "$SCRIPT" | b64_no_wrap)
 
+  # Build StringList commands as small lines
+  local -a CMDS
+  CMDS+=("rm -f /tmp/remote.b64 /tmp/remote.sh")
+  # chunk base64 into ~3000 chars per command
+  local chunk_size=3000 i part
+  for (( i=0; i<${#SCRIPT_B64}; i+=chunk_size )); do
+    part=${SCRIPT_B64:i:chunk_size}
+    CMDS+=("printf '${part}' >> /tmp/remote.b64")
+  done
+  CMDS+=("base64 -d /tmp/remote.b64 > /tmp/remote.sh")
+  CMDS+=("chmod +x /tmp/remote.sh")
+  CMDS+=("/tmp/remote.sh")
+
+  # Turn array into JSON StringList
+  local CMD_JSON
+  CMD_JSON=$(printf '%s\n' "${CMDS[@]}" | jq -Rs 'split("\n")[:-1]')
+
+  # Send command
   cmd_id=$(aws ssm send-command \
     --region "$AWS_REGION" \
     --instance-ids "$iid" \
@@ -150,6 +168,7 @@ EOS
     --parameters "commands=${CMD_JSON}" \
     --query 'Command.CommandId' --output text)
 
+  # Poll
   while :; do
     status=$(aws ssm get-command-invocation \
       --region "$AWS_REGION" \
@@ -160,6 +179,7 @@ EOS
     sleep 3
   done
 
+  # Return full invocation JSON
   aws ssm get-command-invocation \
     --region "$AWS_REGION" \
     --command-id "$cmd_id" \
