@@ -288,13 +288,19 @@ jobs:
           zone = "us-central1-f"
           project_id = "red-101"
           machine_type = "n2-standard-16"
-          desired_capacity = ${{ env.DESIRED_CAPACITY }}
-          num_infinia_instances = ${{ env.INFINIA_INSTANCES }}
+
           num_clients = ${{ env.NUM_CLIENTS }}
-          #local_disks = 4
-          pd_disk_size = 64
-          pd_disk_count = 4
+          local_disks = 0  #added, initially commented out.
+          #pd_disk_size = 64
+          #pd_disk_count = 4
+          #pd_disk_type = "pd-ssd"
+          #desired_capacity = ${{ env.DESIRED_CAPACITY }}
+          #num_infinia_instances = ${{ env.INFINIA_INSTANCES }}
+          pd_disk_size = 64 #20
+          pd_disk_count = 4 #12
           pd_disk_type = "pd-ssd"
+          num_infinia_instances = 10
+          #desired_capacity = 27
           infinia_version = "${INFINIA_VERSION}"
           source_image = "${{ env.IMAGE_NAME }}"
           EOF
