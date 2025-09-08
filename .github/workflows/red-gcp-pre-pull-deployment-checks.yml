@@ -279,7 +279,7 @@ jobs:
           fi
           
           # Create a new tfvars file with the specified details
-          echo "Infinia Instance : $INFINIA_INSTANCES"
+          "$INFINIA_INSTANCES"
           echo "Infinia Instance : ${INFINIA_INSTANCES}"
           cat > marketplace_deployment.tfvars << 'EOF'
           goog_cm_deployment_name = "precheck-${TIMESTAMP}"
