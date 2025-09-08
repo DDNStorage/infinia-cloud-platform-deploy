@@ -418,8 +418,8 @@ jobs:
                 echo "✅ redcli login successful"
                 
                 # Wait for cluster formation and node discovery
-                echo "⏳ Waiting 5 minutes for all nodes to join cluster and complete discovery..."
-                sleep 300  # 5 minutes = 300 seconds
+                echo "⏳ Waiting 15 minutes for all nodes to join cluster and complete discovery..."
+                sleep 900  # 15 minutes = 900 seconds
 
                 # Test redcli inventory show
                 echo "🔍 Testing redcli inventory show..."
