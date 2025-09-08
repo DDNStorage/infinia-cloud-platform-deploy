@@ -293,11 +293,11 @@ jobs:
           sed -i "s/goog_cm_deployment_name = .*/goog_cm_deployment_name = \"precheck-${TIMESTAMP}\"/g" marketplace_test.tfvars
           
           # Update the source image
-          sed -i "s|source_image = .*|source_image = \"${{ env.IMAGE_NAME }}\"|g" marketplace_test.tfvars
-          
+          #sed -i "s|source_image = .*|source_image = \"${{ env.IMAGE_NAME }}\"|g" marketplace_test.tfvars
+          sed -i "s|source_image = .*|source_image = \"${SOURCE_IMAGE}\"|g" marketplace_test.tfvars
           # Update the infinia version
-          sed -i "s/infinia_version = .*/infinia_version = \"${INFINIA_VERSION}\"/g" marketplace_test.tfvars
-          
+          #sed -i "s/infinia_version = .*/infinia_version = \"${INFINIA_VERSION}\"/g" marketplace_test.tfvars
+          sed -i "s/infinia_version = .*/infinia_version = \"${INFINIA_VERSION}\"/g" marketplace_test.tfvars          
           # Update num_infinia_instances if it exists, otherwise add it
           if grep -q "num_infinia_instances" marketplace_test.tfvars; then
             sed -i "s/num_infinia_instances = .*/num_infinia_instances = ${{ env.INFINIA_INSTANCES }}/g" marketplace_test.tfvars
