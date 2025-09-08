@@ -287,7 +287,35 @@ jobs:
             INFINIA_VERSION="${{ env.INFINIA_VERSION }}"
           fi
 
-    
+          # Create a new tfvars file with the specified details
+          cat > marketplace_deployment.tfvars << 'EOF'
+          goog_cm_deployment_name = "precheck"
+          zone = "us-central1-a"
+          project_id = "red-101"
+          machine_type = "n2-standard-16"
+          num_clients = ${{ env.NUM_CLIENTS }}
+          local_disks = 0  #added, initially commented out.
+          #pd_disk_size = 64
+          #pd_disk_count = 4
+          #pd_disk_type = "pd-ssd"
+          desired_capacity = ${{ env.DESIRED_CAPACITY }}
+          num_infinia_instances = ${{ env.INFINIA_INSTANCES }}
+          pd_disk_size = 64 #20
+          pd_disk_count = 4 #12
+          pd_disk_type = "pd-ssd"
+          #num_infinia_instances = 10
+          #desired_capacity = 27
+          infinia_version = "${INFINIA_VERSION}"
+          source_image = "${{ env.IMAGE_NAME }}"
+          EOF
+          
+          # Fix any variable substitution issues in the tfvars file
+          #sed -i "s|\${TIMESTAMP}|$TIMESTAMP|g" marketplace_deployment.tfvars
+          #sed -i "s|\${INFINIA_VERSION}|$INFINIA_VERSION|g" marketplace_deployment.tfvars
+          
+          # Display the created tfvars file
+          echo "Created marketplace_deployment.tfvars:"
+          cat marketplace_deployment.tfvars    
      
       - name: Initialize Terraform
         working-directory: ./deployments/gcp/deployment_with_pd_gcp/
@@ -295,11 +323,11 @@ jobs:
       
       - name: Plan Terraform
         working-directory: ./deployments/gcp/deployment_with_pd_gcp/
-        run: terraform plan -var-file=marketplace_test.tfvars -var="project_id=${{ env.GCP_PROJECT }}" -out=tfplan
+        run: terraform plan -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}" -out=tfplan
       
       - name: Apply Terraform
         working-directory: ./deployments/gcp/deployment_with_pd_gcp/
-        run: terraform apply -auto-approve tfplan
+        run: terraform apply --var-file=marketplace_deployment.tfvars -auto-approve tfplan
 
       - name: Save Terraform state
         uses: actions/upload-artifact@v3
@@ -312,7 +340,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-tfvars-${{ env.TIMESTAMP }}
-          path: ./deployments/gcp/deployment_with_pd_gcp/marketplace_test.tfvars
+          path: ./deployments/gcp/deployment_with_pd_gcp/marketplace_deployment.tfvars
           retention-days: 1        
 
 
@@ -365,8 +393,8 @@ jobs:
           if ! gcloud compute instances describe "$FIRST_NODE" --zone="$ZONE" --project="${{ env.GCP_PROJECT }}" &>/dev/null; then
             echo "❌ VM $FIRST_NODE not found in zone $ZONE"
             echo "Available VMs in deployment:"
-            gcloud compute instances list --filter="name~'precheck-${{ env.TIMESTAMP }}'" --format="table(name,zone,status)"
-            
+            #gcloud compute instances list --filter="name~'precheck-${{ env.TIMESTAMP }}'" --format="table(name,zone,status)"
+            gcloud compute instances list --filter="name~'precheck-'" --format="table(name,zone,status)"
             # Add failure to summary
             cat >> $GITHUB_STEP_SUMMARY << EOF
           - **Status**: ❌ **FAILED**
@@ -457,7 +485,7 @@ jobs:
           After debugging, manually destroy resources:
           \`\`\`bash
           cd gcp-marketplace-deployment
-          terraform destroy -auto-approve -var-file=marketplace_test.tfvars -var="project_id=${{ env.GCP_PROJECT }}"
+          terraform destroy -auto-approve -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}"
           \`\`\`
           EOF
             exit 1
@@ -515,9 +543,9 @@ jobs:
           terraform init
           
           # Verify tfvars file exists
-          if [[ -f "marketplace_test.tfvars" ]]; then
+          if [[ -f "marketplace_deployment.tfvars" ]]; then
             echo "✅ Found existing tfvars file"
-            cat marketplace_test.tfvars
+            cat marketplace_deployment.tfvars
           else
             echo "❌ tfvars file not found, cannot cleanup safely"
             exit 1
@@ -548,7 +576,7 @@ jobs:
           echo "🗑️ Destroying resources..."
           echo "Sleeping for 5 minutes..."
           sleep 300
-          terraform destroy -auto-approve -var-file=marketplace_test.tfvars -var="project_id=${{ env.GCP_PROJECT }}"
+          terraform destroy -auto-approve -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}"
           
           echo "✅ Cleanup completed successfully"
           
