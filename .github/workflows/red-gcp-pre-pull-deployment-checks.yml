@@ -310,8 +310,8 @@ jobs:
           EOF
           
           # Fix any variable substitution issues in the tfvars file
-          #sed -i "s|\${TIMESTAMP}|$TIMESTAMP|g" marketplace_deployment.tfvars
-          #sed -i "s|\${INFINIA_VERSION}|$INFINIA_VERSION|g" marketplace_deployment.tfvars
+          sed -i "s|\${TIMESTAMP}|$TIMESTAMP|g" marketplace_deployment.tfvars
+          sed -i "s|\${INFINIA_VERSION}|$INFINIA_VERSION|g" marketplace_deployment.tfvars
           
           # Display the created tfvars file
           echo "Created marketplace_deployment.tfvars:"
