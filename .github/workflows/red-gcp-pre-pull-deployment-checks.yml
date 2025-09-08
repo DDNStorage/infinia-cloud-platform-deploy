@@ -288,7 +288,7 @@ jobs:
       
       - name: Plan Terraform
         working-directory: ./deployments/gcp/deployment_with_pd_gcp/
-        run: terraform plan -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}" -out=tfplan
+        run: terraform plan -var-file=marketplace_test.tfvars -var="project_id=${{ env.GCP_PROJECT }}" -out=tfplan
       
       - name: Apply Terraform
         working-directory: ./deployments/gcp/deployment_with_pd_gcp/
@@ -305,7 +305,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: terraform-tfvars-${{ env.TIMESTAMP }}
-          path: ./deployments/gcp/deployment_with_pd_gcp/marketplace_deployment.tfvars
+          path: ./deployments/gcp/deployment_with_pd_gcp/marketplace_test.tfvars
           retention-days: 1        
 
 
@@ -450,7 +450,7 @@ jobs:
           After debugging, manually destroy resources:
           \`\`\`bash
           cd gcp-marketplace-deployment
-          terraform destroy -auto-approve -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}"
+          terraform destroy -auto-approve -var-file=marketplace_test.tfvars -var="project_id=${{ env.GCP_PROJECT }}"
           \`\`\`
           EOF
             exit 1
@@ -508,9 +508,9 @@ jobs:
           terraform init
           
           # Verify tfvars file exists
-          if [[ -f "marketplace_deployment.tfvars" ]]; then
+          if [[ -f "marketplace_test.tfvars" ]]; then
             echo "✅ Found existing tfvars file"
-            cat marketplace_deployment.tfvars
+            cat marketplace_test.tfvars
           else
             echo "❌ tfvars file not found, cannot cleanup safely"
             exit 1
@@ -541,7 +541,7 @@ jobs:
           echo "🗑️ Destroying resources..."
           echo "Sleeping for 5 minutes..."
           sleep 300
-          terraform destroy -auto-approve -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}"
+          terraform destroy -auto-approve -var-file=marketplace_test.tfvars -var="project_id=${{ env.GCP_PROJECT }}"
           
           echo "✅ Cleanup completed successfully"
           
