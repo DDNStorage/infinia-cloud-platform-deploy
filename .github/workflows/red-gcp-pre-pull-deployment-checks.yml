@@ -356,7 +356,7 @@ jobs:
       - name: Test Infinia Cluster on First Node
         id: validation
         run: |
-          DEPLOYMENT_NAME="pr-${TIMESTAMP}"
+          DEPLOYMENT_NAME="pr-${{ env.TIMESTAMP }}"
           FIRST_NODE="${DEPLOYMENT_NAME}-0"  #Use correct naming convention
           ZONE="us-central1-a"
           
@@ -384,7 +384,7 @@ jobs:
           if ! gcloud compute instances describe "$FIRST_NODE" --zone="$ZONE" --project="${{ env.GCP_PROJECT }}" &>/dev/null; then
             echo "❌ VM $FIRST_NODE not found in zone $ZONE"
             echo "Available VMs in deployment:"
-            gcloud compute instances list --filter="name~'precheck-${{ env.TIMESTAMP }}'" --format="table(name,zone,status)"
+            gcloud compute instances list --filter="name~'pr-${{ env.TIMESTAMP }}'" --format="table(name,zone,status)"
             #gcloud compute instances list --filter="name~'precheck-'" --format="table(name,zone,status)"
             # Add failure to summary
             cat >> $GITHUB_STEP_SUMMARY << EOF
