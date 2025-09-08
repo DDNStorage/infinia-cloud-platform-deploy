@@ -201,7 +201,7 @@ jobs:
           echo "num_clients=$NUM_CLIENTS" >> $GITHUB_OUTPUT
           
           # Set desired capacity
-          DESIRED_CAPACITY="${{ github.event.inputs.desired_capacity || '7' }}"
+          DESIRED_CAPACITY="${{ github.event.inputs.desired_capacity || '63' }}"
           echo "desired_capacity=$DESIRED_CAPACITY" >> $GITHUB_OUTPUT
 
   deploy-marketplace:
@@ -281,6 +281,7 @@ jobs:
           cat > marketplace_deployment.tfvars << 'EOF'
           goog_cm_deployment_name = "precheck-${TIMESTAMP}"
           zone = "us-central1-f"
+          project_id = "red-101"
           machine_type = "n2-standard-16"
           #desired_capacity = ${{ env.DESIRED_CAPACITY }}
           num_infinia_instances = ${{ env.DESIRED_CAPACITY }}
