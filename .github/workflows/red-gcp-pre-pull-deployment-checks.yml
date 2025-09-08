@@ -553,6 +553,8 @@ jobs:
           
           # Destroy resources
           echo "🗑️ Destroying resources..."
+          echo "Sleeping for 5 minutes..."
+          sleep 300
           terraform destroy -auto-approve -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}"
           
           echo "✅ Cleanup completed successfully"
