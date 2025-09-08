@@ -287,7 +287,7 @@ jobs:
           project_id = "red-101"
           machine_type = "n2-standard-16"
           desired_capacity = ${{ env.DESIRED_CAPACITY }}
-          num_infinia_instances = "${{INFINIA_INSTANCES }}"
+          num_infinia_instances = "${INFINIA_INSTANCES}"
           num_clients = ${{ env.NUM_CLIENTS }}
           #local_disks = 4
           pd_disk_size = 64
