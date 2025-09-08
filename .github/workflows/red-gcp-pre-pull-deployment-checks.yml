@@ -253,6 +253,12 @@ jobs:
         run: |
           # Generate a unique timestamp for this deployment
           TIMESTAMP=${{ env.TIMESTAMP }}
+          INFINIA_VERSION="2.2.24"
+          SOURCE_IMAGE="projects/red-101/global/images/ddn-infinia-2-2-24-ubuntu-2404-amd-2025-07-15"
+          
+          echo "🔧 Using hardcoded values for testing:"
+          echo "INFINIA_VERSION: $INFINIA_VERSION"
+          echo "SOURCE_IMAGE: $SOURCE_IMAGE"          
           
           # Debug: Print environment variables to verify they're set
           echo "DEBUG: INFINIA_VERSION=${{ env.INFINIA_VERSION }}"
@@ -282,8 +288,7 @@ jobs:
           fi
 
           cp marketplace_test.tfvars marketplace_test.tfvars.backup
-          INFINIA_VERSION = "2.2.24"
-          source_image = "projects/red-101/global/images/ddn-infinia-2-2-24-ubuntu-2404-amd-2025-07-15"
+
           # Update the deployment name
           sed -i "s/goog_cm_deployment_name = .*/goog_cm_deployment_name = \"precheck-${TIMESTAMP}\"/g" marketplace_test.tfvars
           
