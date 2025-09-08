@@ -51,6 +51,7 @@ jobs:
       num_clients: ${{ steps.set-params.outputs.num_clients }}
       desired_capacity: ${{ steps.set-params.outputs.desired_capacity }}
       timestamp: ${{ steps.set-params.outputs.timestamp }}
+      infinia_instances: ${{ steps.set-params.outputs.infinia_instances }}
     
     steps:
 
@@ -203,7 +204,8 @@ jobs:
           # Set desired capacity
           DESIRED_CAPACITY="${{ github.event.inputs.desired_capacity || '63' }}"
           echo "desired_capacity=$DESIRED_CAPACITY" >> $GITHUB_OUTPUT
-          INFINIA_INSTANCES=$(( (${{ env.DESIRED_CAPACITY }} + 8) / 9 ))
+          INFINIA_INSTANCES=$(( ($DESIRED_CAPACITY + 8) / 9 ))
+          echo "infinia_instances=$INFINIA_INSTANCES" >> $GITHUB_OUTPUT
 
   deploy-marketplace:
     needs: [prepare]
