@@ -252,7 +252,8 @@ jobs:
         working-directory: ./deployments/gcp/deployment_with_pd_gcp/
         run: |
           # Generate a unique timestamp for this deployment
-          TIMESTAMP=${{ env.TIMESTAMP }}
+          #TIMESTAMP=${{ env.TIMESTAMP }}
+          TIMESTAMP=$(echo $RANDOM | md5sum | head -c 4)
 
           # Debug: Print environment variables to verify they're set
           echo "DEBUG: INFINIA_VERSION=${{ env.INFINIA_VERSION }}"
@@ -283,7 +284,7 @@ jobs:
 
           # Create a new tfvars file with the specified details
           cat > marketplace_deployment.tfvars << 'EOF'
-          goog_cm_deployment_name = "precheck"
+          goog_cm_deployment_name = "pr-${TIMESTAMP}"
           zone = "us-central1-a"
           project_id = "red-101"
           machine_type = "n2-standard-16"
@@ -354,7 +355,7 @@ jobs:
       - name: Test Infinia Cluster on First Node
         id: validation
         run: |
-          DEPLOYMENT_NAME="precheck"
+          DEPLOYMENT_NAME="pr-${TIMESTAMP}"
           FIRST_NODE="${DEPLOYMENT_NAME}-0"  #Use correct naming convention
           ZONE="us-central1-a"
           
@@ -382,8 +383,8 @@ jobs:
           if ! gcloud compute instances describe "$FIRST_NODE" --zone="$ZONE" --project="${{ env.GCP_PROJECT }}" &>/dev/null; then
             echo "❌ VM $FIRST_NODE not found in zone $ZONE"
             echo "Available VMs in deployment:"
-            #gcloud compute instances list --filter="name~'precheck-${{ env.TIMESTAMP }}'" --format="table(name,zone,status)"
-            gcloud compute instances list --filter="name~'precheck-'" --format="table(name,zone,status)"
+            gcloud compute instances list --filter="name~'precheck-${{ env.TIMESTAMP }}'" --format="table(name,zone,status)"
+            #gcloud compute instances list --filter="name~'precheck-'" --format="table(name,zone,status)"
             # Add failure to summary
             cat >> $GITHUB_STEP_SUMMARY << EOF
           - **Status**: ❌ **FAILED**
