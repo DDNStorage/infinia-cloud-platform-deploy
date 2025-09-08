@@ -203,6 +203,7 @@ jobs:
           # Set desired capacity
           DESIRED_CAPACITY="${{ github.event.inputs.desired_capacity || '63' }}"
           echo "desired_capacity=$DESIRED_CAPACITY" >> $GITHUB_OUTPUT
+          INFINIA_INSTANCES=$(( (${{ env.DESIRED_CAPACITY }} + 8) / 9 ))
 
   deploy-marketplace:
     needs: [prepare]
@@ -283,8 +284,8 @@ jobs:
           zone = "us-central1-f"
           project_id = "red-101"
           machine_type = "n2-standard-16"
-          #desired_capacity = ${{ env.DESIRED_CAPACITY }}
-          num_infinia_instances = ${{ env.DESIRED_CAPACITY }}
+          desired_capacity = ${{ env.DESIRED_CAPACITY }}
+          num_infinia_instances = ${INFINIA_INSTANCES}
           num_clients = ${{ env.NUM_CLIENTS }}
           #local_disks = 4
           pd_disk_size = 64
