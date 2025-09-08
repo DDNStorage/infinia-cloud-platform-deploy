@@ -397,29 +397,39 @@ jobs:
             
             # Login to redcli first (required for inventory command)
             echo "🔐 Logging into redcli..."
-            if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli user login realm_admin -p Adminpassword" 2>&1 | tee login_output.log; then
-              echo "✅ redcli login successful"
+            # First get the admin password from metadata
+            ADMIN_PASSWORD=$(gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="curl -s 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/admin-password' -H 'Metadata-Flavor: Google'" 2>/dev/null)
+            
+            if [ -z "$ADMIN_PASSWORD" ]; then
+              echo "❌ Failed to retrieve admin password from metadata"
+              INVENTORY_STATUS="❌ FAILED - Could not get admin password"
+            else
+              echo "✅ Retrieved admin password from metadata"
               
-              # Test redcli inventory show
-              echo "🔍 Testing redcli inventory show..."
-              if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli inventory show" 2>&1 | tee inventory_output.log; then
-                echo "✅ redcli inventory show successful"
+              if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli user login realm_admin -p '$ADMIN_PASSWORD'" 2>&1 | tee login_output.log; then
+                echo "✅ redcli login successful"
                 
-                # Check if inventory contains expected hardware info
-                if grep -qi "cpu\|memory\|disk\|nodes:" inventory_output.log; then
-                  echo "✅ Inventory contains hardware information"
-                  INVENTORY_STATUS="✅ SUCCESS - Hardware detected"
+                # Test redcli inventory show
+                echo "🔍 Testing redcli inventory show..."
+                if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli inventory show" 2>&1 | tee inventory_output.log; then
+                  echo "✅ redcli inventory show successful"
+                  
+                  # Check if inventory contains expected hardware info
+                  if grep -qi "cpu\|memory\|disk\|nodes:" inventory_output.log; then
+                    echo "✅ Inventory contains hardware information"
+                    INVENTORY_STATUS="✅ SUCCESS - Hardware detected"
+                  else
+                    echo "⚠️ Inventory output seems incomplete"
+                    INVENTORY_STATUS="⚠️ WARNING - Limited hardware info"
+                  fi
                 else
-                  echo "⚠️ Inventory output seems incomplete"
-                  INVENTORY_STATUS="⚠️ WARNING - Limited hardware info"
+                  echo "❌ redcli inventory show failed"
+                  INVENTORY_STATUS="❌ FAILED - Command failed"
                 fi
               else
-                echo "❌ redcli inventory show failed"
-                INVENTORY_STATUS="❌ FAILED - Command failed"
+                echo "❌ redcli login failed"
+                INVENTORY_STATUS="❌ FAILED - Login failed"
               fi
-            else
-              echo "❌ redcli login failed"
-              INVENTORY_STATUS="❌ FAILED - Login failed"
             fi
             
             echo "validation_success=true" >> $GITHUB_OUTPUT
@@ -554,5 +564,6 @@ jobs:
           - **Resources Destroyed**: All test resources cleaned up
           - **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
           EOF
+
 
 
