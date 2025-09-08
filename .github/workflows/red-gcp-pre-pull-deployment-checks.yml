@@ -201,7 +201,7 @@ jobs:
           echo "num_clients=$NUM_CLIENTS" >> $GITHUB_OUTPUT
           
           # Set desired capacity
-          DESIRED_CAPACITY="${{ github.event.inputs.desired_capacity || '36' }}"
+          DESIRED_CAPACITY="${{ github.event.inputs.desired_capacity || '7' }}"
           echo "desired_capacity=$DESIRED_CAPACITY" >> $GITHUB_OUTPUT
 
   deploy-marketplace:
@@ -410,6 +410,10 @@ jobs:
               if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli user login realm_admin -p '$ADMIN_PASSWORD'" 2>&1 | tee login_output.log; then
                 echo "✅ redcli login successful"
                 
+                # Wait for cluster formation and node discovery
+                echo "⏳ Waiting 5 minutes for all nodes to join cluster and complete discovery..."
+                sleep 300  # 5 minutes = 300 seconds
+
                 # Test redcli inventory show
                 echo "🔍 Testing redcli inventory show..."
                 if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli inventory show" 2>&1 | tee inventory_output.log; then
