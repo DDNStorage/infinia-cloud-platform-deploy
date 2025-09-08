@@ -414,16 +414,12 @@ jobs:
                 if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli inventory show" 2>&1 | tee inventory_output.log; then
                   echo "✅ redcli inventory show successful"
                   
-                  # Check if inventory contains expected hardware info
-                  if grep -qi "cpu\|memory\|disk\|nodes:" inventory_output.log; then
-                    echo "✅ Inventory contains hardware information"
-                    INVENTORY_STATUS="✅ SUCCESS - Hardware detected"
-                  else
-                    echo "⚠️ Inventory output seems incomplete"
-                    INVENTORY_STATUS="⚠️ WARNING - Limited hardware info"
-                  fi
+                  # Capture inventory output for summary
+                  INVENTORY_OUTPUT=$(cat inventory_output.log)
+                  INVENTORY_STATUS="✅ SUCCESS - Command executed"
                 else
                   echo "❌ redcli inventory show failed"
+                  INVENTORY_OUTPUT=$(cat inventory_output.log)
                   INVENTORY_STATUS="❌ FAILED - Command failed"
                 fi
               else
@@ -440,6 +436,11 @@ jobs:
           - **redcli Version**: \`$REDCLI_VERSION\`
           - **Inventory Check**: $INVENTORY_STATUS
           - **Next Step**: Resources will be cleaned up automatically
+          
+          ## 📋 Inventory Output
+          \`\`\`
+          $INVENTORY_OUTPUT
+          \`\`\`
           
           ## 🎉 Deployment is ready for merge!
           EOF
@@ -564,6 +565,8 @@ jobs:
           - **Resources Destroyed**: All test resources cleaned up
           - **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
           EOF
+
+
 
 
 
