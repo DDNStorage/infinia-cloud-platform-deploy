@@ -282,7 +282,8 @@ jobs:
           fi
 
           cp marketplace_test.tfvars marketplace_test.tfvars.backup
-          
+          INFINIA_VERSION = "2.2.24"
+          source_image = "projects/red-101/global/images/ddn-infinia-2-2-24-ubuntu-2404-amd-2025-07-15"
           # Update the deployment name
           sed -i "s/goog_cm_deployment_name = .*/goog_cm_deployment_name = \"precheck-${TIMESTAMP}\"/g" marketplace_test.tfvars
           
@@ -355,7 +356,7 @@ jobs:
         run: |
           DEPLOYMENT_NAME="precheck-${{ env.TIMESTAMP }}"
           FIRST_NODE="${DEPLOYMENT_NAME}-0"  #Use correct naming convention
-          ZONE="us-central1-f"
+          ZONE="us-central1-a"
           
           echo "🔍 Debug Information:"
           echo "TIMESTAMP: ${{ env.TIMESTAMP }}"
