@@ -215,6 +215,7 @@ jobs:
       NUM_CLIENTS: ${{ needs.prepare.outputs.num_clients }}
       DESIRED_CAPACITY: ${{ needs.prepare.outputs.desired_capacity }}
       TIMESTAMP: ${{ needs.prepare.outputs.timestamp }}
+      INFINIA_INSTANCES: ${{ needs.prepare.outputs.infinia_instances }}
     
     steps:
 
@@ -279,8 +280,7 @@ jobs:
           fi
           
           # Create a new tfvars file with the specified details
-          echo "$INFINIA_INSTANCES"
-          echo "Infinia Instance : ${{ env.INFINIA_INSTANCES }}"
+
           cat > marketplace_deployment.tfvars << 'EOF'
           goog_cm_deployment_name = "precheck-${TIMESTAMP}"
           zone = "us-central1-f"
