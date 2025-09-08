@@ -282,7 +282,8 @@ jobs:
           goog_cm_deployment_name = "test-deploy-${TIMESTAMP}"
           zone = "us-central1-f"
           machine_type = "n2-standard-16"
-          desired_capacity = ${{ env.DESIRED_CAPACITY }}
+          #desired_capacity = ${{ env.DESIRED_CAPACITY }}
+          num_infinia_instances = ${{ env.DESIRED_CAPACITY }}
           num_clients = ${{ env.NUM_CLIENTS }}
           #local_disks = 4
           pd_disk_size = 64
