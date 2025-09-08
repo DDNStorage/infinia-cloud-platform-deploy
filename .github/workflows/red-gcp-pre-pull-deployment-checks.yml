@@ -191,7 +191,8 @@ jobs:
         id: set-params
         run: |
           # Set timestamp for unique deployment names
-          TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          #TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          TIMESTAMP=$(echo $RANDOM | md5sum | head -c 4)
           echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
           
           # Set GCP project
@@ -252,8 +253,8 @@ jobs:
         working-directory: ./deployments/gcp/deployment_with_pd_gcp/
         run: |
           # Generate a unique timestamp for this deployment
-          #TIMESTAMP=${{ env.TIMESTAMP }}
-          TIMESTAMP=$(echo $RANDOM | md5sum | head -c 4)
+          TIMESTAMP=${{ env.TIMESTAMP }}
+          #TIMESTAMP=$(echo $RANDOM | md5sum | head -c 4)
 
           # Debug: Print environment variables to verify they're set
           echo "DEBUG: INFINIA_VERSION=${{ env.INFINIA_VERSION }}"
