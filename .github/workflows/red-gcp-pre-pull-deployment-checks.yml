@@ -295,11 +295,11 @@ jobs:
       
       - name: Plan Terraform
         working-directory: ./deployments/gcp/deployment_with_pd_gcp/
-        run: terraform plan -var-file=marketplace_test.tfvars -var="project_id=${{ env.GCP_PROJECT }}"  -var="goog_cm_deployment_name=precheck-${{ env.TIMESTAMP }}" -var="infinia_version=2.2.24" -var="source_image=projects/red-101/global/images/ddn-infinia-2-2-24-ubuntu-2404-amd-2025-07-15" -out=tfplan
+        run: terraform plan -var-file=marketplace_test.tfvars -var="project_id=${{ env.GCP_PROJECT }}" -out=tfplan
       
       - name: Apply Terraform
         working-directory: ./deployments/gcp/deployment_with_pd_gcp/
-        run: terraform apply -var="goog_cm_deployment_name=precheck-${{ env.TIMESTAMP }}" -var="infinia_version=2.2.24" -var="source_image=projects/red-101/global/images/ddn-infinia-2-2-24-ubuntu-2404-amd-2025-07-15" -auto-approve tfplan
+        run: terraform apply -auto-approve tfplan
 
       - name: Save Terraform state
         uses: actions/upload-artifact@v3
