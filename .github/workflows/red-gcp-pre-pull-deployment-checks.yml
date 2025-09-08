@@ -279,13 +279,15 @@ jobs:
           fi
           
           # Create a new tfvars file with the specified details
+          echo "Infinia Instance : $INFINIA_INSTANCES"
+          echo "Infinia Instance : ${INFINIA_INSTANCES}"
           cat > marketplace_deployment.tfvars << 'EOF'
           goog_cm_deployment_name = "precheck-${TIMESTAMP}"
           zone = "us-central1-f"
           project_id = "red-101"
           machine_type = "n2-standard-16"
           desired_capacity = ${{ env.DESIRED_CAPACITY }}
-          num_infinia_instances = $INFINIA_INSTANCES
+          num_infinia_instances = ${INFINIA_INSTANCES}
           num_clients = ${{ env.NUM_CLIENTS }}
           #local_disks = 4
           pd_disk_size = 64
