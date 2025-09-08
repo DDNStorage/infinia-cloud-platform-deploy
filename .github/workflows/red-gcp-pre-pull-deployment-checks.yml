@@ -393,13 +393,42 @@ jobs:
           # Run redcli --version on the first node
           if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli --version" 2>&1 | tee redcli_output.log; then
             REDCLI_VERSION=$(grep "redcli version" redcli_output.log | head -1)
-            echo "✅ Validation successful - redcli is working"
+            echo "✅ redcli --version successful"
+            
+            # Login to redcli first (required for inventory command)
+            echo "🔐 Logging into redcli..."
+            if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli user login realm_admin -p Adminpassword" 2>&1 | tee login_output.log; then
+              echo "✅ redcli login successful"
+              
+              # Test redcli inventory show
+              echo "🔍 Testing redcli inventory show..."
+              if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli inventory show" 2>&1 | tee inventory_output.log; then
+                echo "✅ redcli inventory show successful"
+                
+                # Check if inventory contains expected hardware info
+                if grep -qi "cpu\|memory\|disk\|nodes:" inventory_output.log; then
+                  echo "✅ Inventory contains hardware information"
+                  INVENTORY_STATUS="✅ SUCCESS - Hardware detected"
+                else
+                  echo "⚠️ Inventory output seems incomplete"
+                  INVENTORY_STATUS="⚠️ WARNING - Limited hardware info"
+                fi
+              else
+                echo "❌ redcli inventory show failed"
+                INVENTORY_STATUS="❌ FAILED - Command failed"
+              fi
+            else
+              echo "❌ redcli login failed"
+              INVENTORY_STATUS="❌ FAILED - Login failed"
+            fi
+            
             echo "validation_success=true" >> $GITHUB_OUTPUT
             
             # Add success to summary
             cat >> $GITHUB_STEP_SUMMARY << EOF
           - **Status**: ✅ **SUCCESS**
           - **redcli Version**: \`$REDCLI_VERSION\`
+          - **Inventory Check**: $INVENTORY_STATUS
           - **Next Step**: Resources will be cleaned up automatically
           
           ## 🎉 Deployment is ready for merge!
@@ -501,7 +530,6 @@ jobs:
             ls -la
             exit 1
           fi
-          
 
           
           # Now check resources in state (after init)
@@ -526,3 +554,5 @@ jobs:
           - **Resources Destroyed**: All test resources cleaned up
           - **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
           EOF
+
+
