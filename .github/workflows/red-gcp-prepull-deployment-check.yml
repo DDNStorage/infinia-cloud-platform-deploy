@@ -455,7 +455,7 @@ jobs:
           $INVENTORY_OUTPUT
           \`\`\`
           
-          ## �� Deployment is ready for merge!
+          ## 🎉 Deployment is ready for merge!
           EOF
           else
             echo "❌ Validation failed - redcli not working"
