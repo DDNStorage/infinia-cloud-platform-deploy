@@ -14,7 +14,7 @@ on:
       - deployments/gcp/deployment_with_pd_gcp**
       - .github/workflows/**
       - vm-images/gcp**
-	  - scripts/**
+      - scripts/**
 
   # Manual trigger with inputs
   workflow_dispatch:
