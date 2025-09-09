@@ -1,0 +1,583 @@
+name: Pre-Check on Red GCP Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened               # default
+      - synchronize          # default
+      - reopened             # default
+      - converted_to_draft
+      - ready_for_review
+    paths:
+      - deployments/gcp/deployment_with_pd_gcp**
+      - .github/workflows/**
+      - vm-images/gcp**
+	  - scripts/**
+
+  # Manual trigger with inputs
+  workflow_dispatch:
+    inputs:
+      image_name:
+        description: "Name of the GCP image to deploy"
+        required: false
+        default: ""
+      infinia_version:
+        description: "Version of Infinia"
+        required: false
+        default: ""
+      gcp_project:
+        description: "GCP Project ID"
+        required: false
+        default: "red-101"
+      num_clients:
+        description: "Number of client VMs to create"
+        required: false
+        type: string
+        default: "2"
+      desired_capacity:
+        description: "Desired capacity in TB (multiple of 9, minimum 63)"
+        required: false
+        default: "63"
+        type: string
+
+jobs:
+  prepare:
+    runs-on: small-dynamic-amd64-u24
+    outputs:
+      infinia_version: ${{ steps.set-version.outputs.infinia_version }}
+      image_name: ${{ steps.set-image.outputs.image_name }}
+      gcp_project: ${{ steps.set-params.outputs.gcp_project }}
+      num_clients: ${{ steps.set-params.outputs.num_clients }}
+      desired_capacity: ${{ steps.set-params.outputs.desired_capacity }}
+      timestamp: ${{ steps.set-params.outputs.timestamp }}
+      infinia_instances: ${{ steps.set-params.outputs.infinia_instances }}
+    
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+      
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+      
+      - name: Set GCP project
+        run: |
+          GCP_PROJECT="${{ github.event.inputs.gcp_project || 'red-101' }}"
+          gcloud config set project $GCP_PROJECT
+          echo "GCP_PROJECT=$GCP_PROJECT" >> $GITHUB_ENV
+      
+      - name: Set image and version
+        id: set-image
+        run: |
+          # For manual workflow with image_name specified
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.image_name }}" ]; then
+            echo "Using manually specified image: ${{ github.event.inputs.image_name }}"
+            IMAGE_NAME="${{ github.event.inputs.image_name }}"
+            
+            # Check if it's a full path or just a name
+            if [[ "$IMAGE_NAME" != *"/"* ]]; then
+              # It's just a name, get the full path
+              IMAGE_PATH=$(gcloud compute images describe "$IMAGE_NAME" --format="value(selfLink)" 2>/dev/null)
+              if [ -n "$IMAGE_PATH" ]; then
+                IMAGE_NAME="$IMAGE_PATH"
+              fi
+            fi
+            
+            echo "image_name=$IMAGE_NAME" >> $GITHUB_OUTPUT
+            
+            # Extract version from image name if version not provided
+            if [ -z "${{ github.event.inputs.infinia_version }}" ]; then
+              BASE_NAME=$(basename "$IMAGE_NAME")
+              if [[ "$BASE_NAME" =~ ddn-infinia-([0-9]+[-\.][0-9]+[-\.][0-9]+) ]]; then
+                VERSION="${BASH_REMATCH[1]}"
+                # Replace hyphens with dots if needed
+                VERSION=$(echo "$VERSION" | tr '-' '.')
+                echo "Extracted version from image name: $VERSION"
+                echo "infinia_version=$VERSION" >> $GITHUB_OUTPUT
+              else
+                echo "Could not extract version from image name."
+                echo "infinia_version=latest" >> $GITHUB_OUTPUT
+              fi
+            else
+              echo "Using manually specified version: ${{ github.event.inputs.infinia_version }}"
+              echo "infinia_version=${{ github.event.inputs.infinia_version }}" >> $GITHUB_OUTPUT
+            fi
+          
+          # For manual workflow with only infinia_version specified
+          elif [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.infinia_version }}" ]; then
+            echo "Using manually specified version: ${{ github.event.inputs.infinia_version }}"
+            VERSION="${{ github.event.inputs.infinia_version }}"
+            echo "infinia_version=$VERSION" >> $GITHUB_OUTPUT
+            
+            # Format version for image search (replace dots with hyphens)
+            FORMATTED_VERSION=$(echo "$VERSION" | tr '.' '-')
+            
+            echo "Looking for image with version: $VERSION (formatted as: $FORMATTED_VERSION)"
+            
+            MATCHING_IMAGE_NAME=$(gcloud compute images list \
+              --filter="name~'ddn-infinia-$FORMATTED_VERSION'" \
+              --project=${{ env.GCP_PROJECT }} \
+              --format="value(name)" \
+              --limit=1)
+            
+            if [ -n "$MATCHING_IMAGE_NAME" ]; then
+              MATCHING_IMAGE="projects/${{ env.GCP_PROJECT }}/global/images/$MATCHING_IMAGE_NAME"
+              echo "Found matching image: $MATCHING_IMAGE"
+              echo "image_name=$MATCHING_IMAGE" >> $GITHUB_OUTPUT
+            else
+              echo "No matching image found for version $VERSION."
+              echo "Workflow cannot proceed without a valid image."
+              exit 1
+            fi
+          
+          # For automated workflow or manual without specific inputs
+          else
+            # Find the latest image using the specific filter pattern
+            echo "Finding latest image by semantic version..."
+            
+            # Use the specific filter pattern to get the latest image name
+            LATEST_IMAGE_NAME=$(gcloud compute images list \
+              --project=${{ env.GCP_PROJECT }} \
+              --format="value(name)" \
+              --filter="name~'ddn-infinia-[0-9]+-[0-9]+-[0-9]+-ubuntu-2404-amd-[0-9]{4}-[0-9]{2}-[0-9]{2}'" \
+              --sort-by="creationTimestamp" | tail -n 1)
+            
+            if [ -z "$LATEST_IMAGE_NAME" ]; then
+              echo "No matching Infinia images found. Trying with a simpler filter..."
+              
+              # Try with a simpler filter if the specific one doesn't match
+              LATEST_IMAGE_NAME=$(gcloud compute images list \
+                --project=${{ env.GCP_PROJECT }} \
+                --format="value(name)" \
+                --filter="name~'ddn-infinia-'" \
+                --sort-by="creationTimestamp" | tail -n 1)
+                
+              if [ -z "$LATEST_IMAGE_NAME" ]; then
+                echo "No Infinia images found. Workflow cannot proceed."
+                exit 1
+              fi
+            fi
+            
+            echo "Found latest image by name: $LATEST_IMAGE_NAME"
+            
+            # Construct the full image reference
+            LATEST_IMAGE="projects/${{ env.GCP_PROJECT }}/global/images/$LATEST_IMAGE_NAME"
+            echo "Full image reference: $LATEST_IMAGE"
+            echo "image_name=$LATEST_IMAGE" >> $GITHUB_OUTPUT
+            
+            # Extract version from image name
+            if [[ "$LATEST_IMAGE_NAME" =~ ddn-infinia-([0-9]+[-\.][0-9]+[-\.][0-9]+) ]]; then
+              VERSION="${BASH_REMATCH[1]}"
+              # Replace hyphens with dots if needed
+              VERSION=$(echo "$VERSION" | tr '-' '.')
+              echo "Extracted version: $VERSION"
+              echo "infinia_version=$VERSION" >> $GITHUB_OUTPUT
+            else
+              echo "Could not extract version from image name."
+              echo "infinia_version=latest" >> $GITHUB_OUTPUT
+            fi
+          fi
+      
+      - name: Set parameters
+        id: set-params
+        run: |
+          # Set timestamp for unique deployment names
+          #TIMESTAMP=$(date +%Y%m%d%H%M%S)
+          TIMESTAMP=$(echo $RANDOM | md5sum | head -c 4)
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          
+          # Set GCP project
+          echo "gcp_project=${{ env.GCP_PROJECT }}" >> $GITHUB_OUTPUT
+          
+          # Set number of clients
+          NUM_CLIENTS="${{ github.event.inputs.num_clients || '1' }}"
+          echo "num_clients=$NUM_CLIENTS" >> $GITHUB_OUTPUT
+          
+          # Set desired capacity
+          DESIRED_CAPACITY="${{ github.event.inputs.desired_capacity || '63' }}"
+          echo "desired_capacity=$DESIRED_CAPACITY" >> $GITHUB_OUTPUT
+          INFINIA_INSTANCES=$(( ($DESIRED_CAPACITY + 8) / 9 ))
+          echo "infinia_instances=$INFINIA_INSTANCES" >> $GITHUB_OUTPUT
+
+  deploy-marketplace:
+    needs: [prepare]
+    runs-on: small-dynamic-amd64-u24
+    env:
+      GCP_PROJECT: ${{ needs.prepare.outputs.gcp_project }}
+      INFINIA_VERSION: ${{ needs.prepare.outputs.infinia_version }}
+      IMAGE_NAME: ${{ needs.prepare.outputs.image_name }}
+      NUM_CLIENTS: ${{ needs.prepare.outputs.num_clients }}
+      DESIRED_CAPACITY: ${{ needs.prepare.outputs.desired_capacity }}
+      TIMESTAMP: ${{ needs.prepare.outputs.timestamp }}
+      INFINIA_INSTANCES: ${{ needs.prepare.outputs.infinia_instances }}
+    
+    steps:
+
+      - name: Checkout Code (Same Repository)
+        uses: actions/checkout@v3
+        if: ${{ github.repository == 'red/red-cloud-platform-deploy' }}
+
+      - name: Checkout Code (Different Repository)
+        uses: actions/checkout@v3
+        if: ${{ github.repository != 'red/red-cloud-platform-deploy' }}
+        with:
+          repository: red/red-cloud-platform-deploy
+          ref: main
+          token: '${{ secrets.DEVOPS_BOT_TOKEN }}'
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      - uses: hashicorp/setup-terraform@v3        
+      
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+      
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+      
+     
+      - name: Create deployment tfvars file
+        working-directory: ./deployments/gcp/deployment_with_pd_gcp/
+        run: |
+          # Generate a unique timestamp for this deployment
+          TIMESTAMP=${{ env.TIMESTAMP }}
+          #TIMESTAMP=$(echo $RANDOM | md5sum | head -c 4)
+
+          # Debug: Print environment variables to verify they're set
+          echo "DEBUG: INFINIA_VERSION=${{ env.INFINIA_VERSION }}"
+          echo "DEBUG: IMAGE_NAME=${{ env.IMAGE_NAME }}"
+          
+          # Ensure INFINIA_VERSION is set - if empty, extract it from the image name
+          if [ -z "${{ env.INFINIA_VERSION }}" ]; then
+            echo "INFINIA_VERSION is empty, extracting from IMAGE_NAME"
+            IMAGE_NAME="${{ env.IMAGE_NAME }}"
+            BASE_NAME=$(basename "$IMAGE_NAME")
+            if [[ "$BASE_NAME" =~ ddn-infinia-([0-9]+[-\.][0-9]+[-\.][0-9]+) ]]; then
+              EXTRACTED_VERSION="${BASH_REMATCH[1]}"
+              # Replace hyphens with dots if needed
+              EXTRACTED_VERSION=$(echo "$EXTRACTED_VERSION" | tr '-' '.')
+              echo "Extracted version from image name: $EXTRACTED_VERSION"
+              echo "INFINIA_VERSION=$EXTRACTED_VERSION" >> $GITHUB_ENV
+              # Use the extracted version directly in the tfvars file
+              INFINIA_VERSION="$EXTRACTED_VERSION"
+            else
+              echo "Could not extract version from image name, using default"
+              echo "INFINIA_VERSION=latest" >> $GITHUB_ENV
+              INFINIA_VERSION="latest"
+            fi
+          else
+            # Use the environment variables
+            INFINIA_VERSION="${{ env.INFINIA_VERSION }}"
+          fi
+
+          # Create a new tfvars file with the specified details
+          cat > marketplace_deployment.tfvars << 'EOF'
+          goog_cm_deployment_name = "pr-${TIMESTAMP}"
+          zone = "us-central1-a"
+          project_id = "red-101"
+          machine_type = "n2-standard-16"
+          num_clients = ${{ env.NUM_CLIENTS }}
+          local_disks = 0  #added, initially commented out.
+          desired_capacity = ${{ env.DESIRED_CAPACITY }}
+          num_infinia_instances = ${{ env.INFINIA_INSTANCES }}
+          pd_disk_size = 64 #20
+          pd_disk_count = 4 #12
+          pd_disk_type = "pd-ssd"
+          infinia_version = "${INFINIA_VERSION}"
+          source_image = "${{ env.IMAGE_NAME }}"
+          EOF
+          
+          # Fix any variable substitution issues in the tfvars file
+          sed -i "s|\${TIMESTAMP}|$TIMESTAMP|g" marketplace_deployment.tfvars
+          sed -i "s|\${INFINIA_VERSION}|$INFINIA_VERSION|g" marketplace_deployment.tfvars
+          
+          # Display the created tfvars file
+          echo "Created marketplace_deployment.tfvars:"
+          cat marketplace_deployment.tfvars    
+     
+      - name: Initialize Terraform
+        working-directory: ./deployments/gcp/deployment_with_pd_gcp/
+        run: terraform init
+      
+      - name: Plan Terraform
+        working-directory: ./deployments/gcp/deployment_with_pd_gcp/
+        run: terraform plan -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}" -out=tfplan
+      
+      - name: Apply Terraform
+        working-directory: ./deployments/gcp/deployment_with_pd_gcp/
+        run: terraform apply --var-file=marketplace_deployment.tfvars -auto-approve tfplan
+
+      - name: Save Terraform state
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-state-${{ env.TIMESTAMP }}
+          path: ./deployments/gcp/deployment_with_pd_gcp/terraform.tfstate*
+          retention-days: 1
+
+      - name: Save tfvars for cleanup
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-tfvars-${{ env.TIMESTAMP }}
+          path: ./deployments/gcp/deployment_with_pd_gcp/marketplace_deployment.tfvars
+          retention-days: 1        
+
+
+  validate-deployment:
+    needs: [prepare, deploy-marketplace]
+    runs-on: small-dynamic-amd64-u24
+    outputs:
+      validation_success: ${{ steps.validation.outputs.validation_success }}    
+    env:
+      GCP_PROJECT: ${{ needs.prepare.outputs.gcp_project }}
+      TIMESTAMP: ${{ needs.prepare.outputs.timestamp }}
+    steps:
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+      
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+      
+      - name: Test Infinia Cluster on First Node
+        id: validation
+        run: |
+          DEPLOYMENT_NAME="pr-${{ env.TIMESTAMP }}"
+          FIRST_NODE="${DEPLOYMENT_NAME}-0"  #Use correct naming convention
+          ZONE="us-central1-a"
+          
+          echo "🔍 Debug Information:"
+          echo "TIMESTAMP: ${{ env.TIMESTAMP }}"
+          echo "DEPLOYMENT_NAME: $DEPLOYMENT_NAME"
+          echo "FIRST_NODE: $FIRST_NODE"
+          echo "ZONE: $ZONE"
+          
+          # Write initial summary
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          # 🧪 Infinia Pre-Pull Deployment Check Results
+          
+          ## Deployment Details
+          - **Deployment Name**: \`$DEPLOYMENT_NAME\`
+          - **First Node**: \`$FIRST_NODE\`
+          - **Zone**: \`$ZONE\`
+          - **Test Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          
+          ## Validation Test
+          EOF
+          
+          # Verify the VM exists first
+          echo "Checking if VM exists..."
+          if ! gcloud compute instances describe "$FIRST_NODE" --zone="$ZONE" --project="${{ env.GCP_PROJECT }}" &>/dev/null; then
+            echo "❌ VM $FIRST_NODE not found in zone $ZONE"
+            echo "Available VMs in deployment:"
+            gcloud compute instances list --filter="name~'pr-${{ env.TIMESTAMP }}'" --format="table(name,zone,status)"
+            #gcloud compute instances list --filter="name~'precheck-'" --format="table(name,zone,status)"
+            # Add failure to summary
+            cat >> $GITHUB_STEP_SUMMARY << EOF
+          - **Status**: ❌ **FAILED**
+          - **Error**: VM $FIRST_NODE not found
+          - **Next Step**: Check Terraform deployment logs
+          EOF
+            echo "validation_success=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "✅ VM found, testing redcli..."
+          
+          # Run redcli --version on the first node
+          if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli --version" 2>&1 | tee redcli_output.log; then
+            REDCLI_VERSION=$(grep "redcli version" redcli_output.log | head -1)
+            echo "✅ redcli --version successful"
+            
+            # Login to redcli first (required for inventory command)
+            echo "🔐 Logging into redcli..."
+            # First get the admin password from metadata
+            ADMIN_PASSWORD=$(gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="curl -s 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/admin-password' -H 'Metadata-Flavor: Google'" 2>/dev/null)
+            
+            if [ -z "$ADMIN_PASSWORD" ]; then
+              echo "❌ Failed to retrieve admin password from metadata"
+              INVENTORY_STATUS="❌ FAILED - Could not get admin password"
+            else
+              echo "✅ Retrieved admin password from metadata"
+              
+              if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli user login realm_admin -p '$ADMIN_PASSWORD'" 2>&1 | tee login_output.log; then
+                echo "✅ redcli login successful"
+                
+                # Wait for cluster formation and node discovery
+                echo "⏳ Waiting 15 minutes for all nodes to join cluster and complete discovery..."
+                sleep 900  # 15 minutes = 900 seconds
+
+                # Test redcli inventory show
+                echo "🔍 Testing redcli inventory show..."
+                if gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --command="redcli inventory show" 2>&1 | tee inventory_output.log; then
+                  echo "✅ redcli inventory show successful"
+                  
+                  # Capture inventory output for summary
+                  INVENTORY_OUTPUT=$(cat inventory_output.log)
+                  INVENTORY_STATUS="✅ SUCCESS - Command executed"
+                else
+                  echo "❌ redcli inventory show failed"
+                  INVENTORY_OUTPUT=$(cat inventory_output.log)
+                  INVENTORY_STATUS="❌ FAILED - Command failed"
+                fi
+              else
+                echo "❌ redcli login failed"
+                INVENTORY_STATUS="❌ FAILED - Login failed"
+              fi
+            fi
+            
+            echo "validation_success=true" >> $GITHUB_OUTPUT
+            
+            # Add success to summary
+            cat >> $GITHUB_STEP_SUMMARY << EOF
+          - **Status**: ✅ **SUCCESS**
+          - **redcli Version**: \`$REDCLI_VERSION\`
+          - **Inventory Check**: $INVENTORY_STATUS
+          - **Next Step**: Resources will be cleaned up automatically
+          
+          ## 📋 Inventory Output
+          \`\`\`
+          $INVENTORY_OUTPUT
+          \`\`\`
+          
+          ## �� Deployment is ready for merge!
+          EOF
+          else
+            echo "❌ Validation failed - redcli not working"
+            echo "validation_success=false" >> $GITHUB_OUTPUT
+            
+            # Add failure to summary
+            cat >> $GITHUB_STEP_SUMMARY << EOF
+          - **Status**: ❌ **FAILED**
+          - **Error**: redcli command failed on first node
+          - **Next Step**: Resources left for debugging
+          
+          ## 🔍 Debug Information
+          SSH into the failed node for investigation:
+          \`\`\`bash
+          gcloud compute ssh --zone="$ZONE" "$FIRST_NODE" --project="${{ env.GCP_PROJECT }}"
+          \`\`\`
+          
+          ## ⚠️ Manual Cleanup Required
+          After debugging, manually destroy resources:
+          \`\`\`bash
+          cd gcp-marketplace-deployment
+          terraform destroy -auto-approve -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}"
+          \`\`\`
+          EOF
+            exit 1
+          fi
+
+
+  cleanup:
+    needs: [deploy-marketplace, prepare, validate-deployment]
+    if: always() && needs.validate-deployment.outputs.validation_success == 'true'
+    runs-on: small-dynamic-amd64-u24
+
+    env:
+      GCP_PROJECT: ${{ needs.prepare.outputs.gcp_project }}
+      TIMESTAMP: ${{ needs.prepare.outputs.timestamp }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+      
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+        
+
+      
+      - name: Download tfvars artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-tfvars-${{ env.TIMESTAMP }}
+          path: ./deployments/gcp/deployment_with_pd_gcp/
+      
+      - name: Download Terraform state
+        uses: actions/download-artifact@v3
+        with:
+          name: terraform-state-${{ env.TIMESTAMP }}
+          path: ./deployments/gcp/deployment_with_pd_gcp/
+      
+      - name: Cleanup Test Resources
+        working-directory: ./deployments/gcp/deployment_with_pd_gcp/
+        run: |
+          echo "🧹 Starting cleanup process..."
+
+          # Initialize terraform first
+          echo "🔧 Initializing Terraform..."
+          terraform init
+          
+          # Verify tfvars file exists
+          if [[ -f "marketplace_deployment.tfvars" ]]; then
+            echo "✅ Found existing tfvars file"
+            cat marketplace_deployment.tfvars
+          else
+            echo "❌ tfvars file not found, cannot cleanup safely"
+            exit 1
+          fi
+
+          # Verify state file exists
+          if [[ -f "terraform.tfstate" ]]; then
+            echo "✅ Found Terraform state file"
+            echo "Resources in state:"
+            terraform show -json | jq -r '.values.root_module.resources[]?.address // empty' || echo "No resources found in state"
+          else
+            echo "❌ Terraform state file not found"
+            echo "Available files:"
+            ls -la
+            exit 1
+          fi
+
+          
+          # Now check resources in state (after init)
+          echo "📋 Resources in state:"
+          if terraform show -json 2>/dev/null | jq -r '.values.root_module.resources[]?.address // empty' 2>/dev/null | grep -q .; then
+            terraform show -json | jq -r '.values.root_module.resources[]?.address'
+          else
+            echo "No resources found in state or state is empty"
+          fi
+          
+          # Destroy resources
+          echo "🗑️ Destroying resources..."
+          echo "Sleeping for 5 minutes..."
+          sleep 300
+          terraform destroy -auto-approve -var-file=marketplace_deployment.tfvars -var="project_id=${{ env.GCP_PROJECT }}"
+          
+          echo "✅ Cleanup completed successfully"
+          
+          # Update summary with cleanup status
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          
+          ## 🧹 Cleanup Status
+          - **Status**: ✅ **COMPLETED**
+          - **Resources Destroyed**: All test resources cleaned up
+          - **Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          EOF
+
