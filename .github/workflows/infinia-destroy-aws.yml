@@ -58,12 +58,20 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
+      - name: Terraform Init (non-interactive)
         working-directory: ${{ env.TERRAFORM_DIR }}
-        run: |
-          terraform init 
+        run: terraform init -input=false
 
       - name: Terraform Destroy
         working-directory: ${{ env.TERRAFORM_DIR }}
+        env:
+          TF_VAR_admin_password: ${{ secrets.INFINIA_ADMIN_PASSWORD }}
+          TF_VAR_realm_license:  ${{ secrets.INFINIA_LICENSE }}   
         run: |
-          terraform destroy -auto-approve 
+          set -euo pipefail
+          terraform destroy \
+            -input=false \
+            -auto-approve \
+            -lock-timeout=5m \
+            -var-file=terraform.tfvars
+            

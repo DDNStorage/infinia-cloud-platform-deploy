@@ -9,34 +9,15 @@ on:
       aws_region:
         required: true
         type: string
-      # deployment_name:
-      #   required: true
-      #   type: string
       infinia_version:
         required: true
         type: string
-      # s3_bucket_name:
-      #   required: true
-      #   type: string
-      # s3_bucket_region:
-      #   required: true
-      #   type: string
-      # vpc_id:
-      #   required: true
-      #   type: string
-      # subnet_ids:
-      #   required: true
-      #   type: string  # comma-separated string
-      # security_group_id:
-      #   required: true
-      #   type: string
-      # bucket_name:
-      #   required: true
-      #   type: string
+    secrets:
+      INFINIA_ADMIN_PASSWORD:
+        required: true
 
 env:
   TERRAFORM_DIR: deployments/aws
-  ANSIBLE_DIR: deployments/aws/ansible
 
 jobs:
   Infinia-deployment:
@@ -51,26 +32,51 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+        
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: "${{ inputs.aws_region }}"
+          aws-region: ${{ inputs.aws_region }}
 
+      - name: Install AWS CLI v2 (if missing)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v aws >/dev/null 2>&1; then
+            sudo apt-get update -y
+            sudo apt-get install -y unzip
+            curl -sS "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
+            unzip -q awscliv2.zip
+            sudo ./aws/install --update
+          fi
+          aws --version
+
+      - name: Install jq (if missing)
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v jq >/dev/null 2>&1 || { sudo apt-get update -y && sudo apt-get install -y jq; }
+          jq --version
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install boto3
+
+      # -------- DEPLOY (Terraform) --------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
         working-directory: ${{ env.TERRAFORM_DIR }}
-        run: |
-          terraform init
-
-      # - name: Parse Subnet IDs
-      #   id: subnet_json
-      #   run: |
-      #     echo "SUBNET_IDS_JSON=$(echo '${{ inputs.subnet_ids }}' | jq -Rc 'split(",")')" >> $GITHUB_ENV
+        run: terraform init
 
       - name: Terraform Plan
         working-directory: ${{ env.TERRAFORM_DIR }}
@@ -79,23 +85,53 @@ jobs:
             -var-file=terraform.tfvars \
             -var="infinia_ami_id=${{ inputs.ami_id }}" \
             -var="infinia_version=${{ inputs.infinia_version }}" \
+            -var="realm_license=${{ secrets.INFINIA_LICENSE }}" \
+            -var="admin_password=${{ secrets.INFINIA_ADMIN_PASSWORD }}" \
             -out=tfplan
 
       - name: Terraform Apply
         working-directory: ${{ env.TERRAFORM_DIR }}
         run: terraform apply -auto-approve tfplan
 
-      - name: Setup Ansible
+      # -------- VERIFY (SSM + redcli via script) --------
+      - name: Verify Infinia cluster (retry up to 3x)
+        shell: bash
+        env:
+          AWS_REGION: us-east-1
+          REALM_ADMIN_PASSWORD: ${{ secrets.INFINIA_ADMIN_PASSWORD }}
+          # keep each attempt short & light
+          INVENTORY_TIMEOUT_SEC: '300'   # 5 minutes per attempt
+          INVENTORY_POLL_SEC: '10'
+          VERIFY_STRICT: '0'             # optional: set '1' if you want strict checks
         run: |
-          sudo apt update && sudo apt install software-properties-common -y
-          sudo add-apt-repository --yes --update ppa:ansible/ansible
-          sudo apt install ansible -y
-          sudo pip3 install --upgrade ansible-core ansible boto3 botocore
-          curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
-          sudo dpkg -i session-manager-plugin.deb
+          set -euo pipefail
+          ATTEMPTS=3
+          DELAY=120
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "Attempt $i/$ATTEMPTS"
+            if python3 scripts/verify_infinia_aws.py; then
+              echo "Verification succeeded on attempt $i ✅"
+              exit 0
+            fi
+            if [ "$i" -lt "$ATTEMPTS" ]; then
+              echo "Retrying in ${DELAY}s…"
+              sleep "$DELAY"
+            fi
+          done
+          echo "Verification failed after ${ATTEMPTS} attempts ❌"
+          exit 1
 
-      - name: Run Ansible playbook
-        working-directory: ${{ env.ANSIBLE_DIR }}
+      
+      # ---------- S3 Smoke test --------------------------
+      - name: S3 API smoke test (Python via SSM)
+        working-directory: ${{ github.workspace }}
+        env:
+          AWS_REGION: us-east-1
         run: |
-          echo "${{ secrets.ANSIBLE_VAULT }}" > vault_pass
-          ansible-playbook main.yml -i aws_ec2.yml --vault-password-file vault_pass -vv
+          python3 scripts/s3_smoke_test_aws.py \
+            --region "us-east-1" \
+            --admin-password "${{ secrets.INFINIA_ADMIN_PASSWORD }}" \
+            --client-tag-key "Role" --client-tag-value "client" \
+            --endpoint-port 8111 \
+            --no-verify-ssl \
+            --timeout-sec 1800

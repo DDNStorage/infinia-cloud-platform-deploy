@@ -1,11 +1,15 @@
 output "infinia_instance_private_ips" {
   description = "The private IP addresses of the Infinia instances"
-  value       = aws_instance.infinia[*].private_ip
+  value       = aws_instance.infinia_realm[0].private_ip
 }
 
-output "infinia_instance_ids" {
+output "infinia_instance_realm_ids" {
   description = "The instance IDs of the Infinia instances"
-  value       = aws_instance.infinia[*].id
+  value       = aws_instance.infinia_realm[0].id
+}
+output "infinia_instance_none_realm_ids" {
+  description = "The instance IDs of the Infinia instances"
+  value       = aws_instance.infinia_none_realm[*].id
 }
 
 output "client_instance_private_ips" {
@@ -20,17 +24,27 @@ output "client_instance_ids" {
 
 output "vpc_id" {
   description = "The ID of the VPC where resources are deployed"
-  value       = var.vpc_id
+  value       = local.vpc_id
 }
 
 output "subnet_ids" {
   description = "The IDs of the subnets used for deployment"
-  value       = var.subnet_ids
+  value       = local.subnet_ids
 }
 
 output "security_group_id" {
   description = "The ID of the security group used for the instances"
-  value       = var.security_group_id
+  value       = local.security_group_id
+}
+
+output "vpc_created" {
+  description = "Whether VPC was created by this module"
+  value       = var.create_vpc
+}
+
+output "vpc_cidr" {
+  description = "The CIDR block of the VPC"
+  value       = var.create_vpc ? aws_vpc.main[0].cidr_block : null
 }
 
 output "infinia_instance_count" {
@@ -42,6 +56,7 @@ output "client_instance_count" {
   description = "The number of client instances deployed"
   value       = var.num_client_instances
 }
+
 
 # output "load_balancer_private_ip" {
 #   description = "The private IP address of the load balancer instance"

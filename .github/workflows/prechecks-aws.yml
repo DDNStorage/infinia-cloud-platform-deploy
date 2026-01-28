@@ -1,0 +1,65 @@
+name: AWS Deployment Prechecks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'deployments/aws/**'                 # Terraform, etc.
+      - 'scripts/**'                     # your verify_infinia.py/sh
+      - '.github/workflows/*-aws.yml' 
+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Resolve infinia_version
+    runs-on: small-dynamic-amd64-u24
+    outputs:
+      infinia_version: ${{ steps.setver.outputs.infinia_version }}
+    steps:
+      - id: setver
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            ver="${{ vars.INFINIA_VERSION }}"
+            if [ -z "$ver" ]; then
+              echo "::error::Repository variable INFINIA_VERSION is not set. Go to Settings → Variables and create it."
+              exit 1
+            fi
+            echo "Using PR variable INFINIA_VERSION=$ver"
+            echo "infinia_version=$ver" >> "$GITHUB_OUTPUT"
+          else
+            echo "Using input infinia_version=${{ inputs.infinia_version }}"
+            echo "infinia_version=${{ inputs.infinia_version }}" >> "$GITHUB_OUTPUT"
+          fi
+  packer-build:
+    name: Build Packer AMI
+    needs: prepare
+    uses: ./.github/workflows/packer-build-aws.yml
+    with:
+      aws_region: us-east-1
+      infinia_version: ${{ needs.prepare.outputs.infinia_version }}
+    secrets: inherit
+
+  infinia-deploy:
+    name: Deploy Infinia Infrastructure
+    needs: [prepare, packer-build]
+    uses: ./.github/workflows/infinia-deploy-aws.yml
+    with:
+      aws_region: us-east-1
+      ami_id: ${{ needs.packer-build.outputs.ami_id }}
+      infinia_version: ${{ needs.prepare.outputs.infinia_version }}
+    secrets: inherit
+
+  infinia-destroy:
+    name: Destroy Infinia Infrastructure
+    needs: infinia-deploy
+    if: always()
+    uses: ./.github/workflows/infinia-destroy-aws.yml
+    with:
+      aws_region: us-east-1
+    secrets: inherit

@@ -1,0 +1,49 @@
+name: Infinia Build, Deploy and Cleanup
+
+on:
+  # Triggered by another workflow in the same repo
+  workflow_call:
+    inputs:
+      infinia_version:
+        description: "Infinia Version"
+        required: true
+        type: string
+
+  # Manual trigger from the Actions tab
+  workflow_dispatch:
+    inputs:
+      infinia_version:
+        description: "Infinia Version"
+        required: true
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}
+
+jobs:
+  packer-build:
+    name: Build Packer AMI
+    uses: ./.github/workflows/packer-build-aws.yml
+    with:
+      aws_region: us-east-1
+      infinia_version: ${{ inputs.infinia_version }}
+    secrets: inherit
+
+  infinia-deploy:
+    name: Deploy Infinia Infrastructure
+    needs: packer-build
+    uses: ./.github/workflows/infinia-deploy-aws.yml
+    with:
+      aws_region: us-east-1
+      ami_id: ${{ needs.packer-build.outputs.ami_id }}
+      infinia_version: ${{ inputs.infinia_version }}
+    secrets: inherit
+
+  infinia-destroy:
+    name: Destroy Infinia Infrastructure
+    needs: infinia-deploy
+    if: always()
+    uses: ./.github/workflows/infinia-destroy-aws.yml
+    with:
+      aws_region: us-east-1
+    secrets: inherit
