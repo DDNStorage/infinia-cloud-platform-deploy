@@ -346,6 +346,3 @@ resource "google_compute_attached_disk" "follower_attached_disks" {
 # Remove or comment out the old data_disks and attached_data_disks resources
 # resource "google_compute_disk" "data_disks" { ... }
 # resource "google_compute_attached_disk" "attached_data_disks" { ... }
-
-
-

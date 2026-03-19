@@ -98,10 +98,3 @@ output "vm_count" {
   description = "Total number of VMs provisioned."
   value       = var.num_infinia_instances
 }
-
-
-
-
-
-
-
