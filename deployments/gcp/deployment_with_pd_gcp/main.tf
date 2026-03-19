@@ -86,7 +86,7 @@ resource "google_compute_instance" "realm_entry_instance" {
   metadata = merge(local.metadata, {
     infinia_version         = var.infinia_version
     infinia_license         = var.infinia_license
-    startup-script-url      = "https://storage.googleapis.com/infinia-hp-gcp-mp/dev-startup-script.sh"
+    startup-script-url      = var.provision_infra_only ? "https://storage.googleapis.com/infinia-hp-gcp-mp/startup-script-infraonly.sh" : "https://storage.googleapis.com/infinia-hp-gcp-mp/dev-startup-script.sh"
     infinia_instances       = join(",", local.instance_names)
     realm_entry_host        = "${var.goog_cm_deployment_name}-0"
     infinia_instance_count  = tostring(var.num_infinia_instances)
@@ -120,6 +120,11 @@ resource "google_compute_instance" "realm_entry_instance" {
       "https://www.googleapis.com/auth/logging.write",
       "https://www.googleapis.com/auth/monitoring.write"
     ])
+  }
+
+  labels = {
+    skip-shutdown = "true"
+    goog-dm       = var.goog_cm_deployment_name
   }
 }
 
@@ -177,7 +182,7 @@ resource "google_compute_instance" "follower_instances" {
   metadata = merge(local.metadata, {
     infinia_version         = var.infinia_version
     infinia_license         = var.infinia_license
-    startup-script-url      = "https://storage.googleapis.com/infinia-hp-gcp-mp/dev-startup-script.sh"
+    startup-script-url      = var.provision_infra_only ? "https://storage.googleapis.com/infinia-hp-gcp-mp/startup-script-infraonly.sh" : "https://storage.googleapis.com/infinia-hp-gcp-mp/dev-startup-script.sh"
     infinia_instances       = join(",", local.instance_names)
     realm_entry_host        = "${var.goog_cm_deployment_name}-0"
     infinia_instance_count  = tostring(var.num_infinia_instances)
@@ -210,6 +215,11 @@ resource "google_compute_instance" "follower_instances" {
       "https://www.googleapis.com/auth/logging.write",
       "https://www.googleapis.com/auth/monitoring.write"
     ])
+  }
+
+  labels = {
+    skip-shutdown = "true"
+    goog-dm       = var.goog_cm_deployment_name
   }
 }
 
@@ -274,6 +284,10 @@ resource "google_compute_instance" "client_instances" {
       "https://www.googleapis.com/auth/monitoring.write"
     ])
   }
+  labels = {
+    skip-shutdown = "true"
+    goog-dm       = var.goog_cm_deployment_name
+  }
 }
 
 # Firewall rule for HTTPS traffic
@@ -332,3 +346,6 @@ resource "google_compute_attached_disk" "follower_attached_disks" {
 # Remove or comment out the old data_disks and attached_data_disks resources
 # resource "google_compute_disk" "data_disks" { ... }
 # resource "google_compute_attached_disk" "attached_data_disks" { ... }
+
+
+
