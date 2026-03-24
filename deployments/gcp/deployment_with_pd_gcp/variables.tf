@@ -184,3 +184,9 @@ variable "num_infinia_instances" {
   type        = number
   default     = 6  # Default to 6 instances
 }
+
+variable "provision_infra_only" {
+  description = "If true, only provision infrastructure without installing RED/Infinia"
+  type        = bool
+  default     = false
+}

@@ -1,4 +1,4 @@
-goog_cm_deployment_name = "fzhu-qase"
+goog_cm_deployment_name = "fzhu-inc1"
 zone = "us-central1-a"
 project_id = "red-101"  #"infinia-solutions-436513"
 infinia_version = "2.3.0-rcx.21"
@@ -8,9 +8,9 @@ machine_type = "n2-standard-16"
 pd_disk_size = 20
 pd_disk_count = 12
 pd_disk_type = "pd-ssd"
-num_infinia_instances = 240
+num_infinia_instances = 40
 #desired_capacity = 27
-num_clients = 10
+num_clients = 0
 client_boot_disk_size = 100
 provision_infra_only = true
 external_ips = []
